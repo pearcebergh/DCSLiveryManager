@@ -1,4 +1,6 @@
 import Livery
 import UnitConfig
 
-#UnitConfig.Aircraft
+
+#class LiveryManager:
+  #def __init__(self):
