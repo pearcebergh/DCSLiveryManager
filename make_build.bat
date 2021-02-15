@@ -1,0 +1,1 @@
+CALL pyinstaller dcslm.py -n DCSLM --noconfirm --onefile --clean --console

@@ -142,6 +142,7 @@ class DCSLM:
 
     def setup_console_window(self):
         self.console = Console()
+        set_terminal_size(120,40)
 
 
     def run(self):
