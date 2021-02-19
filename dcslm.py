@@ -4,13 +4,15 @@ from rich.console import Console
 from rich.rule import Rule
 from datetime import datetime
 import os
+import sys
 import platform
 from DCSLM import __version__
 from prompt_toolkit import PromptSession, HTML
 from prompt_toolkit.shortcuts import confirm
 from prompt_toolkit.completion import WordCompleter, NestedCompleter
-from DCSLM import LiveryManager, UnitConfig, Utilities
+from DCSLM import  UnitConfig, Utilities
 from DCSLM.Livery import DCSUserFile, Livery
+from DCSLM.LiveryManager import LiveryManager
 
 if platform.system() == 'Windows':
   from ctypes import windll, wintypes
@@ -44,13 +46,15 @@ class DCSLMApp:
     self.session = PromptSession(reserve_space_for_menu=6, complete_in_thread=True)
     self.completer = None
     self.commands = None
+    self.lm = None
 
   def start(self):
     self.setup_commands()
     self.setup_command_completer()
     self.setup_console_window()
     self.clear_and_print_header()
-    self.print_help()
+    self.setup_livery_manager()
+    #self.print_help()
     self.run()
 
   def setup_commands(self):
@@ -105,6 +109,20 @@ class DCSLMApp:
         'args': {},
         'exec': None
       },
+      'info': {
+        'completer': None,
+        'usage': "livery",
+        'desc': "Get additional info about an installed livery",
+        'flags': {},
+        'args': {
+          'livery': {
+            'type': "string",
+            'optional': False,
+            'desc': "DCS User Files livery title"
+          },
+        },
+        'exec': None
+      },
       'scan': {
         'completer': None,
         'usage': "",
@@ -146,13 +164,27 @@ class DCSLMApp:
     }
 
   def install_liveries(self, sArgs):
+    self.console.print("Attempting to download and install " + str(len(sArgs)) + (" liveries." if len(sArgs) > 1 else " livery."))
     for liveryStr in sArgs:
       self.console.print("Attempting to download and install " + liveryStr)
       correctedLiveryStr = Utilities.correct_dcs_user_files_url(liveryStr)
       if correctedLiveryStr:
         livery = Livery()
-        livery.dcsuf = DCSUserFile()
-        livery.dcsuf.id = livery.dcsuf.get_id_from_url(correctedLiveryStr)
+        #livery.dcsuf = DCSUserFile()
+        #livery.dcsuf.id = livery.dcsuf.get_id_from_url(correctedLiveryStr)
+        livery._fill_data_test()
+        self.print_livery(livery)
+        downloadPath = self.lm.download_livery_archive(livery)
+        if downloadPath:
+          extractPath = self.lm.extract_livery_archive(livery)
+          if extractPath:
+            detectedLiveries = self.lm.detect_extracted_liveries(livery, extractPath)
+            if len(detectedLiveries):
+              if self.lm.move_detected_liveries(livery, extractPath, detectedLiveries):
+                self.lm.register_livery(livery)
+                self.lm.write_livery_registry_file(livery)
+            self.lm.remove_extracted_livery_archive(livery, extractPath)
+          self.lm.remove_downloaded_archive(livery, downloadPath)
 
   def func_test(self, sArgs):
     self.console.print(sArgs)
@@ -181,6 +213,12 @@ class DCSLMApp:
 
     self.console.print("\n")
 
+  def print_livery(self, livery):
+    if livery:
+      self.console.print(livery.unit + " - \'" + livery.dcsuf.title + "\' by " + livery.dcsuf.author)
+      self.console.print("User Files ID: " + str(livery.dcsuf.id) + " \tUpload Date: " + livery.dcsuf.date + " \tDownload Size: " + livery.dcsuf.size)
+      self.console.print(livery.archive)
+
   def setup_command_completer(self):
     completerDict = {}
     for k, v in self.commands.items():
@@ -195,10 +233,21 @@ class DCSLMApp:
     self.console.print('')
 
   def setup_console_window(self):
-    self.console = Console()
-    set_terminal_size(120, 40)
+    self.console = Console(width=120)
+    #set_terminal_size(80, 50)
+
+  def setup_livery_manager(self):
+    self.lm = LiveryManager()
+    lmData = self.lm.load_data()
+    if not lmData:
+      self.console.print("No existing dcslm.json file found with config and livery data. Loading defaults.")
+      self.lm.prompt_default_data()
+    else:
+      self.console.print("Loaded Livery Manager config and data from dcslm.json")
+      self.lm = lmData
 
   def run(self):
+    self.console.print("")
     runCommands = True
     while runCommands:
       try:
@@ -227,10 +276,13 @@ class DCSLMApp:
             self.console.print("Command \'" + splitCommand[0] + "\' not found.")
         else:
           self.console.print("Command \'" + command + "\' not found.")
+    self.console.print("Writing out current config and livery data to dcslm.json")
+    self.lm.write_data()
+    self.console.print("Exiting DCS Livery Manager.")
 
 
 if __name__ == '__main__':
-  print(platform.system())
+  os.chdir(os.path.dirname(os.path.abspath(sys.executable)))
   set_terminal_title(f'DCS Livery Manager v{__version__}')
   dcslmapp = DCSLMApp()
   dcslmapp.start()
