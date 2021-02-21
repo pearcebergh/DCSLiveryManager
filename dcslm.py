@@ -169,27 +169,37 @@ class DCSLMApp:
   def install_liveries(self, sArgs):
     self.console.print("Installing " + str(len(sArgs)) + (" liveries" if len(sArgs) > 1 else " livery") + " from DCS User Files.")
     for liveryStr in sArgs:
-      self.console.print("Attempting to download and install https://www.digitalcombatsimulator.com/en/files/" + liveryStr)
+      self.console.print("Attempting to download and install livery from https://www.digitalcombatsimulator.com/en/files/" + liveryStr)
       correctedLiveryStr = Utilities.correct_dcs_user_files_url(liveryStr)
       if correctedLiveryStr:
-        try:
-          livery = Livery()
-          #livery.dcsuf.id = livery.dcsuf.get_id_from_url(correctedLiveryStr)
-          livery._fill_data_test()
-          self.print_livery(livery)
-          downloadPath = self.lm.download_livery_archive(livery)
-          if downloadPath:
-            extractPath = self.lm.extract_livery_archive(livery)
-            if extractPath:
-              detectedLiveries = self.lm.detect_extracted_liveries(livery, extractPath)
-              if len(detectedLiveries):
-                if self.lm.move_detected_liveries(livery, extractPath, detectedLiveries):
-                  self.lm.write_livery_registry_file(livery)
-                  self.lm.register_livery(livery)
-              self.lm.remove_extracted_livery_archive(livery, extractPath)
-            self.lm.remove_downloaded_archive(livery, downloadPath)
-        except Exception as e:
-          self.console.print(e)
+        #try:
+        livery = Livery()
+        #livery.dcsuf.id = livery.dcsuf.get_id_from_url(correctedLiveryStr)
+        livery._fill_data_test()
+        self.print_livery(livery)
+        downloadPath = self.lm.download_livery_archive(livery)
+        if downloadPath:
+          self.console.print(downloadPath)
+          extractPath = self.lm.extract_livery_archive(livery)
+          if extractPath:
+            destinationPath = self.lm.generate_livery_destination_path(livery)
+            livery.destination = destinationPath
+            unitLiveries = Units.Units['aircraft'][livery.unit]['liveries']
+            if len(unitLiveries) > 1:
+              unitLiveries = self.prompt_aircraft_livery_choice(livery, unitLiveries)
+            self.console.print(unitLiveries)
+            installRoots = self.lm.generate_aircraft_livery_install_path(livery, unitLiveries)
+            self.console.print(installRoots)
+            return
+            detectedLiveries = self.lm.detect_extracted_liveries(livery, extractPath)
+            if len(detectedLiveries):
+              if self.lm.move_detected_liveries(livery, extractPath, detectedLiveries):
+                self.lm.write_livery_registry_file(livery)
+                self.lm.register_livery(livery)
+            self.lm.remove_extracted_livery_archive(livery, extractPath)
+          self.lm.remove_downloaded_archive(livery, downloadPath)
+        #except Exception as e:
+          #self.console.print(e)
 
   def func_test(self, sArgs):
     self.console.print(sArgs)
@@ -220,8 +230,8 @@ class DCSLMApp:
 
   def print_livery(self, livery):
     if livery:
-      self.console.print(Panel("User Files ID: " + str(livery.dcsuf.id) + " | Upload Date: " + livery.dcsuf.date + " | Archive Size: " + livery.dcsuf.size + " \n" + livery.dcsuf.download,
-                               title=Units.Units['aircraft'][livery.unit]['friendly'] + " - " + livery.dcsuf.title + " by " + livery.dcsuf.author,
+      self.console.print(Panel("File ID: " + str(livery.dcsuf.id) + " | Author: " + livery.dcsuf.author + " |  Upload Date: " + livery.dcsuf.date + " | Archive Size: " + livery.dcsuf.size + " \n" + livery.dcsuf.download,
+                               title=Units.Units['aircraft'][livery.unit]['friendly'] + " - " + livery.dcsuf.title,
                                expand=False, highlight=True))
 
   def setup_command_completer(self):
@@ -261,6 +271,27 @@ class DCSLMApp:
       self.lm.LiveryData['config']['ovgme'] = ovgme
       if ovgme:
         self.console.print("[green]Enabling OVGME (Mod Manager) mode.")
+
+  def prompt_aircraft_livery_choice(self, livery, unitLiveries):
+    choosenLiveries = []
+    liveryChoices = ["All"]
+    for u in unitLiveries:
+      if u in Units.Units['aircraft'].keys():
+        liveryChoices.append(Units.Units['aircraft'][u]['friendly'])
+      else:
+        liveryChoices.append(u)
+    if len(liveryChoices) > 2:
+      choiceText = ""
+      for i in range(0, len(liveryChoices)):
+        choiceText += "[" + str(i) + "]" + liveryChoices[i] + " "
+      self.console.print("\nThere are multiple livery install locations for the [bold magenta]" + Units.Units['aircraft'][livery.unit]['friendly'] + "[/bold magenta]. Please choose from one of the following choices by inputting the corresponding index number:")
+      self.console.print("\n\t" + choiceText)
+      choice = Prompt.ask("\n[bold]Which aircraft do you want the livery to be installed to?[/bold]", choices=[str(i) for i in range(0,len(liveryChoices))])
+      if choice == "0":
+        choosenLiveries = unitLiveries
+      else:
+        choosenLiveries = [unitLiveries[int(choice) - 1]]
+    return choosenLiveries
 
   def run(self):
     self.console.print("")

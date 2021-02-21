@@ -5,7 +5,7 @@ class UnitConfig:
     self.setup_config()
 
   def get_unit_from_text(self, unitText):
-    return self.Units['aicraft'][unitText]
+    return self.Units['aircraft'][unitText]
 
   def setup_config(self):
     self.Units = {
@@ -190,6 +190,20 @@ class UnitConfig:
           "friendly": "L-39",
           "dcs_files": "L-39 Albatros",
           "liveries": ["L-39C", "L-39ZA"],
+          "core": "CoreMods/aircraft/L-39"
+        },
+        "l-39c": {
+          "names": ["l-39c"],
+          "friendly": "L-39C",
+          "dcs_files": "L-39C Albatros",
+          "liveries": ["L-39C"],
+          "core": "CoreMods/aircraft/L-39"
+        },
+        "l-39za": {
+          "names": ["l-39za"],
+          "friendly": "L-39ZA",
+          "dcs_files": "L-39ZA Albatros",
+          "liveries": ["L-39ZA"],
           "core": "CoreMods/aircraft/L-39"
         },
         "m-2000c": {

@@ -66,12 +66,12 @@ class DCSUserFile:
 
   def _fill_data_test(self):
     self.id = 69420
-    self.unit = "f-16c"
+    self.unit = "f-14"
     self.author = "Sneep"
     self.title = "69th #VIPENATION FS Livery"
-    self.date = "19.02.2021 03:24"
+    self.date = "19.02.2021 04:20"
     self.datetime = 0
-    self.size = "69.00 Mb"
+    self.size = "69.96 Mb"
     self.download = "https://www.digitalcombatsimulator.com/upload/iblock/079/69th_-_Vipenation_FS_v1.zip"
 
 class Livery:
@@ -83,7 +83,6 @@ class Livery:
     self.destination = None
     self.dcsuf = DCSUserFile()
     self.install = []
-    # install paths will be in the form of Units['aircraft'][self.aircraft]/livery_title/
 
   def to_JSON(self):
     return {

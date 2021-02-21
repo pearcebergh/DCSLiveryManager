@@ -128,8 +128,8 @@ class LiveryManager:
 
   def download_livery_archive(self, livery):
     if livery:
-      return True
-    return False
+      return os.path.join(os.getcwd(), DCSLMFolderName, "archives", str.split(livery.dcsuf.download, '/')[-1])
+    raise RuntimeError("Unable to get path for livery " + livery.title)
 
   def extract_livery_archive(self, livery):
     if livery:
@@ -155,3 +155,17 @@ class LiveryManager:
     if livery:
       return True
     return False
+
+  def generate_livery_destination_path(self, livery):
+    if self.LiveryData['config']['ovgme']:
+      return os.path.join(livery.ovgme, "Liveries")
+    else:
+      return "Liveries"
+
+  def generate_aircraft_livery_install_path(self, livery, unitLiveries):
+    liveryPaths = []
+    destination = self.generate_livery_destination_path(livery)
+    for unit in unitLiveries:
+      liveryPaths.append(os.path.join(destination, unit))
+    return liveryPaths
+
