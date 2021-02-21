@@ -230,7 +230,7 @@ class DCSLMApp:
 
   def print_livery(self, livery):
     if livery:
-      self.console.print(Panel("File ID: " + str(livery.dcsuf.id) + " | Author: " + livery.dcsuf.author + " |  Upload Date: " + livery.dcsuf.date + " | Archive Size: " + livery.dcsuf.size + " \n" + livery.dcsuf.download,
+      self.console.print(Panel("ID: " + str(livery.dcsuf.id) + " | Author: " + livery.dcsuf.author + " | Upload Date: " + livery.dcsuf.date + " | Archive Size: " + livery.dcsuf.size + " \n" + livery.dcsuf.download,
                                title=Units.Units['aircraft'][livery.unit]['friendly'] + " - " + livery.dcsuf.title,
                                expand=False, highlight=True))
 
