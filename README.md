@@ -1,2 +1,2 @@
 # DCSLiveriesManager
-TUI tool to download, install, and manage your DCS liveries from DCS User Files.
+TUI tool to download, install, and update your DCS liveries from DCS User Files.
