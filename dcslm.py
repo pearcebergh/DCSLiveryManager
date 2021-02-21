@@ -2,6 +2,8 @@ from requests import get
 from rich.progress import track
 from rich.console import Console
 from rich.rule import Rule
+from rich.prompt import Prompt
+from rich.panel import Panel, Padding, PaddingDimensions
 from datetime import datetime
 import os
 import sys
@@ -10,9 +12,10 @@ from DCSLM import __version__
 from prompt_toolkit import PromptSession, HTML
 from prompt_toolkit.shortcuts import confirm
 from prompt_toolkit.completion import WordCompleter, NestedCompleter
-from DCSLM import  UnitConfig, Utilities
+from DCSLM import Utilities
 from DCSLM.Livery import DCSUserFile, Livery
-from DCSLM.LiveryManager import LiveryManager
+from DCSLM.LiveryManager import LiveryManager, DCSLMFolderName
+from DCSLM.UnitConfig import Units
 
 if platform.system() == 'Windows':
   from ctypes import windll, wintypes
@@ -164,27 +167,29 @@ class DCSLMApp:
     }
 
   def install_liveries(self, sArgs):
-    self.console.print("Attempting to download and install " + str(len(sArgs)) + (" liveries." if len(sArgs) > 1 else " livery."))
+    self.console.print("Installing " + str(len(sArgs)) + (" liveries" if len(sArgs) > 1 else " livery") + " from DCS User Files.")
     for liveryStr in sArgs:
-      self.console.print("Attempting to download and install " + liveryStr)
+      self.console.print("Attempting to download and install https://www.digitalcombatsimulator.com/en/files/" + liveryStr)
       correctedLiveryStr = Utilities.correct_dcs_user_files_url(liveryStr)
       if correctedLiveryStr:
-        livery = Livery()
-        #livery.dcsuf = DCSUserFile()
-        #livery.dcsuf.id = livery.dcsuf.get_id_from_url(correctedLiveryStr)
-        livery._fill_data_test()
-        self.print_livery(livery)
-        downloadPath = self.lm.download_livery_archive(livery)
-        if downloadPath:
-          extractPath = self.lm.extract_livery_archive(livery)
-          if extractPath:
-            detectedLiveries = self.lm.detect_extracted_liveries(livery, extractPath)
-            if len(detectedLiveries):
-              if self.lm.move_detected_liveries(livery, extractPath, detectedLiveries):
-                self.lm.register_livery(livery)
-                self.lm.write_livery_registry_file(livery)
-            self.lm.remove_extracted_livery_archive(livery, extractPath)
-          self.lm.remove_downloaded_archive(livery, downloadPath)
+        try:
+          livery = Livery()
+          #livery.dcsuf.id = livery.dcsuf.get_id_from_url(correctedLiveryStr)
+          livery._fill_data_test()
+          self.print_livery(livery)
+          downloadPath = self.lm.download_livery_archive(livery)
+          if downloadPath:
+            extractPath = self.lm.extract_livery_archive(livery)
+            if extractPath:
+              detectedLiveries = self.lm.detect_extracted_liveries(livery, extractPath)
+              if len(detectedLiveries):
+                if self.lm.move_detected_liveries(livery, extractPath, detectedLiveries):
+                  self.lm.write_livery_registry_file(livery)
+                  self.lm.register_livery(livery)
+              self.lm.remove_extracted_livery_archive(livery, extractPath)
+            self.lm.remove_downloaded_archive(livery, downloadPath)
+        except Exception as e:
+          self.console.print(e)
 
   def func_test(self, sArgs):
     self.console.print(sArgs)
@@ -215,9 +220,9 @@ class DCSLMApp:
 
   def print_livery(self, livery):
     if livery:
-      self.console.print(livery.unit + " - \'" + livery.dcsuf.title + "\' by " + livery.dcsuf.author)
-      self.console.print("User Files ID: " + str(livery.dcsuf.id) + " \tUpload Date: " + livery.dcsuf.date + " \tDownload Size: " + livery.dcsuf.size)
-      self.console.print(livery.archive)
+      self.console.print(Panel("User Files ID: " + str(livery.dcsuf.id) + " | Upload Date: " + livery.dcsuf.date + " | Archive Size: " + livery.dcsuf.size + " \n" + livery.dcsuf.download,
+                               title=Units.Units['aircraft'][livery.unit]['friendly'] + " - " + livery.dcsuf.title + " by " + livery.dcsuf.author,
+                               expand=False, highlight=True))
 
   def setup_command_completer(self):
     completerDict = {}
@@ -227,8 +232,7 @@ class DCSLMApp:
 
   def clear_and_print_header(self):
     clear()
-    self.console.print(
-      Rule(f'[bold gold1]DCS Livery Manager[/bold gold1] [bold sky_blue1]v{__version__}[/bold sky_blue1]',
+    self.console.print(Rule(f'[bold gold1]DCS Livery Manager[/bold gold1] [bold sky_blue1]v{__version__}[/bold sky_blue1]',
            characters="~═~*", style="deep_pink2"))
     self.console.print('')
 
@@ -241,10 +245,22 @@ class DCSLMApp:
     lmData = self.lm.load_data()
     if not lmData:
       self.console.print("No existing dcslm.json file found with config and livery data. Loading defaults.")
-      self.lm.prompt_default_data()
+      self.lm.make_dcslm_dir()
+      self.prompt_livery_manager_defaults()
     else:
       self.console.print("Loaded Livery Manager config and data from dcslm.json")
-      self.lm = lmData
+      self.lm.LiveryData = lmData
+
+  def prompt_livery_manager_defaults(self):
+    if self.lm:
+      self.console.print("\n\n[bold green underline]OVGME (Mod Manager) Mode:")
+      self.console.print("If you use a mod manager, like OVGME, to manage your DCS mod installs, you can enable \'OVGME Mode\' to have it create a root directory named with the aircraft and title of the livery.")
+      self.console.print("\n[gold1]Make sure you've placed DCSLM inside your mod manager's directory that is configured for the [/gold1]\'DCS Saved Games\'[gold1] directory, not the DCS install directory.[/gold1]")
+      ovgme = Prompt.ask("\n[bold]Do you want to enable OVGME (Mod Manager) Mode?[/bold]", choices=["Yes", "No"])
+      ovgme = (True if ovgme == "Yes" else False)
+      self.lm.LiveryData['config']['ovgme'] = ovgme
+      if ovgme:
+        self.console.print("[green]Enabling OVGME (Mod Manager) mode.")
 
   def run(self):
     self.console.print("")
@@ -282,7 +298,8 @@ class DCSLMApp:
 
 
 if __name__ == '__main__':
-  os.chdir(os.path.dirname(os.path.abspath(sys.executable)))
+  #os.chdir(os.path.dirname(os.path.abspath(sys.executable)))
+  os.chdir(os.path.dirname(os.path.abspath(sys.argv[0])))
   set_terminal_title(f'DCS Livery Manager v{__version__}')
   dcslmapp = DCSLMApp()
   dcslmapp.start()

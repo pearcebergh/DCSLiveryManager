@@ -318,3 +318,5 @@ class UnitConfig:
     for type in self.Units.keys():
       for unit,config in self.Units[type].items():
         config['generic'] = unit
+
+Units = UnitConfig()
