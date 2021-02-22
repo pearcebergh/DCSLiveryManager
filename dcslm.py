@@ -180,10 +180,10 @@ class DCSLMApp:
           downloadPath = self.lm.download_livery_archive(livery)
           if downloadPath:
             livery.archive = downloadPath
-            self.console.print("Running extraction program on downloaded archive:\n")
+            self.console.print("\nRunning extraction program on downloaded archive:")
             extractPath = self.lm.extract_livery_archive(livery)
             if extractPath:
-              self.console.print("Extracted " + livery.archive + " to temporary directory.")
+              self.console.print("\nExtracted " + livery.archive + " to temporary directory.")
               destinationPath = self.lm.generate_livery_destination_path(livery)
               livery.destination = destinationPath
               unitLiveries = Units.Units['aircraft'][livery.unit]['liveries']

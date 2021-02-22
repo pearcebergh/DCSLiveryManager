@@ -1,4 +1,4 @@
-from . import Livery
+from .Livery import Livery
 from .UnitConfig import Units
 import os, sys
 import json
@@ -96,7 +96,7 @@ class LiveryManager:
       try:
         with open(registryPath, "r") as registryFile:
           registryData = json.load(registryFile)
-          loadedLivery = Livery.Livery()
+          loadedLivery = Livery()
           loadedLivery.from_JSON(registryData)
           return loadedLivery
       except:

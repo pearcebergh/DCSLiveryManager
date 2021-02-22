@@ -2,6 +2,7 @@ from .Utilities import correct_dcs_user_files_url
 from .UnitConfig import Units
 import os
 import json
+from datetime import datetime
 
 class DCSUserFile:
   def __init__(self):
@@ -43,26 +44,22 @@ class DCSUserFile:
       self.from_JSON(jsonData)
 
   def get_id_from_url(self, fileURL):
-    try:
-      return str.split(fileURL, '/')[-1]
-    except:
-      RuntimeError("Unable to get ID from url \'" + fileURL + "\'")
+    if fileURL:
+      splitURL = str.split(fileURL, '/')
+      for s in splitURL:
+        if s.isnumeric():
+          return int(s)
+    raise RuntimeWarning("Unable to get DCS User File ID from url " + fileURL)
 
   def date_to_datetime(self, date):
-    return 0
+    if len(date):
+      return datetime.strptime(date, '%d.%m.%Y %H:%M')
+    return None
 
   def datetime_to_date(self, datetime):
+    if datetime:
+      return datetime.strftime('%d.%m.%Y %H:%M')
     return ""
-
-  def fill_from_parsed_html(self, fileURL, parsedHTML):
-    try:
-      correctedFileURL = correct_dcs_user_files_url(fileURL)
-      if correctedFileURL:
-        print("Fill from " + correctedFileURL)
-      else:
-        raise NotImplementedError("Unable to get valid DCS Files URL from \'" + fileURL + "\'")
-    except:
-      RuntimeError("Unable to parse HTML for DCS User File class.")
 
   def _fill_data_test(self):
     self.id = 69420
@@ -76,8 +73,6 @@ class DCSUserFile:
 
 class Livery:
   def __init__(self):
-    self.unit = None
-    self.title = None
     self.archive = None
     self.ovgme = None
     self.destination = None
@@ -86,8 +81,6 @@ class Livery:
 
   def to_JSON(self):
     return {
-      'unit': self.unit,
-      'title': self.title,
       'archive': self.archive,
       'ovgme': self.ovgme,
       'destination': self.destination,
@@ -97,8 +90,6 @@ class Livery:
 
   def from_JSON(self, jsonData):
     if jsonData:
-      self.unit = jsonData['unit']
-      self.title = jsonData['title']
       self.archive = jsonData['archive']
       self.ovgme = jsonData['ovgme']
       self.destination = jsonData['destination']
@@ -111,22 +102,15 @@ class Livery:
       self.from_JSON(jsonData)
 
   def generate_ovgme_folder(self):
-    if (self.dcsuf or self.title) and self.unit:
-      titleText = ""
-      if self.title:
-        titleText = self.title
-      elif self.dcsuf:
-        titleText = self.dcsuf.title
-      return Units.Units['aircraft'][self.unit]['friendly'] + " - " + titleText
+    if self.dcsuf and self.dcsuf.unit and self.dcsuf.title:
+      return Units.Units['aircraft'][self.dcsuf.unit]['friendly'] + " - " + self.dcsuf.title
     else:
       raise RuntimeError("Unable to generate OVGME folder for livery due to insufficient data.")
 
   def _fill_data_test(self):
     self.dcsuf = DCSUserFile()
     self.dcsuf._fill_data_test()
-    self.unit = self.dcsuf.unit
-    self.title = self.dcsuf.title
     self.ovgme = self.generate_ovgme_folder()
     self.archive = "/DCSLM/archives/" + self.dcsuf.download.split('/')[-1]
     self.destination = "/Liveries/"
-    self.install.append(os.path.join(Units.Units['aircraft'][self.unit]['liveries'][0], self.title))
+    self.install.append(os.path.join(Units.Units['aircraft'][self.dcsuf.unit]['liveries'][0], self.dcsuf.title))
