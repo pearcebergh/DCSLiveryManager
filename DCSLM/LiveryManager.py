@@ -6,6 +6,7 @@ import json
 import glob
 import shutil
 import patoolib
+from patoolib.programs import *
 import requests
 
 DCSLMFolderName = "DCSLM_Root"

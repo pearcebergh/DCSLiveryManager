@@ -1,1 +1,1 @@
-CALL pyinstaller dcslm.py -n DCSLM --noconfirm --onefile --clean --console
+CALL pyinstaller -n DCSLM --noconfirm --clean --console --onefile --additional-hooks-dir=./hooks dcslm.py

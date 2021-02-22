@@ -296,7 +296,7 @@ class DCSLMApp:
       choiceText = ""
       for i in range(0, len(liveryChoices)):
         choiceText += "[" + str(i) + "]" + liveryChoices[i] + " "
-      self.console.print("\nThere are multiple livery install locations for the [bold magenta]" + Units.Units['aircraft'][livery.unit]['friendly'] + "[/bold magenta]. Please choose from one of the following choices by inputting the corresponding index number:")
+      self.console.print("\nThere are multiple livery install locations for the [bold magenta]" + Units.Units['aircraft'][livery.dcsuf.unit]['friendly'] + "[/bold magenta]. Please choose from one of the following choices by inputting the corresponding index number:")
       self.console.print("\n\t" + choiceText)
       choice = Prompt.ask("\n[bold]Which aircraft do you want the livery to be installed to?[/bold]", choices=[str(i) for i in range(0,len(liveryChoices))])
       if choice == "0":
