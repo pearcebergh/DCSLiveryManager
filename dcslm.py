@@ -170,12 +170,10 @@ class DCSLMApp:
     self.console.print("Installing " + str(len(sArgs)) + (" liveries" if len(sArgs) > 1 else " livery") + " from DCS User Files.")
     for liveryStr in sArgs:
       self.console.print("Getting User File information from https://www.digitalcombatsimulator.com/en/files/" + liveryStr)
-      correctedLiveryStr = Utilities.correct_dcs_user_files_url(liveryStr)
-      if correctedLiveryStr:
+      correctedLiveryURL = Utilities.correct_dcs_user_files_url(liveryStr)
+      if correctedLiveryURL:
         try:
-          livery = Livery()
-          livery.dcsuf.id = livery.dcsuf.get_id_from_url(correctedLiveryStr)
-          livery._fill_data_test()
+          livery = self.lm.get_livery_data_from_dcsuf_url(correctedLiveryURL)
           self.print_livery(livery)
           downloadPath = self.lm.download_livery_archive(livery)
           if downloadPath:
@@ -186,7 +184,7 @@ class DCSLMApp:
               self.console.print("\nExtracted " + livery.archive + " to temporary directory.")
               destinationPath = self.lm.generate_livery_destination_path(livery)
               livery.destination = destinationPath
-              unitLiveries = Units.Units['aircraft'][livery.unit]['liveries']
+              unitLiveries = Units.Units['aircraft'][livery.dcsuf.unit]['liveries']
               if len(unitLiveries) > 1:
                 unitLiveries = self.prompt_aircraft_livery_choice(livery, unitLiveries)
               self.console.print("Detecting extracted liveries...")
@@ -240,7 +238,7 @@ class DCSLMApp:
   def print_livery(self, livery):
     if livery:
       self.console.print(Panel("ID: " + str(livery.dcsuf.id) + " | Author: " + livery.dcsuf.author + " | Upload Date: " + livery.dcsuf.date + " | Archive Size: " + livery.dcsuf.size + " \n" + livery.dcsuf.download,
-                               title=Units.Units['aircraft'][livery.unit]['friendly'] + " - " + livery.dcsuf.title,
+                               title=Units.Units['aircraft'][livery.dcsuf.unit]['friendly'] + " - " + livery.dcsuf.title,
                                expand=False, highlight=True))
 
   def setup_command_completer(self):
@@ -266,6 +264,7 @@ class DCSLMApp:
     if not lmData:
       self.console.print("No existing dcslm.json file found with config and livery data. Loading defaults.")
       self.prompt_livery_manager_defaults()
+      self.lm.write_data()
     else:
       self.console.print("Loaded Livery Manager config and data from dcslm.json")
       self.lm.LiveryData = lmData
@@ -273,8 +272,8 @@ class DCSLMApp:
   def prompt_livery_manager_defaults(self):
     if self.lm:
       self.console.print("\n\n[bold green underline]OVGME (Mod Manager) Mode:")
-      self.console.print("If you use a mod manager, like OVGME, to manage your DCS mod installs, you can enable \'OVGME Mode\' to have it create a root directory named with the aircraft and title of the livery.")
-      self.console.print("\n[gold1]Make sure you've placed DCSLM inside your mod manager's directory that is configured for the [/gold1]\'DCS Saved Games\'[gold1] directory, not the DCS install directory.[/gold1]")
+      self.console.print("If you use a mod manager, like OVGME, to manage your DCS mod installs, you can enable \'OVGME Mode\' to have it create a root directory named with the format [bold purple]{aircraft} - {livery title}[/bold purple].")
+      self.console.print("\n[gold1]Make sure you've placed DCSLM.exe inside your mod manager's directory that is configured for the [/gold1]\'DCS Saved Games\'[gold1] directory, not the DCS install directory.[/gold1]")
       ovgme = Prompt.ask("\n[bold]Do you want to enable OVGME (Mod Manager) Mode?[/bold]", choices=["Yes", "No"])
       ovgme = (True if ovgme == "Yes" else False)
       self.lm.LiveryData['config']['ovgme'] = ovgme
@@ -314,6 +313,7 @@ class DCSLMApp:
         break
       else:
         splitCommand = command.split(' ', 1)
+        splitCommand = ' '.join(splitCommand).split()
         if len(splitCommand):
           if splitCommand[0] in self.commands:
             self.console.print("Running Command \'" + splitCommand[0] + "\'")
@@ -330,8 +330,6 @@ class DCSLMApp:
               runCommands = False
           else:
             self.console.print("Command \'" + splitCommand[0] + "\' not found.")
-        else:
-          self.console.print("Command \'" + command + "\' not found.")
     self.console.print("Writing out current config and livery data to dcslm.json")
     self.lm.write_data()
     self.console.print("Exiting DCS Livery Manager.")

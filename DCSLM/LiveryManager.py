@@ -1,5 +1,6 @@
 from .Livery import Livery
 from .UnitConfig import Units
+from .DCSUFParser import DCSUFParser
 import os, sys
 import json
 import glob
@@ -37,7 +38,6 @@ class LiveryManager:
   def write_data(self):
     global DCSLMFolderName
     configPath = os.path.join(os.getcwd(), DCSLMFolderName, "dcslm.json")
-    print(configPath)
     try:
       with open(configPath, "w") as configFile:
         outJson = {}
@@ -134,10 +134,11 @@ class LiveryManager:
         raise RuntimeError("Unable to find livery registry file \'" + installPath + "\'.")
 
   def download_livery_archive(self, livery):
-    if livery:
+    #if livery:
       # Do the download here
-      return str.split(livery.dcsuf.download, '/')[-1]
-    raise RuntimeError("Unable to get archive path for livery " + livery.title)
+      #return None
+      #return str.split(livery.dcsuf.download, '/')[-1]
+    raise RuntimeError("Unable to get downloaded archive path for livery \'" + livery.dcsuf.title + "\'.")
 
   def _remove_existing_extracted_files(self, livery, extractedRoot):
     if os.path.isdir(extractedRoot):
@@ -245,3 +246,11 @@ class LiveryManager:
       for livery in detectedLiveries:
         installPaths.append(os.path.join(root, livery))
     return installPaths
+
+  def get_livery_data_from_dcsuf_url(self, url):
+    if len(url):
+      l = Livery()
+      l.dcsuf = DCSUFParser().get_dcsuserfile_from_url(url)
+      l.ovgme = l.generate_ovgme_folder()
+      return l
+    raise RuntimeError("Unable to get livey data from url " + url)

@@ -1,5 +1,4 @@
 from .Livery import Livery, DCSUserFile
-from .LiveryManager import LiveryManager
 from .UnitConfig import Units
 from .Utilities import correct_dcs_user_files_url
 import requests
