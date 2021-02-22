@@ -106,10 +106,8 @@ class LiveryManager:
 
   def write_livery_registry_files(self, livery):
     for i in livery.install:
-      if self.LiveryData['config']['ovgme']:
-        installRoot = os.path.join(os.getcwd(), "Liveries", livery.ovgme, i)
-      else:
-        installRoot = os.path.join(os.getcwd(), "Liveries", i)
+      # TODO: Add back logic to add ovgme root here and remove it from install paths to keep it all relative
+      installRoot = os.path.join(os.getcwd(), i)
       if os.path.isdir(installRoot):
         installPath = os.path.join(installRoot, ".dcslm")
         try:
@@ -141,6 +139,10 @@ class LiveryManager:
       return str.split(livery.dcsuf.download, '/')[-1]
     raise RuntimeError("Unable to get archive path for livery " + livery.title)
 
+  def _remove_existing_extracted_files(self, livery, extractedRoot):
+    if os.path.isdir(extractedRoot):
+      shutil.rmtree(extractedRoot)
+
   def extract_livery_archive(self, livery):
     if livery:
       if len(livery.archive):
@@ -153,6 +155,7 @@ class LiveryManager:
           archiveFile = livery.archive
           archiveFolder = os.path.splitext(archiveFile)[0]
           extractedPath = os.path.join(extractRoot, archiveFolder)
+          self._remove_existing_extracted_files(livery, extractedPath)
           patoolib.extract_archive(archivePath, 0, extractedPath)
           return extractedPath
     return None
