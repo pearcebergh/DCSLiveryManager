@@ -163,8 +163,7 @@ class LiveryManager:
           if not os.path.isdir(extractRoot):
             os.makedirs(extractRoot, exist_ok=True)
           archiveFile = livery.archive
-          archiveFolder = os.path.splitext(archiveFile)[0].split('/')[-1]
-          print(archiveFolder)
+          archiveFolder = os.path.splitext(archiveFile)[0].split('\\')[-1]
           extractedPath = os.path.join(extractRoot, archiveFolder)
           self._remove_existing_extracted_files(livery, extractedPath)
           patoolib.extract_archive(archivePath, 0, extractedPath)
