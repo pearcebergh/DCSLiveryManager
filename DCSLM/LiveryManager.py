@@ -211,14 +211,21 @@ class LiveryManager:
             copiedLiveries.append(install)
     return copiedLiveries
 
-  def remove_extracted_livery_archive(self, livery, extractPath):
+  def remove_extracted_livery_archive(self, livery):
     if livery:
+      extractRoot = os.path.join(os.getcwd(), DCSLMFolderName, "extract", str(livery.dcsuf.id))
+      shutil.rmtree(extractRoot, ignore_errors=True)
       return True
     return False
 
   def remove_downloaded_archive(self, livery, downloadPath):
     if livery:
-      return True
+      archivePath = os.path.join(os.getcwd(), DCSLMFolderName, "archives", livery.archive)
+      if os.path.isfile(archivePath):
+        #os.remove(archivePath)
+        return True
+      else:
+        raise RuntimeWarning("Unable to remove archive file \'" + archivePath + "\' as it doesn't exist.")
     return False
 
   def generate_livery_destination_path(self, livery):

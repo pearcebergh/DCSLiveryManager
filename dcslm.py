@@ -197,7 +197,7 @@ class DCSLMApp:
                 livery.install = copiedLiveries
                 self.lm.write_livery_registry_files(livery)
                 self.lm.register_livery(livery)
-            self.lm.remove_extracted_livery_archive(livery, extractPath)
+            self.lm.remove_extracted_livery_archive(livery)
           self.lm.remove_downloaded_archive(livery, downloadPath)
         #except Exception as e:
           #self.console.print(e)
