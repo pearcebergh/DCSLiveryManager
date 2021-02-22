@@ -4,6 +4,7 @@ import os, sys
 import json
 import glob
 import shutil
+import patoolib
 
 DCSLMFolderName = "DCSLM_Root"
 
@@ -136,13 +137,24 @@ class LiveryManager:
 
   def download_livery_archive(self, livery):
     if livery:
-      return os.path.join(os.getcwd(), DCSLMFolderName, "archives", str.split(livery.dcsuf.download, '/')[-1])
-    raise RuntimeError("Unable to get path for livery " + livery.title)
+      # Do the download here
+      return str.split(livery.dcsuf.download, '/')[-1]
+    raise RuntimeError("Unable to get archive path for livery " + livery.title)
 
   def extract_livery_archive(self, livery):
     if livery:
-      # do the extract
-      return os.path.join(os.getcwd(), DCSLMFolderName, "extract", str(livery.dcsuf.id))
+      if len(livery.archive):
+        archivePath = os.path.join(os.getcwd(), DCSLMFolderName, "archives", livery.archive)
+        print(archivePath)
+        if os.path.isfile(archivePath):
+          extractRoot = os.path.join(os.getcwd(), DCSLMFolderName, "extract", str(livery.dcsuf.id))
+          if not os.path.isdir(extractRoot):
+            os.makedirs(extractRoot, exist_ok=True)
+          archiveFile = livery.archive
+          archiveFolder = os.path.splitext(archiveFile)[0]
+          extractedPath = os.path.join(extractRoot, archiveFolder)
+          patoolib.extract_archive(archivePath, 0, extractedPath)
+          return extractedPath
     return None
 
   def is_valid_livery_directory(self, fileList):

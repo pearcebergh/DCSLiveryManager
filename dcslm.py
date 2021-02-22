@@ -179,7 +179,7 @@ class DCSLMApp:
         self.print_livery(livery)
         downloadPath = self.lm.download_livery_archive(livery)
         if downloadPath:
-          self.console.print(downloadPath)
+          livery.archive = downloadPath
           extractPath = self.lm.extract_livery_archive(livery)
           if extractPath:
             destinationPath = self.lm.generate_livery_destination_path(livery)
@@ -187,19 +187,13 @@ class DCSLMApp:
             unitLiveries = Units.Units['aircraft'][livery.unit]['liveries']
             if len(unitLiveries) > 1:
               unitLiveries = self.prompt_aircraft_livery_choice(livery, unitLiveries)
-            self.console.print(unitLiveries)
             installRoots = self.lm.generate_aircraft_livery_install_path(livery, unitLiveries)
-            self.console.print(installRoots)
             extractedLiveryFiles = self.lm.get_extracted_livery_files(livery, extractPath)
-            self.console.print(extractedLiveryFiles)
             detectedLiveries = self.lm.detect_extracted_liveries(livery, extractedLiveryFiles)
-            self.console.print(detectedLiveries)
             if len(detectedLiveries) and len(installRoots):
               installPaths = self.lm.generate_livery_install_paths(installRoots, detectedLiveries)
-              self.console.print(installPaths)
               copiedLiveries = self.lm.copy_detected_liveries(livery, extractPath, extractedLiveryFiles, detectedLiveries, installPaths)
               if len(copiedLiveries):
-                self.console.print(copiedLiveries)
                 livery.install = copiedLiveries
                 #self.lm.write_livery_registry_files(livery)
                 #self.lm.register_livery(livery)
