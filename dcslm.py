@@ -174,7 +174,9 @@ class DCSLMApp:
       if correctedLiveryURL:
         try:
           livery = self.lm.get_livery_data_from_dcsuf_url(correctedLiveryURL)
+          self.console.print("")
           self.print_livery(livery)
+          self.console.print("\nDownloading livery archive file " + livery.dcsuf.download)
           downloadPath = self.lm.download_livery_archive(livery)
           if downloadPath:
             livery.archive = downloadPath
@@ -203,6 +205,8 @@ class DCSLMApp:
                   self.console.print("[bold green]Livery Registered!")
               self.console.print("Removing temporarily extracted folder.")
               self.lm.remove_extracted_livery_archive(livery)
+            else:
+              self.console.print("Failed to extract livery archive " + livery.archive + ".")
             self.console.print("Removing downloaded archive file.")
             self.lm.remove_downloaded_archive(livery, downloadPath)
         except Exception as e:
@@ -266,7 +270,7 @@ class DCSLMApp:
       self.prompt_livery_manager_defaults()
       self.lm.write_data()
     else:
-      self.console.print("Loaded Livery Manager config and data from dcslm.json")
+      self.console.print("Loaded Livery Manager config and data from DCSLM/dcslm.json")
       self.lm.LiveryData = lmData
 
   def prompt_livery_manager_defaults(self):

@@ -4,10 +4,11 @@ from .Utilities import correct_dcs_user_files_url
 import requests
 from bs4 import BeautifulSoup
 
+ArchiveExtensions = [".zip", ".rar", ".7z"]
+
 class DCSUFParser():
   def __init__(self):
     self.DCSDownloadUrlPrefix = "https://www.digitalcombatsimulator.com"
-    self.ArchiveExtensions = [".zip", ".rar", ".7z"]
     return
 
   def _get_aircraft_config_from_name(self, aircraftText):
@@ -33,7 +34,7 @@ class DCSUFParser():
     if downloadClass:
       fullArchiveUrl = self.DCSDownloadUrlPrefix + downloadClass['href']
       archiveType = '.' + str.split(fullArchiveUrl, '.')[-1]
-      if archiveType in self.ArchiveExtensions:
+      if archiveType in ArchiveExtensions:
         return fullArchiveUrl
       else:
         raise RuntimeError(fullArchiveUrl + " is not a valid url to an archive file.")

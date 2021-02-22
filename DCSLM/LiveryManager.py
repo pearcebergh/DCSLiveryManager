@@ -1,11 +1,12 @@
 from .Livery import Livery
 from .UnitConfig import Units
-from .DCSUFParser import DCSUFParser
+from .DCSUFParser import DCSUFParser, ArchiveExtensions
 import os, sys
 import json
 import glob
 import shutil
 import patoolib
+import requests
 
 DCSLMFolderName = "DCSLM_Root"
 
@@ -109,7 +110,7 @@ class LiveryManager:
       # TODO: Add back logic to add ovgme root here and remove it from install paths to keep it all relative
       installRoot = os.path.join(os.getcwd(), i)
       if os.path.isdir(installRoot):
-        installPath = os.path.join(installRoot, ".dcslm")
+        installPath = os.path.join(installRoot, ".dcslm.json")
         try:
           with open(installPath, "w") as registryFile:
             json.dump(livery.to_JSON(), registryFile)
@@ -124,7 +125,7 @@ class LiveryManager:
         installRoot = os.path.join(os.getcwd(), "Liveries", livery.ovgme, i)
       else:
         installRoot = os.path.join(os.getcwd(), "Liveries", i)
-      installPath = os.path.join(installRoot, ".dcslm")
+      installPath = os.path.join(installRoot, ".dcslm.json")
       if os.path.isfile(installPath):
         try:
           os.remove(installPath)
@@ -134,10 +135,19 @@ class LiveryManager:
         raise RuntimeError("Unable to find livery registry file \'" + installPath + "\'.")
 
   def download_livery_archive(self, livery):
-    #if livery:
-      # Do the download here
-      #return None
-      #return str.split(livery.dcsuf.download, '/')[-1]
+    if livery:
+      if livery.dcsuf.download:
+        archiveType = '.' + str.split(livery.dcsuf.download, '.')[-1]
+        if archiveType in ArchiveExtensions:
+          destinationPath = os.path.join(os.getcwd(), DCSLMFolderName, "archives")
+          archiveFilename = str.split(livery.dcsuf.download, '/')[-1]
+          destinationFilename = os.path.join(destinationPath, archiveFilename)
+          with requests.get(livery.dcsuf.download, stream=True) as req:
+            req.raise_for_status()
+            with open(destinationFilename, 'wb') as f:
+              for chunk in req.iter_content(chunk_size=8192):
+                f.write(chunk)
+          return destinationFilename
     raise RuntimeError("Unable to get downloaded archive path for livery \'" + livery.dcsuf.title + "\'.")
 
   def _remove_existing_extracted_files(self, livery, extractedRoot):
@@ -153,7 +163,8 @@ class LiveryManager:
           if not os.path.isdir(extractRoot):
             os.makedirs(extractRoot, exist_ok=True)
           archiveFile = livery.archive
-          archiveFolder = os.path.splitext(archiveFile)[0]
+          archiveFolder = os.path.splitext(archiveFile)[0].split('/')[-1]
+          print(archiveFolder)
           extractedPath = os.path.join(extractRoot, archiveFolder)
           self._remove_existing_extracted_files(livery, extractedPath)
           patoolib.extract_archive(archivePath, 0, extractedPath)

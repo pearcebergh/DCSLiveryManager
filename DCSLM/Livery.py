@@ -22,7 +22,7 @@ class DCSUserFile:
       'author': self.author,
       'title': self.title,
       'date': self.date,
-      'datetime': self.datetime,
+      'datetime': datetime.timestamp(self.datetime),
       'size': self.size,
       'download': self.download,
     }
@@ -34,7 +34,7 @@ class DCSUserFile:
       self.author = jsonData['author']
       self.title = jsonData['title']
       self.date = jsonData['date']
-      self.datetime = jsonData['datetime']
+      self.datetime = datetime.fromtimestamp(jsonData['datetime'])
       self.size = jsonData['size']
       self.download = jsonData['download']
 
