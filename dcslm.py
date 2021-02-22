@@ -190,12 +190,19 @@ class DCSLMApp:
             self.console.print(unitLiveries)
             installRoots = self.lm.generate_aircraft_livery_install_path(livery, unitLiveries)
             self.console.print(installRoots)
-            return
-            detectedLiveries = self.lm.detect_extracted_liveries(livery, extractPath)
-            if len(detectedLiveries):
-              if self.lm.move_detected_liveries(livery, extractPath, detectedLiveries):
-                self.lm.write_livery_registry_file(livery)
-                self.lm.register_livery(livery)
+            extractedLiveryFiles = self.lm.get_extracted_livery_files(livery, extractPath)
+            self.console.print(extractedLiveryFiles)
+            detectedLiveries = self.lm.detect_extracted_liveries(livery, extractedLiveryFiles)
+            self.console.print(detectedLiveries)
+            if len(detectedLiveries) and len(installRoots):
+              installPaths = self.lm.generate_livery_install_paths(installRoots, detectedLiveries)
+              self.console.print(installPaths)
+              copiedLiveries = self.lm.copy_detected_liveries(livery, extractPath, extractedLiveryFiles, detectedLiveries, installPaths)
+              if len(copiedLiveries):
+                self.console.print(copiedLiveries)
+                livery.install = copiedLiveries
+                #self.lm.write_livery_registry_files(livery)
+                #self.lm.register_livery(livery)
             self.lm.remove_extracted_livery_archive(livery, extractPath)
           self.lm.remove_downloaded_archive(livery, downloadPath)
         #except Exception as e:
@@ -253,9 +260,9 @@ class DCSLMApp:
   def setup_livery_manager(self):
     self.lm = LiveryManager()
     lmData = self.lm.load_data()
+    self.lm.make_dcslm_dirs()
     if not lmData:
       self.console.print("No existing dcslm.json file found with config and livery data. Loading defaults.")
-      self.lm.make_dcslm_dir()
       self.prompt_livery_manager_defaults()
     else:
       self.console.print("Loaded Livery Manager config and data from dcslm.json")
