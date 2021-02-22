@@ -169,38 +169,46 @@ class DCSLMApp:
   def install_liveries(self, sArgs):
     self.console.print("Installing " + str(len(sArgs)) + (" liveries" if len(sArgs) > 1 else " livery") + " from DCS User Files.")
     for liveryStr in sArgs:
-      self.console.print("Attempting to download and install livery from https://www.digitalcombatsimulator.com/en/files/" + liveryStr)
+      self.console.print("Getting User File information from https://www.digitalcombatsimulator.com/en/files/" + liveryStr)
       correctedLiveryStr = Utilities.correct_dcs_user_files_url(liveryStr)
       if correctedLiveryStr:
-        #try:
-        livery = Livery()
-        #livery.dcsuf.id = livery.dcsuf.get_id_from_url(correctedLiveryStr)
-        livery._fill_data_test()
-        self.print_livery(livery)
-        downloadPath = self.lm.download_livery_archive(livery)
-        if downloadPath:
-          livery.archive = downloadPath
-          extractPath = self.lm.extract_livery_archive(livery)
-          if extractPath:
-            destinationPath = self.lm.generate_livery_destination_path(livery)
-            livery.destination = destinationPath
-            unitLiveries = Units.Units['aircraft'][livery.unit]['liveries']
-            if len(unitLiveries) > 1:
-              unitLiveries = self.prompt_aircraft_livery_choice(livery, unitLiveries)
-            installRoots = self.lm.generate_aircraft_livery_install_path(livery, unitLiveries)
-            extractedLiveryFiles = self.lm.get_extracted_livery_files(livery, extractPath)
-            detectedLiveries = self.lm.detect_extracted_liveries(livery, extractedLiveryFiles)
-            if len(detectedLiveries) and len(installRoots):
-              installPaths = self.lm.generate_livery_install_paths(installRoots, detectedLiveries)
-              copiedLiveries = self.lm.copy_detected_liveries(livery, extractPath, extractedLiveryFiles, detectedLiveries, installPaths)
-              if len(copiedLiveries):
-                livery.install = copiedLiveries
-                self.lm.write_livery_registry_files(livery)
-                self.lm.register_livery(livery)
-            self.lm.remove_extracted_livery_archive(livery)
-          self.lm.remove_downloaded_archive(livery, downloadPath)
-        #except Exception as e:
-          #self.console.print(e)
+        try:
+          livery = Livery()
+          livery.dcsuf.id = livery.dcsuf.get_id_from_url(correctedLiveryStr)
+          livery._fill_data_test()
+          self.print_livery(livery)
+          downloadPath = self.lm.download_livery_archive(livery)
+          if downloadPath:
+            livery.archive = downloadPath
+            self.console.print("Running extraction program on downloaded archive:\n")
+            extractPath = self.lm.extract_livery_archive(livery)
+            if extractPath:
+              self.console.print("Extracted " + livery.archive + " to temporary directory.")
+              destinationPath = self.lm.generate_livery_destination_path(livery)
+              livery.destination = destinationPath
+              unitLiveries = Units.Units['aircraft'][livery.unit]['liveries']
+              if len(unitLiveries) > 1:
+                unitLiveries = self.prompt_aircraft_livery_choice(livery, unitLiveries)
+              self.console.print("Detecting extracted liveries...")
+              installRoots = self.lm.generate_aircraft_livery_install_path(livery, unitLiveries)
+              extractedLiveryFiles = self.lm.get_extracted_livery_files(livery, extractPath)
+              detectedLiveries = self.lm.detect_extracted_liveries(livery, extractedLiveryFiles)
+              if len(detectedLiveries) and len(installRoots):
+                self.console.print("Copying " + str(len(detectedLiveries)) + (" liveries" if len(detectedLiveries)>1 else " livery") + " to " + str(len(installRoots)) + " aircraft.")
+                installPaths = self.lm.generate_livery_install_paths(installRoots, detectedLiveries)
+                copiedLiveries = self.lm.copy_detected_liveries(livery, extractPath, extractedLiveryFiles, detectedLiveries, installPaths)
+                if len(copiedLiveries):
+                  livery.install = copiedLiveries
+                  self.console.print("Writing registry files to installed livery directories.")
+                  self.lm.write_livery_registry_files(livery)
+                  self.lm.register_livery(livery)
+                  self.console.print("[bold green]Livery Registered!")
+              self.console.print("Removing temporarily extracted folder.")
+              self.lm.remove_extracted_livery_archive(livery)
+            self.console.print("Removing downloaded archive file.")
+            self.lm.remove_downloaded_archive(livery, downloadPath)
+        except Exception as e:
+          self.console.print(e)
 
   def func_test(self, sArgs):
     self.console.print(sArgs)

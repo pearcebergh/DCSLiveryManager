@@ -147,7 +147,6 @@ class LiveryManager:
     if livery:
       if len(livery.archive):
         archivePath = os.path.join(os.getcwd(), DCSLMFolderName, "archives", livery.archive)
-        print(archivePath)
         if os.path.isfile(archivePath):
           extractRoot = os.path.join(os.getcwd(), DCSLMFolderName, "extract", str(livery.dcsuf.id))
           if not os.path.isdir(extractRoot):
