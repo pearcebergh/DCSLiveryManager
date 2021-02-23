@@ -189,7 +189,7 @@ class DCSLMApp:
             self.console.print("\nRunning extraction program on downloaded archive:")
             extractPath = self.lm.extract_livery_archive(livery)
             if extractPath:
-              self.console.print("\nExtracted " + livery.archive + " to temporary directory.")
+              self.console.print("Extracted " + livery.archive + " to temporary directory.\n")
               destinationPath = self.lm.generate_livery_destination_path(livery)
               livery.destination = destinationPath
               unitLiveries = Units.Units['aircraft'][livery.dcsuf.unit]['liveries']
@@ -200,6 +200,7 @@ class DCSLMApp:
               extractedLiveryFiles = self.lm.get_extracted_livery_files(livery, extractPath)
               detectedLiveries = self.lm.detect_extracted_liveries(livery, extractedLiveryFiles)
               if len(detectedLiveries) and len(installRoots):
+                self.console.print(detectedLiveries)
                 self.console.print("Generating livery install paths...")
                 installPaths = self.lm.generate_livery_install_paths(livery, installRoots, detectedLiveries)
                 if len(installPaths):
@@ -211,7 +212,7 @@ class DCSLMApp:
                     self.console.print("Writing registry files to installed livery directories.")
                     self.lm.write_livery_registry_files(livery)
                     self.lm.register_livery(livery)
-                    self.console.print("[bold green]Livery[/bold green] " + str(livery.dcsuf.title) + " [bold green]Registered!")
+                    self.console.print("[bold green]Livery[/bold green] \'" + str(livery.dcsuf.title) + "\' [bold green]Registered!")
                   else:
                     self.console.print("[bold red]Failed to copy livery files to install directories!")
                 else:
