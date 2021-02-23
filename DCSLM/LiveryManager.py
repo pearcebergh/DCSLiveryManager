@@ -111,7 +111,7 @@ class LiveryManager:
       # TODO: Add back logic to add ovgme root here and remove it from install paths to keep it all relative
       installRoot = os.path.join(os.getcwd(), i)
       if os.path.isdir(installRoot):
-        installPath = os.path.join(installRoot, ".dcslm.json")
+        installPath = os.path.join(installRoot, ".dcslm")
         try:
           with open(installPath, "w") as registryFile:
             json.dump(livery.to_JSON(), registryFile)
@@ -126,7 +126,7 @@ class LiveryManager:
         installRoot = os.path.join(os.getcwd(), "Liveries", livery.ovgme, i)
       else:
         installRoot = os.path.join(os.getcwd(), "Liveries", i)
-      installPath = os.path.join(installRoot, ".dcslm.json")
+      installPath = os.path.join(installRoot, ".dcslm")
       if os.path.isfile(installPath):
         try:
           os.remove(installPath)
@@ -226,13 +226,14 @@ class LiveryManager:
       installLivery = str.split(install, "\\")[-1]
       for root, files in extractedLiveryFiles.items():
         rootLivery = root
-        if root != "\\":
-          rootLivery = str.split(root, "\\")[-1]
-        else:
-          rootLivery = livery.dcsuf.title
-        if installLivery == rootLivery:
-          if self._copy_livery_files(livery, extractPath, files, install):
-            copiedLiveries.append(install)
+        if self.is_valid_livery_directory(files):
+          if root != "\\":
+            rootLivery = str.split(root, "\\")[-1]
+          else:
+            rootLivery = livery.dcsuf.title
+          if installLivery == rootLivery:
+            if self._copy_livery_files(livery, extractPath, files, install):
+              copiedLiveries.append(install)
     return copiedLiveries
 
   def remove_extracted_livery_archive(self, livery):
