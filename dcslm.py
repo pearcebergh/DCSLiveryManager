@@ -169,8 +169,8 @@ class DCSLMApp:
   def install_liveries(self, sArgs):
     self.console.print("Installing " + str(len(sArgs)) + (" liveries" if len(sArgs) > 1 else " livery") + " from DCS User Files.")
     for liveryStr in sArgs:
-      self.console.print("Getting User File information from https://www.digitalcombatsimulator.com/en/files/" + liveryStr)
       correctedLiveryURL = Utilities.correct_dcs_user_files_url(liveryStr)
+      self.console.print("Getting User File information from " + correctedLiveryURL)
       if correctedLiveryURL:
         try:
           livery = self.lm.get_livery_data_from_dcsuf_url(correctedLiveryURL)
@@ -194,15 +194,16 @@ class DCSLMApp:
               extractedLiveryFiles = self.lm.get_extracted_livery_files(livery, extractPath)
               detectedLiveries = self.lm.detect_extracted_liveries(livery, extractedLiveryFiles)
               if len(detectedLiveries) and len(installRoots):
-                self.console.print("Copying " + str(len(detectedLiveries)) + (" liveries" if len(detectedLiveries)>1 else " livery") + " to " + str(len(installRoots)) + " aircraft.")
+                self.console.print("Installing " + str(len(detectedLiveries)) + (" liveries" if len(detectedLiveries)>1 else " livery") + " to " + str(len(installRoots)) + " aircraft.")
                 installPaths = self.lm.generate_livery_install_paths(installRoots, detectedLiveries)
                 copiedLiveries = self.lm.copy_detected_liveries(livery, extractPath, extractedLiveryFiles, detectedLiveries, installPaths)
                 if len(copiedLiveries):
                   livery.install = copiedLiveries
+                  self.console.print(livery.install)
                   self.console.print("Writing registry files to installed livery directories.")
                   self.lm.write_livery_registry_files(livery)
                   self.lm.register_livery(livery)
-                  self.console.print("[bold green]Livery Registered!")
+                  self.console.print("[bold green]Livery[/bold green] " + str(livery.dcsuf.title) + " [bold green]Registered!")
               self.console.print("Removing temporarily extracted folder.")
               self.lm.remove_extracted_livery_archive(livery)
             else:
@@ -323,8 +324,8 @@ class DCSLMApp:
             self.console.print("Running Command \'" + splitCommand[0] + "\'")
             commandData = self.commands[splitCommand[0]]
             argList = []
-            if len(splitCommand) == 2:
-              argList = str.split(splitCommand[1], ' ')
+            if len(splitCommand) > 1:
+              argList = splitCommand[1:]
             if commandData['exec']:
               if len(commandData['args']):
                 commandData['exec'](sArgs=argList)

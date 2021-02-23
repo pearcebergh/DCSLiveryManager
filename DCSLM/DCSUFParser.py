@@ -23,7 +23,7 @@ class DCSUFParser():
     return None, None
 
   def _remove_bad_filename_characters(self, filename):
-    badFilenameCharacters = ['/', '\\', '?', '|', '*', '\"', '<', '>']
+    badFilenameCharacters = ['/', '\\', '?', '|', '*', '\"', '<', '>', ':']
     correctFilename = filename
     for c in badFilenameCharacters:
       correctFilename = correctFilename.replace(c, '')
@@ -51,12 +51,15 @@ class DCSUFParser():
   def _parse_html_for_dcsuf(self, url, dcsufHTML):
     try:
       dcsuf = DCSUserFile()
-      fileType = dcsufHTML.select_one(
-        "body > div.container > div.row.well > div.row.file-body > div.col-xs-10 > div.row.file-data-1 > div.col-xs-3.type > a").text
+      fileType = dcsufHTML.select_one("body > div.container > div.row.well > div.row.file-body > div.col-xs-10 > div.row.file-data-1 > div.col-xs-3.type > a").text
+      print(fileType)
       if fileType == "Skin":
         fileURL = self._get_dcsfiles_archive_url_from_html(dcsufHTML)
-        if fileURL:  # Make sure we got a valid url to download (checks if it's a zip file)
-          aircraftText = dcsufHTML.select_one("body > div.container > div.row.well > div.row.file-head.file-type-skin > div:nth-child(2) > span").text
+        if fileURL:
+          aircraftText = dcsufHTML.select_one("body > div.container > div.row.well > div.row.file-head.file-type-skn > div:nth-child(2) > span")
+          if not aircraftText:
+            aircraftText = dcsufHTML.select_one("body > div.container > div.row.well > div.row.file-head.file-type-skin > div:nth-child(2) > span")
+          aircraftText = aircraftText.text
           aircraftGeneric, aircraftConfig = self._get_aircraft_config_from_name(aircraftText)
           dcsuf.id = dcsuf.get_id_from_url(url)
           dcsuf.unit = aircraftGeneric
