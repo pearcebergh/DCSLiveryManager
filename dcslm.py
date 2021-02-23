@@ -167,19 +167,25 @@ class DCSLMApp:
     }
 
   def install_liveries(self, sArgs):
-    self.console.print("Installing " + str(len(sArgs)) + (" liveries" if len(sArgs) > 1 else " livery") + " from DCS User Files.")
+    self.console.print("Attempting to install " + str(len(sArgs)) + (" liveries" if len(sArgs) > 1 else " livery") + " from DCS User Files.")
     for liveryStr in sArgs:
       correctedLiveryURL = Utilities.correct_dcs_user_files_url(liveryStr)
-      self.console.print("Getting User File information from " + correctedLiveryURL)
-      if correctedLiveryURL:
+      if not correctedLiveryURL:
+        self.console.print("Failed to get DCS User Files url or ID from \'" + liveryStr + "\'.")
+      else:
         try:
+          self.console.print("Getting User File information from " + correctedLiveryURL)
           livery = self.lm.get_livery_data_from_dcsuf_url(correctedLiveryURL)
           self.console.print("")
           self.print_livery(livery)
-          self.console.print("\nDownloading livery archive file " + livery.dcsuf.download)
-          downloadPath = self.lm.download_livery_archive(livery)
-          if downloadPath:
-            livery.archive = downloadPath
+          archivePath = self.lm.does_archive_exist(livery.dcsuf.download.split('/')[-1])
+          if archivePath:
+            self.console.print("Archive for " + livery.dcsuf.title + " already exists. Using that instead.")
+          else:
+            self.console.print("\nDownloading livery archive file " + livery.dcsuf.download)
+            archivePath = self.lm.download_livery_archive(livery)
+          if archivePath:
+            livery.archive = archivePath
             self.console.print("\nRunning extraction program on downloaded archive:")
             extractPath = self.lm.extract_livery_archive(livery)
             if extractPath:
@@ -194,24 +200,35 @@ class DCSLMApp:
               extractedLiveryFiles = self.lm.get_extracted_livery_files(livery, extractPath)
               detectedLiveries = self.lm.detect_extracted_liveries(livery, extractedLiveryFiles)
               if len(detectedLiveries) and len(installRoots):
-                self.console.print("Installing " + str(len(detectedLiveries)) + (" liveries" if len(detectedLiveries)>1 else " livery") + " to " + str(len(installRoots)) + " aircraft.")
-                installPaths = self.lm.generate_livery_install_paths(installRoots, detectedLiveries)
-                copiedLiveries = self.lm.copy_detected_liveries(livery, extractPath, extractedLiveryFiles, detectedLiveries, installPaths)
-                if len(copiedLiveries):
-                  livery.install = copiedLiveries
-                  self.console.print(livery.install)
-                  self.console.print("Writing registry files to installed livery directories.")
-                  self.lm.write_livery_registry_files(livery)
-                  self.lm.register_livery(livery)
-                  self.console.print("[bold green]Livery[/bold green] " + str(livery.dcsuf.title) + " [bold green]Registered!")
+                self.console.print("Generating livery install paths...")
+                installPaths = self.lm.generate_livery_install_paths(livery, installRoots, detectedLiveries)
+                if len(installPaths):
+                  self.console.print("Installing " + str(len(detectedLiveries)) + (" liveries" if len(detectedLiveries) > 1 else " livery") + " to " + str(len(installRoots)) + " aircraft.")
+                  copiedLiveries = self.lm.copy_detected_liveries(livery, extractPath, extractedLiveryFiles, detectedLiveries, installPaths, installRoots)
+                  if len(copiedLiveries):
+                    livery.install = copiedLiveries
+                    self.console.print(livery.install)
+                    self.console.print("Writing registry files to installed livery directories.")
+                    self.lm.write_livery_registry_files(livery)
+                    self.lm.register_livery(livery)
+                    self.console.print("[bold green]Livery[/bold green] " + str(livery.dcsuf.title) + " [bold green]Registered!")
+                  else:
+                    self.console.print("[bold red]Failed to copy livery files to install directories!")
+                else:
+                  self.console.print("[bold red]Failed to generate install paths!")
+              else:
+                self.console.print("[bold red]Failed to detect install roots from extracted livery directories!")
+                self.console.print(extractedLiveryFiles)
+                self.console.print(detectedLiveries)
               self.console.print("Removing temporarily extracted folder.")
               self.lm.remove_extracted_livery_archive(livery)
             else:
               self.console.print("Failed to extract livery archive " + livery.archive + ".")
             self.console.print("Removing downloaded archive file.")
-            self.lm.remove_downloaded_archive(livery, downloadPath)
+            self.lm.remove_downloaded_archive(livery, archivePath)
         except Exception as e:
           self.console.print(e)
+
 
   def func_test(self, sArgs):
     self.console.print(sArgs)

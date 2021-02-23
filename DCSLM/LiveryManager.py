@@ -180,11 +180,20 @@ class LiveryManager:
   def detect_extracted_liveries(self, livery, extractedLiveryFiles):
     liveryDirectories = []
     for root, files in extractedLiveryFiles.items():
-      liveryName = str.split(root,"\\")[-1]
+      liveryName = root
+      if root != "\\":
+        liveryName = str.split(root,"\\")[-1]
       if len(liveryName):
         if self.is_valid_livery_directory(files):
           liveryDirectories.append(liveryName)
     return liveryDirectories
+
+  def does_archive_exist(self, archiveName):
+    archiveFiles = glob.glob(os.path.join(os.getcwd(), DCSLMFolderName, "archives") + "/*.*")
+    for a in archiveFiles:
+      if archiveName in a:
+        return a
+    return None
 
   def get_extracted_livery_files(self, livery, extractPath):
     extractedFiles = glob.glob(extractPath + "/**/*", recursive=True)
@@ -211,12 +220,16 @@ class LiveryManager:
       shutil.copy(extractedFilepath, destinationFilepath)
     return True
 
-  def copy_detected_liveries(self, livery, extractPath, extractedLiveryFiles, detectedLiveries, installPaths):
+  def copy_detected_liveries(self, livery, extractPath, extractedLiveryFiles, detectedLiveries, installPaths, installRoots):
     copiedLiveries = []
     for install in installPaths:
       installLivery = str.split(install, "\\")[-1]
       for root, files in extractedLiveryFiles.items():
-        rootLivery = str.split(root, "\\")[-1]
+        rootLivery = root
+        if root != "\\":
+          rootLivery = str.split(root, "\\")[-1]
+        else:
+          rootLivery = livery.dcsuf.title
         if installLivery == rootLivery:
           if self._copy_livery_files(livery, extractPath, files, install):
             copiedLiveries.append(install)
@@ -251,11 +264,13 @@ class LiveryManager:
       liveryPaths.append(os.path.join(livery.destination, unit))
     return liveryPaths
 
-  def generate_livery_install_paths(self, installRoots, detectedLiveries):
+  def generate_livery_install_paths(self, livery, installRoots, detectedLiveries):
     installPaths = []
     for root in installRoots:
-      for livery in detectedLiveries:
-        installPaths.append(os.path.join(root, livery))
+      for dl in detectedLiveries:
+        if dl == "\\":
+          dl = livery.dcsuf.title
+        installPaths.append(os.path.join(root, dl))
     return installPaths
 
   def get_livery_data_from_dcsuf_url(self, url):
