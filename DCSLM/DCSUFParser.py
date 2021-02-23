@@ -52,7 +52,6 @@ class DCSUFParser():
     try:
       dcsuf = DCSUserFile()
       fileType = dcsufHTML.select_one("body > div.container > div.row.well > div.row.file-body > div.col-xs-10 > div.row.file-data-1 > div.col-xs-3.type > a").text
-      print(fileType)
       if fileType == "Skin":
         fileURL = self._get_dcsfiles_archive_url_from_html(dcsufHTML)
         if fileURL:
