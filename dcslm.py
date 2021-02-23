@@ -168,9 +168,11 @@ class DCSLMApp:
 
   def install_liveries(self, sArgs):
     self.console.print("Attempting to install " + str(len(sArgs)) + (" liveries" if len(sArgs) > 1 else " livery") + " from DCS User Files.")
+    installData = {'success': [], 'failed' : []}
     for liveryStr in sArgs:
       correctedLiveryURL = Utilities.correct_dcs_user_files_url(liveryStr)
       if not correctedLiveryURL:
+        installData['failed'].append(liveryStr)
         self.console.print("Failed to get DCS User Files url or ID from \'" + liveryStr + "\'.")
       else:
         try:
@@ -213,6 +215,7 @@ class DCSLMApp:
                     self.lm.write_livery_registry_files(livery)
                     self.lm.register_livery(livery)
                     self.console.print("[bold green]Livery[/bold green] \'" + str(livery.dcsuf.title) + "\' [bold green]Registered!")
+                    installData['success'].append(livery)
                   else:
                     self.console.print("[bold red]Failed to copy livery files to install directories!")
                 else:
@@ -228,7 +231,10 @@ class DCSLMApp:
             self.console.print("Removing downloaded archive file.")
             self.lm.remove_downloaded_archive(livery, archivePath)
         except Exception as e:
+          installData['failed'].append(correctedLiveryURL)
           self.console.print(e)
+    self.console.print("\n[bold]Install Liveries Report:")
+    self.console.print(installData)
 
 
   def func_test(self, sArgs):
