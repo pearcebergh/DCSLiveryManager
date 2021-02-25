@@ -5,6 +5,7 @@ from rich.rule import Rule
 from rich.prompt import Prompt
 from rich.panel import Panel, Padding, PaddingDimensions
 from rich.table import Table
+from rich import box
 from datetime import datetime
 import os
 import sys
@@ -29,7 +30,6 @@ from rich.progress import (
     TaskID,
 )
 
-
 if platform.system() == 'Windows':
   from ctypes import windll, wintypes
 
@@ -39,13 +39,11 @@ def set_terminal_title(title):
   else:
     os.system(f'echo "\033]0;{title}\007"')
 
-
 def clear():
   if platform.system() == 'Windows':
     os.system('cls')
   else:
     os.system('clear')
-
 
 def set_terminal_size(w, h):
   if platform.system() == 'Windows':
@@ -185,8 +183,9 @@ class DCSLMApp:
     for liveryStr in sArgs:
       correctedLiveryURL = Utilities.correct_dcs_user_files_url(liveryStr)
       if not correctedLiveryURL:
-        installData['failed'].append(liveryStr)
-        self.console.print("Failed to get DCS User Files url or ID from \'" + liveryStr + "\'.")
+        errorMsg = "[bold red]Failed to get DCS User Files url or ID from \'" + liveryStr + "\'."
+        installData['failed'].append({'url': liveryStr, 'error':errorMsg})
+        self.console.print(errorMsg)
       else:
         try:
           self.console.print("Getting User File information from " + correctedLiveryURL)
@@ -240,24 +239,25 @@ class DCSLMApp:
               self.console.print("Removing temporarily extracted folder.")
               self.lm.remove_extracted_livery_archive(livery)
             else:
-              self.console.print("Failed to extract livery archive " + livery.archive + ".")
+              self.console.print("[bold red]Failed to extract livery archive " + livery.archive + ".")
             self.console.print("Removing downloaded archive file.")
             self.lm.remove_downloaded_archive(livery, archivePath)
         except Exception as e:
-          installData['failed'].append(correctedLiveryURL)
-          self.console.print(e)
+          installData['failed'].append({ 'url': correctedLiveryURL, 'error': e })
+          self.console.print(e, style="bold red")
     if len(installData['success']):
-      installTable = Table(title="Livery Install Report",expand=False)
+      installTable = Table(title="Livery Install Report",expand=False, box=box.ROUNDED)
       installTable.add_column("Aircraft", justify="right", no_wrap=True, style="cyan")
       installTable.add_column("Livery", justify="left", style="magenta")
       installTable.add_column("# Liveries", justify="center", no_wrap=True, style="green")
+      installTable.add_column("Size (MB)", justify="center", no_wrap=True, style="gold1")
       for l in installData['success']:
-        installTable.add_row(Units.Units['aircraft'][l.dcsuf.unit]['friendly'], l.dcsuf.title, str(len(l.install)))
+        installTable.add_row(Units.Units['aircraft'][l.dcsuf.unit]['friendly'], l.dcsuf.title, str(len(l.install)), "00.00")
       self.console.print(installTable)
     if len(installData['failed']):
       self.console.print("[bold red]Failed Livery Installs:")
       for l in installData['failed']:
-        self.console.print("\t[red]" + l)
+        self.console.print("[bold red]" + l['url'] + "[/bold red][red]: " + str(l['error']))
 
   def func_test(self, sArgs):
     return None
