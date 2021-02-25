@@ -20,7 +20,6 @@ from DCSLM.UnitConfig import Units
 if platform.system() == 'Windows':
   from ctypes import windll, wintypes
 
-
 def set_terminal_title(title):
   if platform.system() == 'Windows':
     os.system(f'title {title}')
@@ -179,7 +178,10 @@ class DCSLMApp:
           self.console.print("Getting User File information from " + correctedLiveryURL)
           livery = self.lm.get_livery_data_from_dcsuf_url(correctedLiveryURL)
           self.console.print("")
-          self.print_livery(livery)
+          self.print_dcsuf(livery)
+          unitLiveries = Units.Units['aircraft'][livery.dcsuf.unit]['liveries']
+          if len(unitLiveries) > 1:
+            unitLiveries = self.prompt_aircraft_livery_choice(livery, unitLiveries)
           archivePath = self.lm.does_archive_exist(livery.dcsuf.download.split('/')[-1])
           if archivePath:
             self.console.print("Archive for " + livery.dcsuf.title + " already exists. Using that instead.")
@@ -188,15 +190,12 @@ class DCSLMApp:
             archivePath = self.lm.download_livery_archive(livery)
           if archivePath:
             livery.archive = archivePath
-            self.console.print("\nRunning extraction program on downloaded archive:")
+            self.console.print("\n[bold]Running extraction program on downloaded archive:")
             extractPath = self.lm.extract_livery_archive(livery)
             if extractPath:
-              self.console.print("Extracted " + livery.archive + " to temporary directory.")
+              self.console.print("\nExtracted " + livery.archive + " to temporary directory.")
               destinationPath = self.lm.generate_livery_destination_path(livery)
               livery.destination = destinationPath
-              unitLiveries = Units.Units['aircraft'][livery.dcsuf.unit]['liveries']
-              if len(unitLiveries) > 1:
-                unitLiveries = self.prompt_aircraft_livery_choice(livery, unitLiveries)
               self.console.print("Detecting extracted liveries...")
               installRoots = self.lm.generate_aircraft_livery_install_path(livery, unitLiveries)
               extractedLiveryFiles = self.lm.get_extracted_livery_files(livery, extractPath)
@@ -264,7 +263,7 @@ class DCSLMApp:
 
     self.console.print("\n")
 
-  def print_livery(self, livery):
+  def print_dcsuf(self, livery):
     if livery:
       self.console.print(Panel("ID: " + str(livery.dcsuf.id) + " | Author: " + livery.dcsuf.author + " | Upload Date: " + livery.dcsuf.date + " | Archive Size: " + livery.dcsuf.size + " \n" + livery.dcsuf.download,
                                title=Units.Units['aircraft'][livery.dcsuf.unit]['friendly'] + " - " + livery.dcsuf.title,
