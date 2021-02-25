@@ -183,10 +183,11 @@ class DCSLMApp:
     for liveryStr in sArgs:
       correctedLiveryURL = Utilities.correct_dcs_user_files_url(liveryStr)
       if not correctedLiveryURL:
-        errorMsg = "[bold red]Failed to get DCS User Files url or ID from \'" + liveryStr + "\'."
+        errorMsg = "Failed to get DCS User Files url or ID from \'" + liveryStr + "\'."
         installData['failed'].append({'url': liveryStr, 'error':errorMsg})
-        self.console.print(errorMsg)
+        self.console.print(errorMsg, style="bold red")
       else:
+        livery = None
         try:
           self.console.print("Getting User File information from " + correctedLiveryURL)
           livery = self.lm.get_livery_data_from_dcsuf_url(correctedLiveryURL)
@@ -232,21 +233,25 @@ class DCSLMApp:
                     self.console.print("[bold green]Livery[/bold green] \'" + str(livery.dcsuf.title) + "\' [bold green]Registered!")
                     installData['success'].append(livery)
                   else:
-                    raise RuntimeError("[bold red]Failed to copy livery files to install directories!")
+                    raise RuntimeError("Failed to copy livery files to install directories!")
                 else:
-                  raise RuntimeError("[bold red]Failed to generate install paths!")
+                  raise RuntimeError("Failed to generate install paths!")
               else:
-                raise RuntimeError("[bold red]Failed to detect install roots from extracted livery directories!")
-              self.console.print("Removing temporarily extracted folder.")
-              self.lm.remove_extracted_livery_archive(livery)
+                raise RuntimeError("Failed to detect valid livery directories from extracted livery archive!")
             else:
-              raise RuntimeError("[bold red]Failed to extract livery archive[/bold red] \'" + livery.archive + "\'[bold red].")
-            self.console.print("Removing downloaded archive file \'" + os.path.split(livery.archive)[1] + "\'.")
-            self.lm.remove_downloaded_archive(livery, archivePath)
-            self.console.print("")
+              raise RuntimeError("Failed to extract livery archive[/bold red] \'" + livery.archive + "\'[bold red].")
         except Exception as e:
           installData['failed'].append({ 'url': correctedLiveryURL, 'error': e })
           self.console.print(e, style="bold red")
+          self.console.print("")
+        finally:
+          if livery:
+            if livery.destination:
+              self.console.print("Removing temporarily extracted folder.")
+              self.lm.remove_extracted_livery_archive(livery)
+            if livery.archive:
+              self.console.print("Removing downloaded archive file \'" + os.path.split(livery.archive)[1] + "\'.")
+              self.lm.remove_downloaded_archive(livery, livery.archive)
           self.console.print("")
     if len(installData['success']):
       installTable = Table(title="Livery Install Report",expand=False, box=box.ROUNDED)
