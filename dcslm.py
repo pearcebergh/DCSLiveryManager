@@ -4,6 +4,7 @@ from rich.console import Console
 from rich.rule import Rule
 from rich.prompt import Prompt
 from rich.panel import Panel, Padding, PaddingDimensions
+from rich.table import Table
 from datetime import datetime
 import os
 import sys
@@ -187,11 +188,11 @@ class DCSLMApp:
         installData['failed'].append(liveryStr)
         self.console.print("Failed to get DCS User Files url or ID from \'" + liveryStr + "\'.")
       else:
-        #try:
+        try:
           self.console.print("Getting User File information from " + correctedLiveryURL)
           livery = self.lm.get_livery_data_from_dcsuf_url(correctedLiveryURL)
           self.console.print("")
-          #self.print_dcsuf(livery)
+          self.print_dcsuf(livery)
           unitLiveries = Units.Units['aircraft'][livery.dcsuf.unit]['liveries']
           if len(unitLiveries) > 1:
             unitLiveries = self.prompt_aircraft_livery_choice(livery, unitLiveries)
@@ -242,11 +243,21 @@ class DCSLMApp:
               self.console.print("Failed to extract livery archive " + livery.archive + ".")
             self.console.print("Removing downloaded archive file.")
             self.lm.remove_downloaded_archive(livery, archivePath)
-        #except Exception as e:
-          #installData['failed'].append(correctedLiveryURL)
-          #self.console.print(e)
-    self.console.print("\n[bold]Install Liveries Report:")
-    self.console.print(installData)
+        except Exception as e:
+          installData['failed'].append(correctedLiveryURL)
+          self.console.print(e)
+    if len(installData['success']):
+      installTable = Table(title="Livery Install Report",expand=False)
+      installTable.add_column("Aircraft", justify="right", no_wrap=True, style="cyan")
+      installTable.add_column("Livery", justify="left", style="magenta")
+      installTable.add_column("# Liveries", justify="center", no_wrap=True, style="green")
+      for l in installData['success']:
+        installTable.add_row(Units.Units['aircraft'][l.dcsuf.unit]['friendly'], l.dcsuf.title, str(len(l.install)))
+      self.console.print(installTable)
+    if len(installData['failed']):
+      self.console.print("[bold red]Failed Livery Installs:")
+      for l in installData['failed']:
+        self.console.print("\t[red]" + l)
 
   def func_test(self, sArgs):
     return None
