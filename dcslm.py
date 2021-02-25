@@ -232,17 +232,15 @@ class DCSLMApp:
                     self.console.print("[bold green]Livery[/bold green] \'" + str(livery.dcsuf.title) + "\' [bold green]Registered!")
                     installData['success'].append(livery)
                   else:
-                    self.console.print("[bold red]Failed to copy livery files to install directories!")
+                    raise RuntimeError("[bold red]Failed to copy livery files to install directories!")
                 else:
-                  self.console.print("[bold red]Failed to generate install paths!")
+                  raise RuntimeError("[bold red]Failed to generate install paths!")
               else:
-                self.console.print("[bold red]Failed to detect install roots from extracted livery directories!")
-                self.console.print(extractedLiveryFiles)
-                self.console.print(detectedLiveries)
+                raise RuntimeError("[bold red]Failed to detect install roots from extracted livery directories!")
               self.console.print("Removing temporarily extracted folder.")
               self.lm.remove_extracted_livery_archive(livery)
             else:
-              self.console.print("[bold red]Failed to extract livery archive[/bold red] \'" + livery.archive + "\'[bold red].")
+              raise RuntimeError("[bold red]Failed to extract livery archive[/bold red] \'" + livery.archive + "\'[bold red].")
             self.console.print("Removing downloaded archive file \'" + os.path.split(livery.archive)[1] + "\'.")
             self.lm.remove_downloaded_archive(livery, archivePath)
             self.console.print("")
@@ -252,7 +250,7 @@ class DCSLMApp:
           self.console.print("")
     if len(installData['success']):
       installTable = Table(title="Livery Install Report",expand=False, box=box.ROUNDED)
-      installTable.add_column("Aircraft", justify="left", no_wrap=True, style="cyan")
+      installTable.add_column("Unit", justify="left", no_wrap=True, style="cyan")
       installTable.add_column("Livery Title", justify="left", style="magenta")
       installTable.add_column("# Liveries", justify="center", no_wrap=True, style="green")
       installTable.add_column("Size (MB)", justify="center", no_wrap=True, style="gold1")
