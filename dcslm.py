@@ -197,7 +197,7 @@ class DCSLMApp:
             unitLiveries = self.prompt_aircraft_livery_choice(livery, unitLiveries)
           archivePath = self.lm.does_archive_exist(livery.dcsuf.download.split('/')[-1])
           if archivePath:
-            self.console.print("Archive for " + livery.dcsuf.title + " already exists. Using that instead.")
+            self.console.print("Archive file \'" + livery.dcsuf.download.split('/')[-1] + "\' for \'" + livery.dcsuf.title + "\' already exists. Using that instead.")
           else:
             self.console.print("\nDownloading livery archive file " + livery.dcsuf.download)
             archivePath = self._download_archive_progress(livery)
@@ -206,7 +206,7 @@ class DCSLMApp:
             self.console.print("\n[bold]Running extraction program on downloaded archive:")
             extractPath = self.lm.extract_livery_archive(livery)
             if extractPath:
-              self.console.print("\nExtracted " + livery.archive + " to temporary directory.")
+              self.console.print("\nExtracted \'" + livery.archive + "\' to temporary directory.")
               destinationPath = self.lm.generate_livery_destination_path(livery)
               livery.destination = destinationPath
               self.console.print("Detecting extracted liveries...")
@@ -221,8 +221,11 @@ class DCSLMApp:
                   self.console.print("Installing " + str(len(detectedLiveries)) + (" liveries" if len(detectedLiveries) > 1 else " livery") + " to " + str(len(installRoots)) + " aircraft.")
                   copiedLiveries = self.lm.copy_detected_liveries(livery, extractPath, extractedLiveryFiles, detectedLiveries, installPaths, installRoots)
                   if len(copiedLiveries):
-                    livery.install = copiedLiveries
-                    self.console.print(livery.install)
+                    for ac,liv in livery.installs.items():
+                      self.console.print("\'" + ac + "\':")
+                      self.console.print("\t" + str(liv['paths']))
+                    #livery.install = copiedLiveries
+                    #self.console.print(livery.install)
                     self.console.print("Writing registry files to installed livery directories.")
                     self.lm.write_livery_registry_files(livery)
                     self.lm.register_livery(livery)
@@ -239,20 +242,22 @@ class DCSLMApp:
               self.console.print("Removing temporarily extracted folder.")
               self.lm.remove_extracted_livery_archive(livery)
             else:
-              self.console.print("[bold red]Failed to extract livery archive " + livery.archive + ".")
-            self.console.print("Removing downloaded archive file.")
+              self.console.print("[bold red]Failed to extract livery archive[/bold red] \'" + livery.archive + "\'[bold red].")
+            self.console.print("Removing downloaded archive file \'" + os.path.split(livery.archive)[1] + "\'.")
             self.lm.remove_downloaded_archive(livery, archivePath)
+            self.console.print("")
         except Exception as e:
           installData['failed'].append({ 'url': correctedLiveryURL, 'error': e })
           self.console.print(e, style="bold red")
+          self.console.print("")
     if len(installData['success']):
       installTable = Table(title="Livery Install Report",expand=False, box=box.ROUNDED)
-      installTable.add_column("Aircraft", justify="right", no_wrap=True, style="cyan")
-      installTable.add_column("Livery", justify="left", style="magenta")
+      installTable.add_column("Aircraft", justify="left", no_wrap=True, style="cyan")
+      installTable.add_column("Livery Title", justify="left", style="magenta")
       installTable.add_column("# Liveries", justify="center", no_wrap=True, style="green")
       installTable.add_column("Size (MB)", justify="center", no_wrap=True, style="gold1")
       for l in installData['success']:
-        installTable.add_row(Units.Units['aircraft'][l.dcsuf.unit]['friendly'], l.dcsuf.title, str(len(l.install)), "00.00")
+        installTable.add_row(Units.Units['aircraft'][l.dcsuf.unit]['friendly'], l.dcsuf.title, str(l.get_num_liveries()), "00.00")
       self.console.print(installTable)
     if len(installData['failed']):
       self.console.print("[bold red]Failed Livery Installs:")

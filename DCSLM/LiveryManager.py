@@ -212,6 +212,13 @@ class LiveryManager:
       return directoryFiles
     return None
 
+  def get_size_of_livery_files(self, livery, extractPath, fileList):
+    totalSize = 0
+    for f in fileList:
+      extractedFilepath = os.path.join(extractPath, f[1:])
+      totalSize += os.path.getsize(extractedFilepath)
+    return totalSize
+
   def _copy_livery_files(self, livery, extractPath, fileList, installLivery):
     installDirectory = os.path.join(os.getcwd(), installLivery)
     if not os.path.isdir(installDirectory):
@@ -271,10 +278,12 @@ class LiveryManager:
 
   def generate_livery_install_paths(self, livery, installRoots, detectedLiveries):
     installPaths = []
-    for root in installRoots:
-      for dl in detectedLiveries:
-        if dl == "\\":
-          dl = livery.dcsuf.title
+    for dl in detectedLiveries:
+      if dl == "\\":
+        dl = livery.dcsuf.title
+      livery.installs[dl] = {'size': 0, 'paths':[]}
+      for root in installRoots:
+        livery.installs[dl]['paths'].append(os.path.join(root, dl))
         installPaths.append(os.path.join(root, dl))
     return installPaths
 

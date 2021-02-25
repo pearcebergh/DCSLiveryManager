@@ -78,6 +78,7 @@ class Livery:
     self.destination = None
     self.dcsuf = DCSUserFile()
     self.install = []
+    self.installs = {}
 
   def to_JSON(self):
     return {
@@ -86,6 +87,7 @@ class Livery:
       'destination': self.destination,
       'dcsuf': self.dcsuf.to_JSON(),
       'install': self.install,
+      'installs': self.installs
     }
 
   def from_JSON(self, jsonData):
@@ -95,6 +97,7 @@ class Livery:
       self.destination = jsonData['destination']
       self.dcsuf = DCSUserFile().from_JSON(jsonData['dcsuf'])
       self.install = jsonData['install']
+      self.installs = jsonData['installs']
 
   def from_JSON_String(self, jsonStr):
     jsonData = json.loads(jsonStr)
@@ -114,3 +117,9 @@ class Livery:
     self.archive = "/DCSLM/archives/" + self.dcsuf.download.split('/')[-1]
     self.destination = "/Liveries/"
     self.install.append(os.path.join(Units.Units['aircraft'][self.dcsuf.unit]['liveries'][0], self.dcsuf.title))
+
+  def get_num_liveries(self):
+    liveryCount = 0
+    for ac, data in self.installs.items():
+      liveryCount += len(data['paths'])
+    return liveryCount
