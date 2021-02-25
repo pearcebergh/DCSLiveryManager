@@ -134,7 +134,7 @@ class LiveryManager:
       else:
         raise RuntimeError("Unable to find livery registry file \'" + installPath + "\'.")
 
-  def download_livery_archive(self, livery):
+  def download_livery_archive(self, livery, dlCallback=None):
     if livery:
       if livery.dcsuf.download:
         archiveType = '.' + str.split(livery.dcsuf.download, '.')[-1]
@@ -145,8 +145,12 @@ class LiveryManager:
           with requests.get(livery.dcsuf.download, stream=True) as req:
             req.raise_for_status()
             with open(destinationFilename, 'wb') as f:
+              if dlCallback:
+                dlCallback['progress'].start_task(dlCallback['task'])
               for chunk in req.iter_content(chunk_size=8192):
                 f.write(chunk)
+                if dlCallback:
+                  dlCallback['exec'](livery, dlCallback, len(chunk))
           return destinationFilename
     raise RuntimeError("Unable to get downloaded archive path for livery \'" + livery.dcsuf.title + "\'.")
 

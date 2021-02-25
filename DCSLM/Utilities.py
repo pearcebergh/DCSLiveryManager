@@ -1,3 +1,4 @@
+from requests import get
 
 def correct_dcs_user_files_url(fileURL):
   DCSFilesURLRoot = "https://www.digitalcombatsimulator.com/en/files/"
@@ -7,3 +8,14 @@ def correct_dcs_user_files_url(fileURL):
   if str.isnumeric(splitFileURL): # check if it's ID-like
     return DCSFilesURLRoot + splitFileURL + "/" # put it back together
   return None
+
+def size_text_to_bytes(sizeText):
+  if len(sizeText):
+    if 'mb' in str.lower(sizeText):
+      sizeText = sizeText.split(' ')[0]
+    sizeInt = int(float(sizeText) * 100) * (10**4)
+    return sizeInt
+  return 0
+
+def request_file_size(fileURL):
+  return int(get(fileURL, stream=True).headers['Content-length'])

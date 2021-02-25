@@ -1,5 +1,5 @@
-from requests import get
-from rich.progress import track
+import requests
+#import rich.progress as Progress
 from rich.console import Console
 from rich.rule import Rule
 from rich.prompt import Prompt
@@ -16,6 +16,18 @@ from DCSLM import Utilities
 from DCSLM.Livery import DCSUserFile, Livery
 from DCSLM.LiveryManager import LiveryManager, DCSLMFolderName
 from DCSLM.UnitConfig import Units
+from concurrent.futures import ThreadPoolExecutor
+
+from rich.progress import (
+    BarColumn,
+    DownloadColumn,
+    TextColumn,
+    TransferSpeedColumn,
+    TimeRemainingColumn,
+    Progress,
+    TaskID,
+)
+
 
 if platform.system() == 'Windows':
   from ctypes import windll, wintypes
@@ -168,17 +180,18 @@ class DCSLMApp:
   def install_liveries(self, sArgs):
     self.console.print("Attempting to install " + str(len(sArgs)) + (" liveries" if len(sArgs) > 1 else " livery") + " from DCS User Files.")
     installData = {'success': [], 'failed' : []}
+    # TODO: Check for duplicate url/IDs in list
     for liveryStr in sArgs:
       correctedLiveryURL = Utilities.correct_dcs_user_files_url(liveryStr)
       if not correctedLiveryURL:
         installData['failed'].append(liveryStr)
         self.console.print("Failed to get DCS User Files url or ID from \'" + liveryStr + "\'.")
       else:
-        try:
+        #try:
           self.console.print("Getting User File information from " + correctedLiveryURL)
           livery = self.lm.get_livery_data_from_dcsuf_url(correctedLiveryURL)
           self.console.print("")
-          self.print_dcsuf(livery)
+          #self.print_dcsuf(livery)
           unitLiveries = Units.Units['aircraft'][livery.dcsuf.unit]['liveries']
           if len(unitLiveries) > 1:
             unitLiveries = self.prompt_aircraft_livery_choice(livery, unitLiveries)
@@ -187,7 +200,7 @@ class DCSLMApp:
             self.console.print("Archive for " + livery.dcsuf.title + " already exists. Using that instead.")
           else:
             self.console.print("\nDownloading livery archive file " + livery.dcsuf.download)
-            archivePath = self.lm.download_livery_archive(livery)
+            archivePath = self._download_archive_progress(livery)
           if archivePath:
             livery.archive = archivePath
             self.console.print("\n[bold]Running extraction program on downloaded archive:")
@@ -229,15 +242,14 @@ class DCSLMApp:
               self.console.print("Failed to extract livery archive " + livery.archive + ".")
             self.console.print("Removing downloaded archive file.")
             self.lm.remove_downloaded_archive(livery, archivePath)
-        except Exception as e:
-          installData['failed'].append(correctedLiveryURL)
-          self.console.print(e)
+        #except Exception as e:
+          #installData['failed'].append(correctedLiveryURL)
+          #self.console.print(e)
     self.console.print("\n[bold]Install Liveries Report:")
     self.console.print(installData)
 
-
   def func_test(self, sArgs):
-    self.console.print(sArgs)
+    return None
 
   def print_help(self):
     for k, v in self.commands.items():
@@ -260,7 +272,6 @@ class DCSLMApp:
         self.console.print("\t[bold]Flags:[/bold]")
         for j, k in v['flags'].items():
           self.console.print("\t\t[bold]" + ', '.join(k['tags']) + "[/bold] - " + k['desc'])
-
     self.console.print("\n")
 
   def print_dcsuf(self, livery):
@@ -268,6 +279,10 @@ class DCSLMApp:
       self.console.print(Panel("ID: " + str(livery.dcsuf.id) + " | Author: " + livery.dcsuf.author + " | Upload Date: " + livery.dcsuf.date + " | Archive Size: " + livery.dcsuf.size + " \n" + livery.dcsuf.download,
                                title=Units.Units['aircraft'][livery.dcsuf.unit]['friendly'] + " - " + livery.dcsuf.title,
                                expand=False, highlight=True))
+
+  def print_livery(self, livery):
+    if livery:
+      self.console.print(Panel("tHIS IS A LIVERY PUT YOUR HANDS UP!", title=livery.ovgme,expand=False, highlight=True))
 
   def setup_command_completer(self):
     completerDict = {}
@@ -328,6 +343,20 @@ class DCSLMApp:
       else:
         choosenLiveries = [unitLiveries[int(choice) - 1]]
     return choosenLiveries
+
+  def _download_archive_rich_callback(self, livery, dlCallback, downloadedBytes):
+    dlCallback['progress'].update(dlCallback['task'], advance=downloadedBytes)
+
+  def _download_archive_progress(self, livery):
+    downloadProgress = Progress(TextColumn("[bold blue]{task.fields[filename]}", justify="right"),BarColumn(bar_width=None),"[progress.percentage]{task.percentage:>3.1f}%", "•",DownloadColumn(), "•", TransferSpeedColumn(), "•",TimeRemainingColumn(), console=self.console)
+    archiveName = livery.dcsuf.download.split('/')[-1]
+    dlTask = downloadProgress.add_task("download", filename=archiveName, start=False)
+    dlSize = Utilities.request_file_size(livery.dcsuf.download)
+    downloadProgress.update(dlTask, total=dlSize)
+    callbackData = { 'exec': self._download_archive_rich_callback, 'progress': downloadProgress, 'task': dlTask }
+    with downloadProgress:
+      archivePath =  self.lm.download_livery_archive(livery, dlCallback=callbackData)
+    return archivePath
 
   def run(self):
     self.console.print("")
