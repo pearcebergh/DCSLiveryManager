@@ -213,20 +213,20 @@ class DCSLMApp:
               self.console.print("Detecting extracted liveries...")
               installRoots = self.lm.generate_aircraft_livery_install_path(livery, unitLiveries)
               extractedLiveryFiles = self.lm.get_extracted_livery_files(livery, extractPath)
-              detectedLiveries = self.lm.detect_extracted_liveries(livery, extractedLiveryFiles)
+              detectedLiveries = self.lm.detect_extracted_liveries(livery, extractPath, extractedLiveryFiles)
               if len(detectedLiveries) and len(installRoots):
                 self.console.print(detectedLiveries)
                 self.console.print("Generating livery install paths...")
                 installPaths = self.lm.generate_livery_install_paths(livery, installRoots, detectedLiveries)
                 if len(installPaths):
                   self.console.print("Installing " + str(len(detectedLiveries)) + (" liveries" if len(detectedLiveries) > 1 else " livery") + " to " + str(len(installRoots)) + " aircraft.")
-                  copiedLiveries = self.lm.copy_detected_liveries(livery, extractPath, extractedLiveryFiles, detectedLiveries, installPaths, installRoots)
+                  copiedLiveries = self.lm.copy_detected_liveries(livery, extractPath, extractedLiveryFiles, installPaths)
                   if len(copiedLiveries):
+                    '''
                     for ac,liv in livery.installs.items():
                       self.console.print("\'" + ac + "\':")
                       self.console.print("\t" + str(liv['paths']))
-                    #livery.install = copiedLiveries
-                    #self.console.print(livery.install)
+                    '''
                     self.console.print("Writing registry files to installed livery directories.")
                     self.lm.write_livery_registry_files(livery)
                     self.lm.register_livery(livery)
@@ -243,7 +243,6 @@ class DCSLMApp:
         except Exception as e:
           installData['failed'].append({ 'url': correctedLiveryURL, 'error': e })
           self.console.print(e, style="bold red")
-          self.console.print("")
         finally:
           if livery:
             if livery.destination:
@@ -260,7 +259,7 @@ class DCSLMApp:
       installTable.add_column("# Liveries", justify="center", no_wrap=True, style="green")
       installTable.add_column("Size (MB)", justify="center", no_wrap=True, style="gold1")
       for l in installData['success']:
-        installTable.add_row(Units.Units['aircraft'][l.dcsuf.unit]['friendly'], l.dcsuf.title, str(l.get_num_liveries()), "00.00")
+        installTable.add_row(Units.Units['aircraft'][l.dcsuf.unit]['friendly'], l.dcsuf.title, str(l.get_num_liveries()), "{:.2f}".format(float(l.get_size_installed_liveries()/(10**6))))
       self.console.print(installTable)
     if len(installData['failed']):
       self.console.print("[bold red]Failed Livery Installs:")

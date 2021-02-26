@@ -77,7 +77,6 @@ class Livery:
     self.ovgme = None
     self.destination = None
     self.dcsuf = DCSUserFile()
-    self.install = []
     self.installs = {}
 
   def to_JSON(self):
@@ -86,7 +85,6 @@ class Livery:
       'ovgme': self.ovgme,
       'destination': self.destination,
       'dcsuf': self.dcsuf.to_JSON(),
-      'install': self.install,
       'installs': self.installs
     }
 
@@ -96,7 +94,6 @@ class Livery:
       self.ovgme = jsonData['ovgme']
       self.destination = jsonData['destination']
       self.dcsuf = DCSUserFile().from_JSON(jsonData['dcsuf'])
-      self.install = jsonData['install']
       self.installs = jsonData['installs']
 
   def from_JSON_String(self, jsonStr):
@@ -116,10 +113,15 @@ class Livery:
     self.ovgme = self.generate_ovgme_folder()
     self.archive = "/DCSLM/archives/" + self.dcsuf.download.split('/')[-1]
     self.destination = "/Liveries/"
-    self.install.append(os.path.join(Units.Units['aircraft'][self.dcsuf.unit]['liveries'][0], self.dcsuf.title))
 
   def get_num_liveries(self):
     liveryCount = 0
     for ac, data in self.installs.items():
       liveryCount += len(data['paths'])
     return liveryCount
+
+  def get_size_installed_liveries(self):
+    totalSize = 0
+    for i, v in self.installs.items():
+      totalSize += v['size'] * len(v['paths'])
+    return totalSize

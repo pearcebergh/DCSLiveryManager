@@ -1,6 +1,7 @@
 from .Livery import Livery
 from .UnitConfig import Units
 from .DCSUFParser import DCSUFParser, ArchiveExtensions
+import DCSLM.Utilities as Utilities
 import os, sys
 import json
 import glob
@@ -107,32 +108,32 @@ class LiveryManager:
       raise RuntimeError("Unable to find livery registry file \'" + registryPath + "\'.")
 
   def write_livery_registry_files(self, livery):
-    for i in livery.install:
-      installRoot = os.path.join(os.getcwd(), livery.destination, i)
-      if os.path.isdir(installRoot):
-        installPath = os.path.join(installRoot, ".dcslm.json")
-        try:
-          with open(installPath, "w") as registryFile:
-            json.dump(livery.to_JSON(), registryFile)
-        except:
-          raise RuntimeError("Unable to write livery registry file to \'" + installPath + "\'.")
-      else:
-        raise RuntimeError("Unable to write livery registry file to \'" + installRoot + "\\\'. Was the livery folder created correctly?")
+    for i, v in livery.installs.items():
+      for p in v['paths']:
+        installRoot = os.path.join(os.getcwd(), livery.destination, p)
+        if os.path.isdir(installRoot):
+          installPath = os.path.join(installRoot, ".dcslm.json")
+          try:
+            with open(installPath, "w") as registryFile:
+              json.dump(livery.to_JSON(), registryFile)
+          except:
+            raise RuntimeError("Unable to write livery registry file to \'" + installPath + "\'.")
+        else:
+          raise RuntimeError("Unable to write livery registry file to \'" + installRoot + "\\\'. Was the livery folder created correctly?")
 
   def remove_livery_registry_file(self, livery):
-    for i in livery['install']:
-      if self.LiveryData['config']['ovgme']:
-        installRoot = os.path.join(os.getcwd(), "Liveries", livery.ovgme, i)
-      else:
-        installRoot = os.path.join(os.getcwd(), "Liveries", i)
-      installPath = os.path.join(installRoot, ".dcslm.json")
-      if os.path.isfile(installPath):
-        try:
-          os.remove(installPath)
-        except:
-          raise RuntimeError("Unable to remove livery registry file at \'" + installPath + "\'.")
-      else:
-        raise RuntimeError("Unable to find livery registry file \'" + installPath + "\'.")
+    for i, v in livery.installs.items():
+      for p in v['paths']:
+        installRoot = os.path.join(os.getcwd(), livery.destination, p)
+        if os.path.isdir(installRoot):
+          installPath = os.path.join(installRoot, ".dcslm.json")
+          if os.path.isfile(installPath):
+            try:
+              os.remove(installPath)
+            except:
+              raise RuntimeError("Unable to remove livery registry file at \'" + installPath + "\'.")
+          else:
+            raise RuntimeError("Unable to find livery registry file \'" + installPath + "\'.")
 
   def download_livery_archive(self, livery, dlCallback=None):
     if livery:
@@ -180,7 +181,7 @@ class LiveryManager:
         return True
     return False
 
-  def detect_extracted_liveries(self, livery, extractedLiveryFiles):
+  def detect_extracted_liveries(self, livery, extractPath, extractedLiveryFiles):
     liveryDirectories = []
     for root, files in extractedLiveryFiles.items():
       liveryName = root
@@ -188,7 +189,9 @@ class LiveryManager:
         liveryName = str.split(root,"\\")[-1]
       if len(liveryName):
         if self.is_valid_livery_directory(files):
-          liveryDirectories.append(liveryName)
+          liverySize = self.get_size_of_livery_files(livery, extractPath, files)
+          liveryDirectories.append({'name': liveryName, 'size': liverySize})
+          #liveryDirectories.append(liveryName)
     return liveryDirectories
 
   def does_archive_exist(self, archiveName):
@@ -197,6 +200,13 @@ class LiveryManager:
       if archiveName in a:
         return a
     return None
+
+  def compare_archive_sizes(self, archivePath, archiveURL):
+    if os.path.isfile(archivePath):
+      fileSize = os.path.getsize(archivePath)
+      urlSize = self.request_archive_size(archiveURL)
+      return fileSize == urlSize
+    return False
 
   def get_extracted_livery_files(self, livery, extractPath):
     extractedFiles = glob.glob(extractPath + "/**/*", recursive=True)
@@ -230,18 +240,16 @@ class LiveryManager:
       shutil.copy(extractedFilepath, destinationFilepath)
     return True
 
-  def copy_detected_liveries(self, livery, extractPath, extractedLiveryFiles, detectedLiveries, installPaths, installRoots):
+  def copy_detected_liveries(self, livery, extractPath, extractedLiveryFiles, installPaths):
     copiedLiveries = []
     for install in installPaths:
       installPath = os.path.join(os.getcwd(), livery.destination, install)
       installLivery = str.split(installPath, "\\")[-1]
       for root, files in extractedLiveryFiles.items():
         if self.is_valid_livery_directory(files):
-          rootLivery = root
+          rootLivery = livery.dcsuf.title
           if root != "\\":
             rootLivery = str.split(root, "\\")[-1]
-          else:
-            rootLivery = livery.dcsuf.title
           if installLivery == rootLivery:
             if self._copy_livery_files(livery, extractPath, files, installPath):
               copiedLiveries.append(install)
@@ -279,12 +287,12 @@ class LiveryManager:
   def generate_livery_install_paths(self, livery, installRoots, detectedLiveries):
     installPaths = []
     for dl in detectedLiveries:
-      if dl == "\\":
-        dl = livery.dcsuf.title
-      livery.installs[dl] = {'size': 0, 'paths':[]}
+      if dl['name'] == "\\":
+        dl['name'] = livery.dcsuf.title
+      livery.installs[dl['name']] = {'size': dl['size'], 'paths':[]}
       for root in installRoots:
-        livery.installs[dl]['paths'].append(os.path.join(root, dl))
-        installPaths.append(os.path.join(root, dl))
+        livery.installs[dl['name']]['paths'].append(os.path.join(root, dl['name']))
+        installPaths.append(os.path.join(root, dl['name']))
     return installPaths
 
   def get_livery_data_from_dcsuf_url(self, url):
@@ -294,3 +302,8 @@ class LiveryManager:
       l.ovgme = l.generate_ovgme_folder()
       return l
     raise RuntimeError("Unable to get livey data from url " + url)
+
+  def request_archive_size(self, livery):
+    if livery.dcsuf.archive:
+      return Utilities.request_file_size(livery.dcsuf.archive)
+    return 0
