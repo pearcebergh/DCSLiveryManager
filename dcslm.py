@@ -208,8 +208,7 @@ class DCSLMApp:
       else:
         livery = None
         try:
-          self.console.print("Getting User File information from " + correctedLiveryURL)
-          livery = self.lm.get_livery_data_from_dcsuf_url(correctedLiveryURL)
+          with self.console.status("Getting User File information from " + correctedLiveryURL + "..."): livery = self.lm.get_livery_data_from_dcsuf_url(correctedLiveryURL)
           self.console.print("")
           self.print_dcsuf(livery)
           unitLiveries = Units.Units['aircraft'][livery.dcsuf.unit]['liveries']
@@ -239,10 +238,10 @@ class DCSLMApp:
                 installPaths = self.lm.generate_livery_install_paths(livery, installRoots, detectedLiveries)
                 if len(installPaths):
                   self.console.print("Installing " + str(len(detectedLiveries)) + (" liveries" if len(detectedLiveries) > 1 else " livery") + " to " + str(len(installRoots)) + " aircraft.")
-                  copiedLiveries = self.lm.copy_detected_liveries(livery, extractPath, extractedLiveryFiles, installPaths)
+                  with self.console.status("Installing extracted liveries..."):copiedLiveries = self.lm.copy_detected_liveries(livery, extractPath, extractedLiveryFiles, installPaths)
                   if len(copiedLiveries):
-                    self.console.print("Writing registry files to installed livery directories.")
-                    self.lm.write_livery_registry_files(livery)
+                    with self.console.status("Writing registry files..."): self.lm.write_livery_registry_files(livery)
+                    self.console.print("Wrote " + str(len(installRoots) * len(detectedLiveries)) + " registry files to installed livery directories.")
                     self.lm.register_livery(livery)
                     self.console.print("[bold green]Livery[/bold green] \'" + str(livery.dcsuf.title) + "\' [bold green]Registered!")
                     installData['success'].append(livery)
@@ -269,8 +268,8 @@ class DCSLMApp:
     if len(installData['success']):
       installTable = Table(title="Livery Install Report",expand=False, box=box.ROUNDED)
       installTable.add_column("Unit", justify="left", no_wrap=True, style="cyan")
-      installTable.add_column("Livery Title", justify="left", style="magenta")
-      installTable.add_column("# Liveries", justify="center", no_wrap=True, style="green")
+      installTable.add_column("Livery Title", justify="left", style="green")
+      installTable.add_column("# Liveries", justify="center", no_wrap=True, style="magenta")
       installTable.add_column("Size (MB)", justify="center", no_wrap=True, style="gold1")
       for l in installData['success']:
         installTable.add_row(Units.Units['aircraft'][l.dcsuf.unit]['friendly'], l.dcsuf.title, str(l.get_num_liveries()), "{:.2f}".format(float(l.get_size_installed_liveries()/(10**6))))
