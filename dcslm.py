@@ -117,7 +117,7 @@ class DCSLMApp:
         'desc': "List currently installed DCS liveries",
         'flags': {},
         'args': {},
-        'exec': None
+        'exec': self.list_liveries
       },
       'check': {
         'completer': None,
@@ -281,8 +281,9 @@ class DCSLMApp:
         self.console.print("[bold red]" + l['url'] + "[/bold red][red]: " + str(l['error']))
 
   def check_liveries(self):
+    # TODO: Make multi-threaded
     if not len(self.lm.LiveryData['liveries']):
-      self.console.print("[red]No liveries registered.")
+      self.console.print("[red]No liveries registered to check.")
       return
     statusTable = Table(title="Livery Update Status", expand=True, box=box.ROUNDED)
     statusTable.add_column("Livery Title", justify="center", no_wrap=True)
@@ -294,6 +295,25 @@ class DCSLMApp:
           statusTable.add_row(l.dcsuf.title, "[red]Out of date")
         else:
           statusTable.add_row(l.dcsuf.title, "[green]Up to date")
+
+  def list_liveries(self):
+    def sort_list_by_unit(e):
+      return e[0]
+
+    if not len(self.lm.LiveryData['liveries']):
+      self.console.print("[red]No liveries registered to list.")
+      return
+    statusTable = Table(title="List of Registered Liveries", expand=True, box=box.ROUNDED, highlight=False)
+    statusTable.add_column("Unit", justify="left", no_wrap=True, style="cyan")
+    statusTable.add_column("Livery Title", justify="center", no_wrap=True, style="green")
+    statusTable.add_column("ID", justify="center", no_wrap=True)
+    liveryRows = []
+    for l in self.lm.Liveries.values():
+     liveryRows.append((Units.Units['aircraft'][l.dcsuf.unit]['friendly'], l.dcsuf.title, str(l.dcsuf.id)))
+    liveryRows.sort(key=sort_list_by_unit)
+    for l in liveryRows:
+      statusTable.add_row(*l)
+    self.console.print(statusTable)
 
   def func_test(self, sArgs):
     return None
