@@ -16,6 +16,7 @@ from DCSLM import Utilities
 from DCSLM.Livery import DCSUserFile, Livery
 from DCSLM.LiveryManager import LiveryManager, DCSLMFolderName
 from DCSLM.UnitConfig import Units
+from DCSLM.DCSUFParser import DCSUFParser
 from rich.progress import (
     BarColumn,
     DownloadColumn,
@@ -122,7 +123,7 @@ class DCSLMApp:
         'desc': "Check for updates to any installed liveries",
         'flags': {},
         'args': {},
-        'exec': None
+        'exec': self.check_liveries
       },
       'info': {
         'completer': None,
@@ -277,10 +278,26 @@ class DCSLMApp:
       for l in installData['success']:
         installTable.add_row(Units.Units['aircraft'][l.dcsuf.unit]['friendly'], l.dcsuf.title, str(l.get_num_liveries()), "{:.2f}".format(float(l.get_size_installed_liveries()/(10**6))))
       self.console.print(installTable)
+      self.lm.write_data()
     if len(installData['failed']):
       self.console.print("[bold red]Failed Livery Installs:")
       for l in installData['failed']:
         self.console.print("[bold red]" + l['url'] + "[/bold red][red]: " + str(l['error']))
+
+  def check_liveries(self):
+    if not len(self.lm.LiveryData['liveries']):
+      self.console.print("[red]No liveries registered.")
+      return
+    statusTable = Table(title="Livery Update Status")
+    statusTable.add_column("Livery Title", justify="center", no_wrap=True)
+    statusTable.add_column("Status", justify="center", no_wrap=True)
+    for l in self.lm.Liveries:
+      reqDCSUF = DCSUFParser().get_dcsuserfile_from_url(l.dcsuf.id)
+      if l.dcsuf.datetime < reqDCSUF.datetime:
+        statusTable.add_row(l.dcsuf.title, "[green]Up to date")
+      else:
+        statusTable.add_row(l.dcsuf.title, "[red]Out of date")
+    self.console.print(statusTable)
 
   def func_test(self, sArgs):
     return None
@@ -337,6 +354,7 @@ class DCSLMApp:
   def setup_livery_manager(self):
     self.lm = LiveryManager()
     lmData = self.lm.load_data()
+    self.console.print(self.lm.Liveries)
     self.lm.make_dcslm_dirs()
     if not lmData:
       self.console.print("No existing dcslm.json file found with config and livery data. Loading defaults.")

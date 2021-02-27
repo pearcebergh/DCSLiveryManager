@@ -33,6 +33,8 @@ class LiveryManager:
       try:
         with open(configPath, "r") as configFile:
           configData = json.load(configFile)
+          for id,l in configData['liveries'].items():
+            self.Liveries[id] = Livery().from_JSON(l)
           return configData
       except:
         raise RuntimeError("Unable to open existing DCSLM config file at \'" + configPath + "\'")
@@ -90,6 +92,7 @@ class LiveryManager:
   def unregister_livery(self, livery):
     if livery:
       if self.is_livery_registered(livery.dcsuf.id):
+        del self.Liveries[livery]
         del self.LiveryData["liveries"][livery.dcsuf.id]
         return True
     return False

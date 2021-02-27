@@ -37,11 +37,12 @@ class DCSUserFile:
       self.datetime = datetime.fromtimestamp(jsonData['datetime'])
       self.size = jsonData['size']
       self.download = jsonData['download']
+      return self
 
   def from_JSON_String(self, jsonStr):
     jsonData = json.loads(jsonStr)
     if jsonData:
-      self.from_JSON(jsonData)
+      return self.from_JSON(jsonData)
 
   def get_id_from_url(self, fileURL):
     if fileURL:
@@ -95,11 +96,12 @@ class Livery:
       self.destination = jsonData['destination']
       self.dcsuf = DCSUserFile().from_JSON(jsonData['dcsuf'])
       self.installs = jsonData['installs']
+      return self
 
   def from_JSON_String(self, jsonStr):
     jsonData = json.loads(jsonStr)
     if jsonData:
-      self.from_JSON(jsonData)
+      return self.from_JSON(jsonData)
 
   def generate_ovgme_folder(self):
     if self.dcsuf and self.dcsuf.unit and self.dcsuf.title:
