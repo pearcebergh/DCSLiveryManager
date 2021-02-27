@@ -1,12 +1,10 @@
-import requests
-#import rich.progress as Progress
 from rich.console import Console
 from rich.rule import Rule
 from rich.prompt import Prompt
 from rich.panel import Panel, Padding, PaddingDimensions
 from rich.table import Table
 from rich import box
-from datetime import datetime
+import argparse
 import os
 import sys
 import platform
@@ -18,8 +16,6 @@ from DCSLM import Utilities
 from DCSLM.Livery import DCSUserFile, Livery
 from DCSLM.LiveryManager import LiveryManager, DCSLMFolderName
 from DCSLM.UnitConfig import Units
-from concurrent.futures import ThreadPoolExecutor
-
 from rich.progress import (
     BarColumn,
     DownloadColumn,
@@ -76,9 +72,15 @@ class DCSLMApp:
         'completer': None,
         'usage': "\[id/url1] \[id/url2] \[id/url3] ...",
         'desc': "Install DCS liveries from DCS User Files URLs or IDs",
-        'flags': {},
+        'flags': {
+          'keep': {
+            'tags': ['-k', '--keep'],
+            'desc': "Keep downloaded livery archive files",
+            'confirm': False
+          }
+        },
         'args': {
-          'id/url': {
+          'url': {
             'type': "number/string",
             'optional': False,
             'desc': "DCS User Files ID or URL"
@@ -176,11 +178,25 @@ class DCSLMApp:
       }
     }
 
+  def _parse_install_args(self, sArgs):
+      installArgsParser = argparse.ArgumentParser(usage=self.commands['install']['usage'],
+                                                  description=self.commands['install']['desc'],
+                                                  exit_on_error=False)
+      installArgsParser.add_argument(*self.commands['install']['flags']['keep']['tags'], action="store_true",
+                                     help=self.commands['install']['flags']['keep']['desc'], dest='keep')
+      installArgsParser.add_argument('url', type=str, help=self.commands['install']['args']['url']['desc'], nargs="+")
+      parsedArgs = installArgsParser.parse_known_args(sArgs)
+      if len(parsedArgs[1]):
+        self.console.print("Failed to parse the following args for \'install\':", style="bold red")
+        self.console.print("\t" + str(parsedArgs[1]), style="bold red")
+      return parsedArgs[0]
+
   def install_liveries(self, sArgs):
-    self.console.print("Attempting to install " + str(len(sArgs)) + (" liveries" if len(sArgs) > 1 else " livery") + " from DCS User Files.")
+    installArgs = self._parse_install_args(sArgs)
+    self.console.print("Attempting to install " + str(len(installArgs.url)) + (" liveries" if len(installArgs.url) > 1 else " livery") + " from DCS User Files.")
     installData = {'success': [], 'failed' : []}
     # TODO: Check for duplicate url/IDs in list
-    for liveryStr in sArgs:
+    for liveryStr in installArgs.url:
       correctedLiveryURL = Utilities.correct_dcs_user_files_url(liveryStr)
       if not correctedLiveryURL:
         errorMsg = "Failed to get DCS User Files url or ID from \'" + liveryStr + "\'."
@@ -248,7 +264,7 @@ class DCSLMApp:
             if livery.destination:
               self.console.print("Removing temporarily extracted folder.")
               self.lm.remove_extracted_livery_archive(livery)
-            if livery.archive:
+            if livery.archive and not installArgs.keep:
               self.console.print("Removing downloaded archive file \'" + os.path.split(livery.archive)[1] + "\'.")
               self.lm.remove_downloaded_archive(livery, livery.archive)
           self.console.print("")
@@ -397,10 +413,13 @@ class DCSLMApp:
             if len(splitCommand) > 1:
               argList = splitCommand[1:]
             if commandData['exec']:
-              if len(commandData['args']):
-                commandData['exec'](sArgs=argList)
-              else:
-                commandData['exec']()
+              try:
+                if len(commandData['args']):
+                  commandData['exec'](sArgs=argList)
+                else:
+                  commandData['exec']()
+              except Exception as e:
+                self.console.print(e, style="bold red")
             if splitCommand[0] == "exit":
               runCommands = False
           else:
