@@ -17,5 +17,8 @@ def size_text_to_bytes(sizeText):
     return sizeInt
   return 0
 
+def bytes_to_mb_string(sizeBytes):
+  return "{:.2f}".format(float(sizeBytes/(10**6)))
+
 def request_file_size(fileURL):
   return int(get(fileURL, stream=True).headers['Content-length'])

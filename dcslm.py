@@ -238,7 +238,7 @@ class DCSLMApp:
                 installPaths = self.lm.generate_livery_install_paths(livery, installRoots, detectedLiveries)
                 if len(installPaths):
                   self.console.print("Installing " + str(len(detectedLiveries)) + (" liveries" if len(detectedLiveries) > 1 else " livery") + " to " + str(len(installRoots)) + " aircraft.")
-                  with self.console.status("Installing extracted liveries..."):copiedLiveries = self.lm.copy_detected_liveries(livery, extractPath, extractedLiveryFiles, installPaths)
+                  with self.console.status("Installing extracted liveries..."): copiedLiveries = self.lm.copy_detected_liveries(livery, extractPath, extractedLiveryFiles, installPaths)
                   if len(copiedLiveries):
                     with self.console.status("Writing registry files..."): self.lm.write_livery_registry_files(livery)
                     self.console.print("Wrote " + str(len(installRoots) * len(detectedLiveries)) + " registry files to installed livery directories.")
@@ -272,7 +272,7 @@ class DCSLMApp:
       installTable.add_column("# Liveries", justify="center", no_wrap=True, style="magenta")
       installTable.add_column("Size (MB)", justify="center", no_wrap=True, style="gold1")
       for l in installData['success']:
-        installTable.add_row(Units.Units['aircraft'][l.dcsuf.unit]['friendly'], l.dcsuf.title, str(l.get_num_liveries()), "{:.2f}".format(float(l.get_size_installed_liveries()/(10**6))))
+        installTable.add_row(Units.Units['aircraft'][l.dcsuf.unit]['friendly'], l.dcsuf.title, Utilities.bytes_to_mb_string(l.get_size_installed_liveries()))
       self.console.print(installTable)
       self.lm.write_data()
     if len(installData['failed']):
@@ -305,14 +305,25 @@ class DCSLMApp:
       return
     statusTable = Table(title="List of Registered Liveries", expand=True, box=box.ROUNDED, highlight=False)
     statusTable.add_column("Unit", justify="left", no_wrap=True, style="cyan")
-    statusTable.add_column("Livery Title", justify="center", no_wrap=True, style="green")
-    statusTable.add_column("ID", justify="center", no_wrap=True)
+    #statusTable.add_column("ID", justify="center", no_wrap=True, style="green")
+    statusTable.add_column("Livery Title", justify="center", no_wrap=True)
+    statusTable.add_column("Size (MB)", justify="right", no_wrap=True, style="gold1")
     liveryRows = []
     for l in self.lm.Liveries.values():
-     liveryRows.append((Units.Units['aircraft'][l.dcsuf.unit]['friendly'], l.dcsuf.title, str(l.dcsuf.id)))
+     liveryRows.append((Units.Units['aircraft'][l.dcsuf.unit]['friendly'], l.dcsuf.title, Utilities.bytes_to_mb_string(l.get_size_installed_liveries())))
     liveryRows.sort(key=sort_list_by_unit)
-    for l in liveryRows:
-      statusTable.add_row(*l)
+    prevUnit = ""
+    for i in range(0, len(liveryRows)):
+      l = liveryRows[i]
+      isEndSection = False
+      if i != len(liveryRows) - 1:
+        nextUnit = nextL = liveryRows[i + 1][0]
+        if nextUnit != l[0]:
+          isEndSection = True
+      if i == len(liveryRows) - 1: # for footer
+        isEndSection = True
+      statusTable.add_row(*l, end_section=isEndSection)
+    #statusTable.add_row("3 Units", "47 Registered Liveries with 100 Installed Livery Directories", "3.02 GB", end_section=True)
     self.console.print(statusTable)
 
   def func_test(self, sArgs):
