@@ -3,7 +3,9 @@ from rich.rule import Rule
 from rich.prompt import Prompt
 from rich.panel import Panel, Padding, PaddingDimensions
 from rich.table import Table
+from rich.live import Live
 from rich import box
+from rich.align import Align
 import argparse
 import os
 import sys
@@ -239,11 +241,6 @@ class DCSLMApp:
                   self.console.print("Installing " + str(len(detectedLiveries)) + (" liveries" if len(detectedLiveries) > 1 else " livery") + " to " + str(len(installRoots)) + " aircraft.")
                   copiedLiveries = self.lm.copy_detected_liveries(livery, extractPath, extractedLiveryFiles, installPaths)
                   if len(copiedLiveries):
-                    '''
-                    for ac,liv in livery.installs.items():
-                      self.console.print("\'" + ac + "\':")
-                      self.console.print("\t" + str(liv['paths']))
-                    '''
                     self.console.print("Writing registry files to installed livery directories.")
                     self.lm.write_livery_registry_files(livery)
                     self.lm.register_livery(livery)
@@ -288,16 +285,16 @@ class DCSLMApp:
     if not len(self.lm.LiveryData['liveries']):
       self.console.print("[red]No liveries registered.")
       return
-    statusTable = Table(title="Livery Update Status")
+    statusTable = Table(title="Livery Update Status", expand=True, box=box.ROUNDED)
     statusTable.add_column("Livery Title", justify="center", no_wrap=True)
     statusTable.add_column("Status", justify="center", no_wrap=True)
-    for l in self.lm.Liveries:
-      reqDCSUF = DCSUFParser().get_dcsuserfile_from_url(l.dcsuf.id)
-      if l.dcsuf.datetime < reqDCSUF.datetime:
-        statusTable.add_row(l.dcsuf.title, "[green]Up to date")
-      else:
-        statusTable.add_row(l.dcsuf.title, "[red]Out of date")
-    self.console.print(statusTable)
+    with Live(statusTable, console=self.console, auto_refresh=True):
+      for l in self.lm.Liveries.values():
+        reqDCSUF = DCSUFParser().get_dcsuserfile_from_url(str(l.dcsuf.id))
+        if l.dcsuf.datetime < reqDCSUF.datetime:
+          statusTable.add_row(l.dcsuf.title, "[red]Out of date")
+        else:
+          statusTable.add_row(l.dcsuf.title, "[green]Up to date")
 
   def func_test(self, sArgs):
     return None
@@ -348,13 +345,12 @@ class DCSLMApp:
     self.console.print('')
 
   def setup_console_window(self):
-    self.console = Console(width=120)
+    self.console = Console(width=120, tab_size=4)
     #set_terminal_size(80, 50)
 
   def setup_livery_manager(self):
     self.lm = LiveryManager()
     lmData = self.lm.load_data()
-    self.console.print(self.lm.Liveries)
     self.lm.make_dcslm_dirs()
     if not lmData:
       self.console.print("No existing dcslm.json file found with config and livery data. Loading defaults.")
@@ -431,13 +427,13 @@ class DCSLMApp:
             if len(splitCommand) > 1:
               argList = splitCommand[1:]
             if commandData['exec']:
-              try:
+              #try:
                 if len(commandData['args']):
                   commandData['exec'](sArgs=argList)
                 else:
                   commandData['exec']()
-              except Exception as e:
-                self.console.print(e, style="bold red")
+              #except Exception as e:
+                #self.console.print(e, style="bold red")
             if splitCommand[0] == "exit":
               runCommands = False
           else:
