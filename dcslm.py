@@ -208,15 +208,16 @@ class DCSLMApp:
       else:
         livery = None
         try:
-          with self.console.status("Getting User File information from " + correctedLiveryURL + "..."): livery = self.lm.get_livery_data_from_dcsuf_url(correctedLiveryURL)
-          self.console.print("")
+          getUFStr = "Getting DCS User File information from " + correctedLiveryURL
+          with self.console.status(getUFStr): livery = self.lm.get_livery_data_from_dcsuf_url(correctedLiveryURL)
+          self.console.print(getUFStr + "\n")
           self.print_dcsuf(livery)
           unitLiveries = Units.Units['aircraft'][livery.dcsuf.unit]['liveries']
           if len(unitLiveries) > 1:
             unitLiveries = self.prompt_aircraft_livery_choice(livery, unitLiveries)
           archivePath = self.lm.does_archive_exist(livery.dcsuf.download.split('/')[-1])
           if archivePath:
-            self.console.print("Archive file \'" + livery.dcsuf.download.split('/')[-1] + "\' for \'" + livery.dcsuf.title + "\' already exists. Using that instead.")
+            self.console.print("\nArchive file \'" + livery.dcsuf.download.split('/')[-1] + "\' for \'" + livery.dcsuf.title + "\' already exists. Using that instead.")
           else:
             self.console.print("\nDownloading livery archive file " + livery.dcsuf.download)
             archivePath = self._download_archive_progress(livery)
@@ -233,7 +234,8 @@ class DCSLMApp:
               extractedLiveryFiles = self.lm.get_extracted_livery_files(livery, extractPath)
               detectedLiveries = self.lm.detect_extracted_liveries(livery, extractPath, extractedLiveryFiles)
               if len(detectedLiveries) and len(installRoots):
-                self.console.print(detectedLiveries)
+                liveryNames = [l['name'] for l in detectedLiveries]
+                self.console.print(liveryNames)
                 self.console.print("Generating livery install paths...")
                 installPaths = self.lm.generate_livery_install_paths(livery, installRoots, detectedLiveries)
                 if len(installPaths):
@@ -270,9 +272,9 @@ class DCSLMApp:
       installTable.add_column("Unit", justify="left", no_wrap=True, style="cyan")
       installTable.add_column("Livery Title", justify="left", style="green")
       installTable.add_column("# Liveries", justify="center", no_wrap=True, style="magenta")
-      installTable.add_column("Size (MB)", justify="center", no_wrap=True, style="gold1")
+      installTable.add_column("Size (MB)", justify="right", no_wrap=True, style="gold1")
       for l in installData['success']:
-        installTable.add_row(Units.Units['aircraft'][l.dcsuf.unit]['friendly'], l.dcsuf.title, Utilities.bytes_to_mb_string(l.get_size_installed_liveries()))
+        installTable.add_row(Units.Units['aircraft'][l.dcsuf.unit]['friendly'], l.dcsuf.title, str(l.get_num_liveries()), Utilities.bytes_to_mb_string(l.get_size_installed_liveries()))
       self.console.print(installTable)
       self.lm.write_data()
     if len(installData['failed']):
@@ -297,22 +299,27 @@ class DCSLMApp:
           statusTable.add_row(l.dcsuf.title, "[green]Up to date")
 
   def list_liveries(self):
-    def sort_list_by_unit(e):
-      return e[0]
+    def sort_list_by_unit_then_title(e):
+      return e[0] + " - " + e[1]
 
     if not len(self.lm.LiveryData['liveries']):
       self.console.print("[red]No liveries registered to list.")
       return
-    statusTable = Table(title="List of Registered Liveries", expand=True, box=box.ROUNDED, highlight=False)
-    statusTable.add_column("Unit", justify="left", no_wrap=True, style="cyan")
-    #statusTable.add_column("ID", justify="center", no_wrap=True, style="green")
-    statusTable.add_column("Livery Title", justify="center", no_wrap=True)
-    statusTable.add_column("Size (MB)", justify="right", no_wrap=True, style="gold1")
     liveryRows = []
+    longestUnit = ""
     for l in self.lm.Liveries.values():
-     liveryRows.append((Units.Units['aircraft'][l.dcsuf.unit]['friendly'], l.dcsuf.title, Utilities.bytes_to_mb_string(l.get_size_installed_liveries())))
-    liveryRows.sort(key=sort_list_by_unit)
-    prevUnit = ""
+      friendlyUnit = Units.Units['aircraft'][l.dcsuf.unit]['friendly']
+      liveryRows.append((friendlyUnit, str(l.dcsuf.id), l.dcsuf.title, Utilities.bytes_to_mb_string(l.get_size_installed_liveries())))
+      if len(friendlyUnit) > len(longestUnit):
+        longestUnit = friendlyUnit
+    unitColWidth = max(8, min(13, len(longestUnit)))
+    statusTable = Table(title="List of Registered Liveries", expand=True, box=box.ROUNDED, highlight=False)
+    statusTable.add_column("Unit", justify="center", no_wrap=True, style="cyan", width=unitColWidth)
+    statusTable.add_column("ID", justify="center", no_wrap=True, style="green", width=11)
+    statusTable.add_column("Livery Title", justify="center", no_wrap=True, overflow='ellipsis')
+    statusTable.add_column("Size", justify="right", no_wrap=True, style="gold1", width=10)
+
+    liveryRows.sort(key=sort_list_by_unit_then_title)
     for i in range(0, len(liveryRows)):
       l = liveryRows[i]
       isEndSection = False
@@ -383,18 +390,18 @@ class DCSLMApp:
     lmData = self.lm.load_data()
     self.lm.make_dcslm_dirs()
     if not lmData:
-      self.console.print("No existing dcslm.json file found with config and livery data. Loading defaults.")
+      self.console.print("No existing \'DCSLM/dcslm.json\' file found with config and livery data. Loading defaults.")
       self.prompt_livery_manager_defaults()
       self.lm.write_data()
     else:
-      self.console.print("Loaded Livery Manager config and data from DCSLM/dcslm.json")
+      self.console.print("Loaded Livery Manager config and data from \'DCSLM/dcslm.json\'")
       self.lm.LiveryData = lmData
 
   def prompt_livery_manager_defaults(self):
     if self.lm:
       self.console.print("\n\n[bold green underline]OVGME (Mod Manager) Mode:")
       self.console.print("If you use a mod manager, like OVGME, to manage your DCS mod installs, you can enable \'OVGME Mode\' to have it create a root directory named with the format [bold purple]{aircraft} - {livery title}[/bold purple].")
-      self.console.print("\n[gold1]Make sure you've placed DCSLM.exe inside your mod manager's directory that is configured for the [/gold1]\'DCS Saved Games\'[gold1] directory, not the DCS install directory.[/gold1]")
+      self.console.print("\n[gold1]Make sure you've placed \'DCSLM.exe\' inside your mod manager's directory that is configured for the [/gold1]\'DCS Saved Games\'[gold1] directory, not the DCS install directory.[/gold1]")
       ovgme = Prompt.ask("\n[bold]Do you want to enable OVGME (Mod Manager) Mode?[/bold]", choices=["Yes", "No"])
       ovgme = (True if ovgme == "Yes" else False)
       self.lm.LiveryData['config']['ovgme'] = ovgme
@@ -402,6 +409,7 @@ class DCSLMApp:
         self.console.print("[green]Enabling OVGME (Mod Manager) mode.")
 
   def prompt_aircraft_livery_choice(self, livery, unitLiveries):
+    # TODO: Add choice for none
     choosenLiveries = []
     liveryChoices = ["All"]
     for u in unitLiveries:
@@ -457,13 +465,13 @@ class DCSLMApp:
             if len(splitCommand) > 1:
               argList = splitCommand[1:]
             if commandData['exec']:
-              #try:
+              try:
                 if len(commandData['args']):
                   commandData['exec'](sArgs=argList)
                 else:
                   commandData['exec']()
-              #except Exception as e:
-                #self.console.print(e, style="bold red")
+              except Exception as e:
+                self.console.print(e, style="bold red")
             if splitCommand[0] == "exit":
               runCommands = False
           else:

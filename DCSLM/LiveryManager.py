@@ -244,6 +244,7 @@ class LiveryManager:
     return True
 
   def copy_detected_liveries(self, livery, extractPath, extractedLiveryFiles, installPaths):
+    # TODO: Fix copying directories within valid livery dirs (3300601, 3315181)
     copiedLiveries = []
     for install in installPaths:
       installPath = os.path.join(os.getcwd(), livery.destination, install)
