@@ -72,8 +72,8 @@ class LiveryManager:
     if livery:
       userID = livery.dcsuf.id
     if userID:
-      if userID in self.LiveryData["liveries"].keys():
-        return self.LiveryData["liveries"][userID]
+      if str(userID) in self.Liveries.keys():
+        return self.Liveries[str(userID)]
     return None
 
   def is_livery_registered(self, id=None, livery=None):
@@ -83,19 +83,36 @@ class LiveryManager:
 
   def register_livery(self, livery):
     if livery:
-      if not self.is_livery_registered(livery.dcsuf.id):
-        self.LiveryData["liveries"][livery.dcsuf.id] = livery.to_JSON()
-        self.Liveries[livery.dcsuf.id] = livery
-        return self.LiveryData["liveries"][livery.dcsuf.id]
+      #if not self.is_livery_registered(livery.dcsuf.id):
+      self.LiveryData["liveries"][str(livery.dcsuf.id)] = livery.to_JSON()
+      self.Liveries[str(livery.dcsuf.id)] = livery
+
+  def _remove_installed_livery_directory(self, livery, installPath):
+    if "Liveries" in installPath:
+      if os.path.isdir(installPath):
+        shutil.rmtree(installPath, ignore_errors=True)
+      else:
+        raise RuntimeError("Install path \'" + installPath + "\' is not a valid directory.")
+
+  def remove_installed_livery_directories(self, livery):
+    for i in livery.installs.values():
+      for p in i['paths']:
+        fullPath = os.path.join(os.getcwd(), livery.destination, p)
+        self._remove_installed_livery_directory(livery, fullPath)
+    livery.installs = {}
     return None
 
   def unregister_livery(self, livery):
     if livery:
       if self.is_livery_registered(livery.dcsuf.id):
-        del self.Liveries[livery]
-        del self.LiveryData["liveries"][livery.dcsuf.id]
+        del self.Liveries[str(livery.dcsuf.id)]
+        del self.LiveryData["liveries"][str(livery.dcsuf.id)]
         return True
     return False
+
+  def uninstall_livery(self, livery):
+    self.remove_installed_livery_directories(livery)
+    self.unregister_livery(livery)
 
   def load_livery_from_livery_registry_file(self, registryPath):
     if os.path.isfile(registryPath):

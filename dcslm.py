@@ -94,13 +94,13 @@ class DCSLMApp:
       'uninstall': {
         'completer': None,
         'usage': "\[flags] livery",
-        'desc': "Uninstall the given managed livery",
+        'desc': "Uninstall the given managed livery from the \'title\' or \'ID\'.",
         'flags': {
           'keep': {
             'tags': ['-k', '--keep'],
             'desc': "Keep livery files on disk (untrack them)",
             'confirm': False
-          }
+          },
         },
         'args': {
           'livery': {
@@ -109,7 +109,7 @@ class DCSLMApp:
             'desc': "DCS User Files livery title"
           },
         },
-        'exec': None
+        'exec': self.uninstall_liveries
       },
       'list': {
         'completer': None,
@@ -139,7 +139,7 @@ class DCSLMApp:
             'desc': "DCS User Files livery title"
           },
         },
-        'exec': None
+        'exec': self.get_livery_info
       },
       'scan': {
         'completer': None,
@@ -196,7 +196,8 @@ class DCSLMApp:
 
   def install_liveries(self, sArgs):
     installArgs = self._parse_install_args(sArgs)
-    self.console.print("Attempting to install " + str(len(installArgs.url)) + (" liveries" if len(installArgs.url) > 1 else " livery") + " from DCS User Files.")
+    self.console.print("Attempting to install " + str(len(installArgs.url)) +
+                       (" liveries" if len(installArgs.url) > 1 else " livery") + " from DCS User Files.")
     installData = {'success': [], 'failed' : []}
     # TODO: Check for duplicate url/IDs in list
     for liveryStr in installArgs.url:
@@ -217,7 +218,8 @@ class DCSLMApp:
             unitLiveries = self.prompt_aircraft_livery_choice(livery, unitLiveries)
           archivePath = self.lm.does_archive_exist(livery.dcsuf.download.split('/')[-1])
           if archivePath:
-            self.console.print("\nArchive file \'" + livery.dcsuf.download.split('/')[-1] + "\' for \'" + livery.dcsuf.title + "\' already exists. Using that instead.")
+            self.console.print("\nArchive file \'" + livery.dcsuf.download.split('/')[-1] + "\' for \'" +
+                               livery.dcsuf.title + "\' already exists. Using that instead.")
           else:
             self.console.print("\nDownloading livery archive file " + livery.dcsuf.download)
             archivePath = self._download_archive_progress(livery)
@@ -239,13 +241,19 @@ class DCSLMApp:
                 self.console.print("Generating livery install paths...")
                 installPaths = self.lm.generate_livery_install_paths(livery, installRoots, detectedLiveries)
                 if len(installPaths):
-                  self.console.print("Installing " + str(len(detectedLiveries)) + (" liveries" if len(detectedLiveries) > 1 else " livery") + " to " + str(len(installRoots)) + " aircraft.")
-                  with self.console.status("Installing extracted liveries..."): copiedLiveries = self.lm.copy_detected_liveries(livery, extractPath, extractedLiveryFiles, installPaths)
+                  self.console.print("Installing " + str(len(detectedLiveries)) +
+                                     (" liveries" if len(detectedLiveries) > 1 else " livery") + " to " +
+                                     str(len(installRoots)) + " aircraft.")
+                  with self.console.status("Installing extracted liveries..."):
+                    copiedLiveries = self.lm.copy_detected_liveries(livery, extractPath,
+                                                                    extractedLiveryFiles, installPaths)
                   if len(copiedLiveries):
                     with self.console.status("Writing registry files..."): self.lm.write_livery_registry_files(livery)
-                    self.console.print("Wrote " + str(len(installRoots) * len(detectedLiveries)) + " registry files to installed livery directories.")
+                    self.console.print("Wrote " + str(len(installRoots) * len(detectedLiveries)) +
+                                       " registry files to installed livery directories.")
                     self.lm.register_livery(livery)
-                    self.console.print("[bold green]Livery[/bold green] \'" + str(livery.dcsuf.title) + "\' [bold green]Registered!")
+                    self.console.print("[bold green]Livery[/bold green] \'" + str(livery.dcsuf.title) +
+                                       "\' [bold green]Registered!")
                     installData['success'].append(livery)
                   else:
                     raise RuntimeError("Failed to copy livery files to install directories!")
@@ -274,13 +282,64 @@ class DCSLMApp:
       installTable.add_column("# Liveries", justify="center", no_wrap=True, style="magenta")
       installTable.add_column("Size (MB)", justify="right", no_wrap=True, style="gold1")
       for l in installData['success']:
-        installTable.add_row(Units.Units['aircraft'][l.dcsuf.unit]['friendly'], l.dcsuf.title, str(l.get_num_liveries()), Utilities.bytes_to_mb_string(l.get_size_installed_liveries()))
+        installTable.add_row(Units.Units['aircraft'][l.dcsuf.unit]['friendly'], l.dcsuf.title,
+                             str(l.get_num_liveries()), Utilities.bytes_to_mb_string(l.get_size_installed_liveries()))
       self.console.print(installTable)
       self.lm.write_data()
     if len(installData['failed']):
       self.console.print("[bold red]Failed Livery Installs:")
       for l in installData['failed']:
         self.console.print("[bold red]" + l['url'] + "[/bold red][red]: " + str(l['error']))
+
+  def _parse_uninstall_args(self, sArgs):
+      installArgsParser = argparse.ArgumentParser(usage=self.commands['uninstall']['usage'],
+                                                  description=self.commands['uninstall']['desc'],
+                                                  exit_on_error=False)
+      installArgsParser.add_argument(*self.commands['uninstall']['flags']['keep']['tags'], action="store_true",
+                                     help=self.commands['uninstall']['flags']['keep']['desc'], dest='keep')
+      installArgsParser.add_argument('livery', type=str, nargs="+",
+                                     help=self.commands['uninstall']['args']['livery']['desc'])
+      parsedArgs = installArgsParser.parse_known_args(sArgs)
+      if len(parsedArgs[1]):
+        self.console.print("Failed to parse the following args for \'uninstall\':", style="bold red")
+        self.console.print("\t" + str(parsedArgs[1]), style="bold red")
+      return parsedArgs[0]
+
+  def uninstall_liveries(self, sArgs):
+    uninstallArgs = self._parse_uninstall_args(sArgs)
+    self.console.print("Attempting to uninstall " + str(len(uninstallArgs.livery)) +
+                       (" registered liveries" if len(uninstallArgs.livery) > 1 else " registered livery") + ".")
+    uninstallData = {'success': [], 'failed': []}
+    # TODO: Check for duplicate liveries in list
+    for liveryStr in uninstallArgs.livery:
+      if str.isnumeric(liveryStr):
+        try:
+          self.console.print("Uninstalling \'" + liveryStr + "\'.")
+          livery = self.lm.get_registered_livery(id=int(liveryStr))
+          if (livery):
+            self.console.print("Found registered livery.")
+            numLiveries = str(livery.get_num_liveries())
+            with self.console.status("Removing " + numLiveries + " installed livery directories..."):
+              self.lm.uninstall_livery(livery)
+            self.console.print("Removed " + numLiveries + " installed livery directories.")
+            uninstallData['success'].append(livery)
+            self.console.print("Successfully uninstalled livery \'" + livery.dcsuf.title + "\'.")
+          else:
+            raise RuntimeError("Livery \'" + liveryStr + "\' not found in livery registry.")
+        except Exception as e:
+          uninstallData['failed'].append({'livery': liveryStr, 'error': e})
+          self.console.print(e, style="bold red")
+        finally:
+          self.console.print("")
+    if len(uninstallData['success']):
+      self.console.print("[bold green]Successful Livery Uninstalls:")
+      for l in uninstallData['success']:
+        self.console.print("\t(" + str(l.dcsuf.id) + ") " + l.dcsuf.title, highlight=False)
+      self.lm.write_data()
+    if len(uninstallData['failed']):
+      self.console.print("[bold red]Failed Livery Uninstalls:")
+      for l in uninstallData['failed']:
+        self.console.print("\t(" + l['livery'] + "[red]: " + str(l['error']))
 
   def check_liveries(self):
     # TODO: Make multi-threaded
@@ -309,7 +368,8 @@ class DCSLMApp:
     longestUnit = ""
     for l in self.lm.Liveries.values():
       friendlyUnit = Units.Units['aircraft'][l.dcsuf.unit]['friendly']
-      liveryRows.append((friendlyUnit, str(l.dcsuf.id), l.dcsuf.title, Utilities.bytes_to_mb_string(l.get_size_installed_liveries())))
+      liveryRows.append((friendlyUnit, str(l.dcsuf.id), l.dcsuf.title,
+                         Utilities.bytes_to_mb_string(l.get_size_installed_liveries())))
       if len(friendlyUnit) > len(longestUnit):
         longestUnit = friendlyUnit
     unitColWidth = max(8, min(13, len(longestUnit)))
@@ -330,8 +390,12 @@ class DCSLMApp:
       if i == len(liveryRows) - 1: # for footer
         isEndSection = True
       statusTable.add_row(*l, end_section=isEndSection)
-    #statusTable.add_row("3 Units", "47 Registered Liveries with 100 Installed Livery Directories", "3.02 GB", end_section=True)
+    #statusTable.add_row("3 Units", "47 Registered Liveries with 100 Installed Livery Directories",
+    #                    "3.02 GB", end_section=True)
     self.console.print(statusTable)
+
+  def get_livery_info(self, sArgs):
+    return
 
   def func_test(self, sArgs):
     return None
@@ -359,11 +423,16 @@ class DCSLMApp:
           self.console.print("\t\t[bold]" + ', '.join(k['tags']) + "[/bold] - " + k['desc'])
     self.console.print("\n")
 
+  def _make_dcsuf_panel(self, livery):
+    return Panel("ID: " +
+                 str(livery.dcsuf.id) + " | Author: " + livery.dcsuf.author + " | Upload Date: " +
+                     livery.dcsuf.date + " | Archive Size: " + livery.dcsuf.size + " \n" + livery.dcsuf.download,
+                     title=Units.Units['aircraft'][livery.dcsuf.unit]['friendly'] + " - " + livery.dcsuf.title,
+                     expand=False, highlight=True)
+
   def print_dcsuf(self, livery):
     if livery:
-      self.console.print(Panel("ID: " + str(livery.dcsuf.id) + " | Author: " + livery.dcsuf.author + " | Upload Date: " + livery.dcsuf.date + " | Archive Size: " + livery.dcsuf.size + " \n" + livery.dcsuf.download,
-                               title=Units.Units['aircraft'][livery.dcsuf.unit]['friendly'] + " - " + livery.dcsuf.title,
-                               expand=False, highlight=True))
+      self.console.print(self._make_dcsuf_panel(livery))
 
   def print_livery(self, livery):
     if livery:
@@ -377,7 +446,8 @@ class DCSLMApp:
 
   def clear_and_print_header(self):
     clear()
-    self.console.print(Rule(f'[bold gold1]DCS Livery Manager[/bold gold1] [bold sky_blue1]v{__version__}[/bold sky_blue1]',
+    self.console.print(
+           Rule(f'[bold gold1]DCS Livery Manager[/bold gold1] [bold sky_blue1]v{__version__}[/bold sky_blue1]',
            characters="~═~*", style="deep_pink2"))
     self.console.print('')
 
@@ -400,8 +470,12 @@ class DCSLMApp:
   def prompt_livery_manager_defaults(self):
     if self.lm:
       self.console.print("\n\n[bold green underline]OVGME (Mod Manager) Mode:")
-      self.console.print("If you use a mod manager, like OVGME, to manage your DCS mod installs, you can enable \'OVGME Mode\' to have it create a root directory named with the format [bold purple]{aircraft} - {livery title}[/bold purple].")
-      self.console.print("\n[gold1]Make sure you've placed \'DCSLM.exe\' inside your mod manager's directory that is configured for the [/gold1]\'DCS Saved Games\'[gold1] directory, not the DCS install directory.[/gold1]")
+      self.console.print("If you use a mod manager, like OVGME, to manage your DCS mod installs, you can enable " +
+                         "\'OVGME Mode\' to have it create a root directory named with the format " +
+                         "[bold purple]{aircraft} - {livery title}[/bold purple].")
+      self.console.print("\n[gold1]Make sure you've placed \'DCSLM.exe\' inside your mod manager's directory that is " +
+                         "configured for the [/gold1]\'DCS Saved Games\'[gold1] directory, " +
+                         "not the DCS install directory.[/gold1]")
       ovgme = Prompt.ask("\n[bold]Do you want to enable OVGME (Mod Manager) Mode?[/bold]", choices=["Yes", "No"])
       ovgme = (True if ovgme == "Yes" else False)
       self.lm.LiveryData['config']['ovgme'] = ovgme
@@ -421,9 +495,12 @@ class DCSLMApp:
       choiceText = ""
       for i in range(0, len(liveryChoices)):
         choiceText += "[" + str(i) + "]" + liveryChoices[i] + " "
-      self.console.print("\nThere are multiple livery install locations for the [bold magenta]" + Units.Units['aircraft'][livery.dcsuf.unit]['friendly'] + "[/bold magenta]. Please choose from one of the following choices by inputting the corresponding index number:")
+      self.console.print("\nThere are multiple livery install locations for the [bold magenta]" +
+                         Units.Units['aircraft'][livery.dcsuf.unit]['friendly'] + "[/bold magenta]. " +
+                         "Please choose from one of the following choices by inputting the corresponding index number:")
       self.console.print("\n\t" + choiceText)
-      choice = Prompt.ask("\n[bold]Which aircraft do you want the livery to be installed to?[/bold]", choices=[str(i) for i in range(0,len(liveryChoices))])
+      choice = Prompt.ask("\n[bold]Which aircraft do you want the livery to be installed to?[/bold]",
+                          choices=[str(i) for i in range(0,len(liveryChoices))])
       if choice == "0":
         choosenLiveries = unitLiveries
       else:
@@ -434,7 +511,10 @@ class DCSLMApp:
     dlCallback['progress'].update(dlCallback['task'], advance=downloadedBytes)
 
   def _download_archive_progress(self, livery):
-    downloadProgress = Progress(TextColumn("[bold blue]{task.fields[filename]}", justify="right"),BarColumn(bar_width=None),"[progress.percentage]{task.percentage:>3.1f}%", "•",DownloadColumn(), "•", TransferSpeedColumn(), "•",TimeRemainingColumn(), console=self.console)
+    downloadProgress = Progress(TextColumn("[bold blue]{task.fields[filename]}", justify="right"),
+                                BarColumn(bar_width=None),"[progress.percentage]{task.percentage:>3.1f}%",
+                                "•",DownloadColumn(), "•", TransferSpeedColumn(), "•",TimeRemainingColumn(),
+                                console=self.console)
     archiveName = livery.dcsuf.download.split('/')[-1]
     dlTask = downloadProgress.add_task("download", filename=archiveName, start=False)
     dlSize = Utilities.request_file_size(livery.dcsuf.download)
@@ -449,7 +529,7 @@ class DCSLMApp:
     runCommands = True
     while runCommands:
       try:
-        command = self.session.prompt(HTML('<ansibrightcyan>DCSLM></ansibrightcyan> '), completer=self.completer)
+        command = self.session.prompt(HTML("<ansibrightcyan>DCSLM></ansibrightcyan> "), completer=self.completer)
       except KeyboardInterrupt:
         continue
       except EOFError:
@@ -465,13 +545,13 @@ class DCSLMApp:
             if len(splitCommand) > 1:
               argList = splitCommand[1:]
             if commandData['exec']:
-              try:
+              #try:
                 if len(commandData['args']):
                   commandData['exec'](sArgs=argList)
                 else:
                   commandData['exec']()
-              except Exception as e:
-                self.console.print(e, style="bold red")
+              #except Exception as e:
+                #self.console.print(e, style="bold red")
             if splitCommand[0] == "exit":
               runCommands = False
           else:
