@@ -67,7 +67,8 @@ class LiveryManager:
     except:
       raise RuntimeError("Unable to create DCSLM directories at \'" + dcslmPath + "\\\'")
 
-  def get_registered_livery(self, id=None, livery=None):
+  def get_registered_livery(self, id=None, livery=None, title=None):
+    # TODO: Search by title
     userID = id
     if livery:
       userID = livery.dcsuf.id
@@ -141,7 +142,7 @@ class LiveryManager:
         else:
           raise RuntimeError("Unable to write livery registry file to \'" + installRoot + "\\\'. Was the livery folder created correctly?")
 
-  def remove_livery_registry_file(self, livery):
+  def remove_livery_registry_files(self, livery):
     for i, v in livery.installs.items():
       for p in v['paths']:
         installRoot = os.path.join(os.getcwd(), livery.destination, p)

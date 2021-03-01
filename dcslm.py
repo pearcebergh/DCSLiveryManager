@@ -212,7 +212,7 @@ class DCSLMApp:
           getUFStr = "Getting DCS User File information from " + correctedLiveryURL
           with self.console.status(getUFStr): livery = self.lm.get_livery_data_from_dcsuf_url(correctedLiveryURL)
           self.console.print(getUFStr + "\n")
-          self.print_dcsuf(livery)
+          self.print_dcsuf_panel(livery)
           unitLiveries = Units.Units['aircraft'][livery.dcsuf.unit]['liveries']
           if len(unitLiveries) > 1:
             unitLiveries = self.prompt_aircraft_livery_choice(livery, unitLiveries)
@@ -319,9 +319,14 @@ class DCSLMApp:
           if (livery):
             self.console.print("Found registered livery.")
             numLiveries = str(livery.get_num_liveries())
-            with self.console.status("Removing " + numLiveries + " installed livery directories..."):
-              self.lm.uninstall_livery(livery)
-            self.console.print("Removed " + numLiveries + " installed livery directories.")
+            if uninstallArgs.keep:
+              with self.console.status("Removing " + numLiveries + " livery registry files... (--keep)"):
+                self.lm.uninstall_livery(livery)
+              self.console.print("Removed " + numLiveries + " livery registry files. (--keep)")
+            else:
+              with self.console.status("Removing " + numLiveries + " installed livery directories..."):
+                self.lm.uninstall_livery(livery)
+              self.console.print("Removed " + numLiveries + " installed livery directories.")
             uninstallData['success'].append(livery)
             self.console.print("Successfully uninstalled livery \'" + livery.dcsuf.title + "\'.")
           else:
@@ -349,13 +354,22 @@ class DCSLMApp:
     statusTable = Table(title="Livery Update Status", expand=True, box=box.ROUNDED)
     statusTable.add_column("Livery Title", justify="center", no_wrap=True)
     statusTable.add_column("Status", justify="center", no_wrap=True)
-    with Live(statusTable, console=self.console, auto_refresh=True):
+    numToUpdate = 0
+    with Live(statusTable, console=self.console, refresh_per_second=20):
       for l in self.lm.Liveries.values():
         reqDCSUF = DCSUFParser().get_dcsuserfile_from_url(str(l.dcsuf.id))
         if l.dcsuf.datetime < reqDCSUF.datetime:
           statusTable.add_row(l.dcsuf.title, "[red]Out of date")
+          numToUpdate += 1
         else:
           statusTable.add_row(l.dcsuf.title, "[green]Up to date")
+    if numToUpdate > 0:
+      if numToUpdate > 1:
+        self.console.print(str(numToUpdate) + " liveries have updates! Run the \'update\' command to get " +
+                           "the latest versions from \'DCS User Files\'.")
+      else:
+        self.console.print(str(numToUpdate) + " livery has an update! Run the \'update\' command to get " +
+                           "the latest version from \'DCS User Files\'.")
 
   def list_liveries(self):
     def sort_list_by_unit_then_title(e):
@@ -395,6 +409,16 @@ class DCSLMApp:
     self.console.print(statusTable)
 
   def get_livery_info(self, sArgs):
+    livery = None
+    if len(sArgs) == 1:
+      liveryID = sArgs[0]
+      livery = self.lm.get_registered_livery(id=liveryID)
+    else:
+      liveryName = ' '.join(sArgs)
+      livery = self.lm.get_registered_livery(title=liveryName)
+    if livery:
+      dcsufPanel = self._make_dcsuf_panel(livery)
+      self.console.print(dcsufPanel)
     return
 
   def func_test(self, sArgs):
@@ -430,7 +454,7 @@ class DCSLMApp:
                      title=Units.Units['aircraft'][livery.dcsuf.unit]['friendly'] + " - " + livery.dcsuf.title,
                      expand=False, highlight=True)
 
-  def print_dcsuf(self, livery):
+  def print_dcsuf_panel(self, livery):
     if livery:
       self.console.print(self._make_dcsuf_panel(livery))
 
