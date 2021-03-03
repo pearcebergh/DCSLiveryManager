@@ -157,6 +157,7 @@ class LiveryManager:
             raise RuntimeError("Unable to find livery registry file \'" + installPath + "\'.")
 
   def download_livery_archive(self, livery, dlCallback=None):
+    # TODO: Make archive path relative
     if livery:
       if livery.dcsuf.download:
         archiveType = '.' + str.split(livery.dcsuf.download, '.')[-1]

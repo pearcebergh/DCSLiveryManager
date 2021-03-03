@@ -3,9 +3,20 @@ from rich.rule import Rule
 from rich.prompt import Prompt
 from rich.panel import Panel, Padding, PaddingDimensions
 from rich.table import Table
+from rich.console import RenderGroup
 from rich.live import Live
 from rich import box
 from rich.align import Align
+from rich.columns import Columns
+from rich.progress import (
+    BarColumn,
+    DownloadColumn,
+    TextColumn,
+    TransferSpeedColumn,
+    TimeRemainingColumn,
+    Progress,
+    TaskID,
+)
 import argparse
 import os
 import sys
@@ -19,15 +30,7 @@ from DCSLM.Livery import DCSUserFile, Livery
 from DCSLM.LiveryManager import LiveryManager, DCSLMFolderName
 from DCSLM.UnitConfig import Units
 from DCSLM.DCSUFParser import DCSUFParser
-from rich.progress import (
-    BarColumn,
-    DownloadColumn,
-    TextColumn,
-    TransferSpeedColumn,
-    TimeRemainingColumn,
-    Progress,
-    TaskID,
-)
+
 
 if platform.system() == 'Windows':
   from ctypes import windll, wintypes
@@ -408,6 +411,35 @@ class DCSLMApp:
     #                    "3.02 GB", end_section=True)
     self.console.print(statusTable)
 
+  def _make_livery_rendergroup(self, livery):
+    liveryLines = []
+    archiveStyle = "[red]"
+    if os.path.isfile(livery.archive):
+      archiveStyle = "[green]"
+    liveryTable = Table.grid(expand=True, padding=(0,2,2,0), pad_edge=True)
+    liveryTable.add_column("Info", justify="right", no_wrap=True)
+    liveryTable.add_column("Content", justify="left")
+    liveryLines.append("Archive Filepath " + archiveStyle + livery.archive)
+    liveryTable.add_row("Archive", archiveStyle + livery.archive)
+    if self.lm.LiveryData['config']['ovgme']:
+      liveryLines.append("OVGME Directory " + livery.ovgme)
+      liveryTable.add_row("OVGME Directory", livery.ovgme)
+    liveryLines.append("Destination " + livery.destination)
+    liveryTable.add_row("Destination", livery.destination)
+    liveryLines.append("Liveries [" + ', '.join(livery.installs.keys()) + "]")
+    liveryTable.add_row("Units", "[" + "F-14A, F-14B" + "]")
+    liveryTable.add_row("Liveries", "[" + ', '.join(livery.installs.keys()) + "]")
+    liveryLines.append("Units [" + "NYI, WIP" + "]")
+    installs = []
+    for l,i in livery.installs.items():
+      installs.extend(i['paths'])
+    liveryLines.append("Paths - ")
+    liveryLines.append(str(installs))
+    liveryTable.add_row("Paths", str(installs))
+    #liveryRG = RenderGroup(*liveryLines)
+    liveryRG = liveryTable
+    return liveryRG
+
   def get_livery_info(self, sArgs):
     livery = None
     if len(sArgs) == 1:
@@ -418,7 +450,13 @@ class DCSLMApp:
       livery = self.lm.get_registered_livery(title=liveryName)
     if livery:
       dcsufPanel = self._make_dcsuf_panel(livery)
-      self.console.print(dcsufPanel)
+      dcsufPanel.title = "DCS User Files Information"
+      dcsufPanel.title_align = "left"
+      dcsufAlign = Align(dcsufPanel, align="center")
+      liveryRG = self._make_livery_rendergroup(livery)
+      liveryAlign = Align(liveryRG, align="center")
+      liveryInfoPanelGroup = RenderGroup(dcsufAlign, liveryAlign)
+      self.console.print(Panel(liveryInfoPanelGroup, title=livery.dcsuf.title + " Livery Info", highlight=True))
     return
 
   def func_test(self, sArgs):

@@ -1,6 +1,7 @@
 from requests import get
 
 def correct_dcs_user_files_url(fileURL):
+  # TODO: Better url parsing as sometimes there is a trailing /?... in the url
   DCSFilesURLRoot = "https://www.digitalcombatsimulator.com/en/files/"
   if fileURL[-1] == '/':
     fileURL = fileURL[:-1]
