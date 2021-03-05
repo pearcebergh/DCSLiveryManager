@@ -96,11 +96,11 @@ class LiveryManager:
         raise RuntimeError("Install path \'" + installPath + "\' is not a valid directory.")
 
   def remove_installed_livery_directories(self, livery):
-    for i in livery.installs.values():
+    for i in livery.installs['liveries'].values():
       for p in i['paths']:
         fullPath = os.path.join(os.getcwd(), livery.destination, p)
         self._remove_installed_livery_directory(livery, fullPath)
-    livery.installs = {}
+    livery.installs['liveries'] = {}
     return None
 
   def unregister_livery(self, livery):
@@ -312,9 +312,9 @@ class LiveryManager:
     for dl in detectedLiveries:
       if dl['name'] == "\\":
         dl['name'] = livery.dcsuf.title
-      livery.installs[dl['name']] = {'size': dl['size'], 'paths':[]}
+      livery.installs['liveries'][dl['name']] = {'size': dl['size'], 'paths':[]}
       for root in installRoots:
-        livery.installs[dl['name']]['paths'].append(os.path.join(root, dl['name']))
+        livery.installs['liveries'][dl['name']]['paths'].append(os.path.join(root, dl['name']))
         installPaths.append(os.path.join(root, dl['name']))
     return installPaths
 

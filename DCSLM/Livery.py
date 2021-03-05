@@ -119,12 +119,12 @@ class Livery:
 
   def get_num_liveries(self):
     liveryCount = 0
-    for ac, data in self.installs.items():
+    for ac, data in self.installs['liveries'].items():
       liveryCount += len(data['paths'])
     return liveryCount
 
   def get_size_installed_liveries(self):
     totalSize = 0
-    for i, v in self.installs.items():
+    for i, v in self.installs['liveries'].items():
       totalSize += v['size'] * len(v['paths'])
     return totalSize

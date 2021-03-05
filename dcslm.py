@@ -219,6 +219,7 @@ class DCSLMApp:
           unitLiveries = Units.Units['aircraft'][livery.dcsuf.unit]['liveries']
           if len(unitLiveries) > 1:
             unitLiveries = self.prompt_aircraft_livery_choice(livery, unitLiveries)
+          livery.installs['units'] = unitLiveries
           archivePath = self.lm.does_archive_exist(livery.dcsuf.download.split('/')[-1])
           if archivePath:
             self.console.print("\nArchive file \'" + livery.dcsuf.download.split('/')[-1] + "\' for \'" +
@@ -426,12 +427,12 @@ class DCSLMApp:
       liveryTable.add_row("OVGME Directory", livery.ovgme)
     liveryLines.append("Destination " + livery.destination)
     liveryTable.add_row("Destination", livery.destination)
-    liveryLines.append("Liveries [" + ', '.join(livery.installs.keys()) + "]")
+    liveryLines.append("Liveries [" + ', '.join(livery.installs['liveries'].keys()) + "]")
     liveryTable.add_row("Units", "[" + "F-14A, F-14B" + "]")
-    liveryTable.add_row("Liveries", "[" + ', '.join(livery.installs.keys()) + "]")
+    liveryTable.add_row("Liveries", "[" + ', '.join(livery.installs['liveries'].keys()) + "]")
     liveryLines.append("Units [" + "NYI, WIP" + "]")
     installs = []
-    for l,i in livery.installs.items():
+    for l,i in livery.installs['liveries'].items():
       installs.extend(i['paths'])
     liveryLines.append("Paths - ")
     liveryLines.append(str(installs))
