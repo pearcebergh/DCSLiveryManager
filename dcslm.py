@@ -118,7 +118,13 @@ class DCSLMApp:
         'completer': None,
         'usage': "",
         'desc': "List currently installed DCS liveries",
-        'flags': {},
+        'flags': {
+          'ids': {
+            'tags': ['ids'],
+            'desc': "List the IDs of all registered liveries for copying.",
+            'confirm': False
+          },
+        },
         'args': {},
         'exec': self.list_liveries
       },
@@ -275,6 +281,7 @@ class DCSLMApp:
             if livery.destination:
               self.console.print("Removing temporarily extracted folder.")
               self.lm.remove_extracted_livery_archive(livery)
+              # TODO: Check if failed to remove all files (desktop.ini, install 3314431)
             if livery.archive and not installArgs.keep:
               self.console.print("Removing downloaded archive file \'" + os.path.split(livery.archive)[1] + "\'.")
               self.lm.remove_downloaded_archive(livery, livery.archive)
@@ -375,13 +382,19 @@ class DCSLMApp:
         self.console.print(str(numToUpdate) + " livery has an update! Run the \'update\' command to get " +
                            "the latest version from \'DCS User Files\'.")
 
-  def list_liveries(self):
+  def list_liveries(self, sArgs):
     def sort_list_by_unit_then_title(e):
       return e[0] + " - " + e[1]
 
     if not len(self.lm.LiveryData['liveries']):
       self.console.print("[red]No liveries registered to list.")
       return
+
+    if len(sArgs):
+      if len(sArgs) == 1 and sArgs[0] == "ids":
+        self.console.print("Printing the IDs of " + str(len(self.lm.Liveries)) + " registered liveries.")
+        self.console.print(' '.join([l for l in self.lm.Liveries.keys()]))
+        return
     liveryRows = []
     longestUnit = ""
     for l in self.lm.Liveries.values():
@@ -609,7 +622,7 @@ class DCSLMApp:
               argList = splitCommand[1:]
             if commandData['exec']:
               #try:
-                if len(commandData['args']):
+                if len(commandData['args']) or len(commandData['flags']):
                   commandData['exec'](sArgs=argList)
                 else:
                   commandData['exec']()

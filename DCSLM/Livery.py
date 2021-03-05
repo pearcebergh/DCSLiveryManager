@@ -54,12 +54,19 @@ class DCSUserFile:
 
   def date_to_datetime(self, date):
     if len(date):
-      return datetime.strptime(date, '%d.%m.%Y %H:%M')
+      if '/' in date: # EN
+        return datetime.strptime(date, '%m/%d/%Y %H:%M:%S')
+      elif '.' in date: # RU, DE, FR, IT
+        return datetime.strptime(date, '%d.%m.%Y %H:%M:%S')
+      elif '-' in date: # CN
+        return datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
+      else:
+        raise RuntimeError("Unable to parse date text \'" + date + "\' to datetime object.")
     return None
 
   def datetime_to_date(self, datetime):
     if datetime:
-      return datetime.strftime('%d.%m.%Y %H:%M')
+      return datetime.strftime('%m/%d/%Y %H:%M:%S')
     return ""
 
   def _fill_data_test(self):
@@ -78,7 +85,7 @@ class Livery:
     self.ovgme = None
     self.destination = None
     self.dcsuf = DCSUserFile()
-    self.installs = {}
+    self.installs = { 'units': [], 'liveries': {} }
 
   def to_JSON(self):
     return {

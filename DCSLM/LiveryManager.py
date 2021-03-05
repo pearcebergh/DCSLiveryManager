@@ -129,7 +129,7 @@ class LiveryManager:
       raise RuntimeError("Unable to find livery registry file \'" + registryPath + "\'.")
 
   def write_livery_registry_files(self, livery):
-    for i, v in livery.installs.items():
+    for i, v in livery.installs['liveries'].items():
       for p in v['paths']:
         installRoot = os.path.join(os.getcwd(), livery.destination, p)
         if os.path.isdir(installRoot):
@@ -143,7 +143,7 @@ class LiveryManager:
           raise RuntimeError("Unable to write livery registry file to \'" + installRoot + "\\\'. Was the livery folder created correctly?")
 
   def remove_livery_registry_files(self, livery):
-    for i, v in livery.installs.items():
+    for i, v in livery.installs['liveries'].items():
       for p in v['paths']:
         installRoot = os.path.join(os.getcwd(), livery.destination, p)
         if os.path.isdir(installRoot):
@@ -252,14 +252,22 @@ class LiveryManager:
     return totalSize
 
   def _copy_livery_files(self, livery, extractPath, fileList, installLivery):
+    badFiles = ['desktop.ini', 'thumbs.db']
     installDirectory = os.path.join(os.getcwd(), installLivery)
     if not os.path.isdir(installDirectory):
       os.makedirs(installDirectory, exist_ok=True)
     for f in fileList:
       fileName = os.path.split(f)[1]
+      badFileName = False
+      for bF in badFiles:
+        if bF in fileName:
+          badFileName = True
+          break
+      if badFileName:
+        continue
       extractedFilepath = os.path.join(extractPath, f[1:])
       destinationFilepath = os.path.join(installDirectory, fileName)
-      shutil.copy(extractedFilepath, destinationFilepath)
+      shutil.copy2(extractedFilepath, destinationFilepath,)
     return True
 
   def copy_detected_liveries(self, livery, extractPath, extractedLiveryFiles, installPaths):
