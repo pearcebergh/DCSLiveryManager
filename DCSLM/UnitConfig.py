@@ -7,6 +7,12 @@ class UnitConfig:
   def get_unit_from_text(self, unitText):
     return self.Units['aircraft'][unitText]
 
+  def get_unit_from_liveries_dir(self, liveryDir):
+    for u in self.Units['aircraft'].values():
+      if liveryDir in u['liveries']:
+        return u
+    return None
+
   def setup_config(self):
     self.Units = {
       "aircraft": {

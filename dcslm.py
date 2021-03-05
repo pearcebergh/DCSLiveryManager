@@ -21,6 +21,7 @@ import argparse
 import os
 import sys
 import platform
+import glob
 from DCSLM import __version__
 from prompt_toolkit import PromptSession, HTML
 from prompt_toolkit.shortcuts import confirm
@@ -77,7 +78,7 @@ class DCSLMApp:
       'install': {
         'completer': None,
         'usage': "\[id/url1] \[id/url2] \[id/url3] ...",
-        'desc': "Install DCS liveries from DCS User Files URLs or IDs",
+        'desc': "Install DCS liveries from DCS User Files URLs or IDs.",
         'flags': {
           'keep': {
             'tags': ['-k', '--keep'],
@@ -114,6 +115,20 @@ class DCSLMApp:
         },
         'exec': self.uninstall_liveries
       },
+      'info': {
+        'completer': None,
+        'usage': "livery",
+        'desc': "Get additional info about an installed livery.",
+        'flags': {},
+        'args': {
+          'livery': {
+            'type': "string",
+            'optional': False,
+            'desc': "DCS User Files livery title"
+          },
+        },
+        'exec': self.get_livery_info
+      },
       'list': {
         'completer': None,
         'usage': "",
@@ -136,32 +151,18 @@ class DCSLMApp:
         'args': {},
         'exec': self.check_liveries
       },
-      'info': {
-        'completer': None,
-        'usage': "livery",
-        'desc': "Get additional info about an installed livery",
-        'flags': {},
-        'args': {
-          'livery': {
-            'type': "string",
-            'optional': False,
-            'desc': "DCS User Files livery title"
-          },
-        },
-        'exec': self.get_livery_info
-      },
       'scan': {
         'completer': None,
         'usage': "",
-        'desc': "Scan DCS liveries folder for installed liveries",
+        'desc': "Scan folders for existing liveries with .dcslm registry files.",
         'flags': {},
         'args': {},
-        'exec': None
+        'exec': self.scan_for_liveries
       },
       'help': {
         'completer': None,
         'usage': "",
-        'desc': "List the commands and their usage",
+        'desc': "List the commands and their usage.",
         'flags': {},
         'args': {},
         'exec': self.print_help
@@ -441,9 +442,9 @@ class DCSLMApp:
     liveryLines.append("Destination " + livery.destination)
     liveryTable.add_row("Destination", livery.destination)
     liveryLines.append("Liveries [" + ', '.join(livery.installs['liveries'].keys()) + "]")
-    liveryTable.add_row("Units", "[" + "F-14A, F-14B" + "]")
+    liveryTable.add_row("Units", "[" + ', '.join(livery.installs['units']) + "]")
     liveryTable.add_row("Liveries", "[" + ', '.join(livery.installs['liveries'].keys()) + "]")
-    liveryLines.append("Units [" + "NYI, WIP" + "]")
+    liveryLines.append("Units [" + ', '.join(livery.installs['units']) + "]")
     installs = []
     for l,i in livery.installs['liveries'].items():
       installs.extend(i['paths'])
@@ -472,6 +473,60 @@ class DCSLMApp:
       liveryInfoPanelGroup = RenderGroup(dcsufAlign, liveryAlign)
       self.console.print(Panel(liveryInfoPanelGroup, title=livery.dcsuf.title + " Livery Info", highlight=True))
     return
+
+  def scan_for_liveries(self):
+    if self.lm.LiveryData['config']['ovgme']:
+      with self.console.status("Scanning for \'OVGME\' directories with .dcslm registry files..."):
+        rootFolders = glob.glob("./*/")
+        liveryFolders = []
+        for f in rootFolders:
+          cDirs = glob.glob(f + "*/")
+          for c in cDirs:
+            if "\\Liveries\\" in c:
+              liveryFolders.append(c)
+        self.console.print("Found " + str(len(liveryFolders)) + " directories with a \'Liveries\' subdirectory.")
+        unitFolders = []
+        for lF in liveryFolders:
+          unitDirs = glob.glob(lF + "*/")
+          for uD in unitDirs:
+            splitUDPath = str.split(uD, '\\')
+            if len(splitUDPath) >= 2:
+              unitName = str.split(uD, '\\')[-2]
+              unit = Units.get_unit_from_liveries_dir(unitName)
+              if unit:
+                unitFolders.append(uD)
+        self.console.print("Matched " + str(len(unitFolders)) + " known unit directories.")
+        installedDCSLMFiles = []
+        for uF in unitFolders:
+          livDirs = glob.glob(uF + "/*/")
+          for lD in livDirs:
+            regFiles = glob.glob(lD + ".dcslm*")
+            if regFiles:
+              installedDCSLMFiles.append(regFiles[0])
+        self.console.print("Found " + str(len(installedDCSLMFiles)) + " \'.dcslm\' registry files.")
+        registeredLiveries = {'success':{}, 'failed':[], 'existing':{}}
+        for dF in installedDCSLMFiles:
+          livery = self.lm.load_livery_from_livery_registry_file(dF)
+          if livery:
+            if not self.lm.is_livery_registered(livery=livery):
+              self.lm.register_livery(livery)
+              registeredLiveries['success'][livery.dcsuf.id] = livery
+            else:
+              if livery not in registeredLiveries['success']:
+                registeredLiveries['existing'][livery.dcsuf.id] = livery
+          else:
+            registeredLiveries['failed'].append(dF)
+        reportStr = ""
+        if len(registeredLiveries['success']):
+          reportStr += "Registered " + str(len(registeredLiveries['success'])) + " missing liveries. "
+        if len(registeredLiveries['existing']):
+          reportStr += "Matched " + str(len(registeredLiveries['existing'])) + " existing registered liveries. "
+        if len(registeredLiveries['failed']):
+          reportStr += "Failed to register " + str(len(registeredLiveries['failed'])) + " liveries from \'.dcslm\' files:\n"
+          reportStr += ', '.join(registeredLiveries['failed'])
+        self.console.print(reportStr)
+    else:
+      self.console.print("Scanning \'Livery\' directory for unit liveries with .dcslm registry files...")
 
   def func_test(self, sArgs):
     return None
