@@ -16,7 +16,8 @@ from rich.progress import (
     TimeRemainingColumn,
     Progress,
     TaskID,
-    track
+    track,
+    SpinnerColumn
 )
 import argparse
 import os
@@ -362,10 +363,11 @@ class DCSLMApp:
   def _check_all_liveries_updates(self):
     liveryStatus = []
     checkProgress = Progress("[progress.description]{task.description}",
+                             SpinnerColumn(spinner_name="dots"),
                              BarColumn(),
                              "{task.completed}/{task.total}",
                              console=self.console)
-    checkTask = checkProgress.add_task("Checking liveries for updates...", total=len(self.lm.Liveries.keys()))
+    checkTask = checkProgress.add_task("Checking liveries for updates", total=len(self.lm.Liveries.keys()))
     with checkProgress:
       for l in self.lm.Liveries.values():
         reqDCSUF = DCSUFParser().get_dcsuserfile_from_url(str(l.dcsuf.id))
