@@ -16,6 +16,7 @@ from rich.progress import (
     TimeRemainingColumn,
     Progress,
     TaskID,
+    track
 )
 import argparse
 import os
@@ -358,23 +359,40 @@ class DCSLMApp:
       for l in uninstallData['failed']:
         self.console.print("\t(" + l['livery'] + "[red]: " + str(l['error']))
 
+  def _check_all_liveries_updates(self):
+    liveryStatus = []
+    checkProgress = Progress("[progress.description]{task.description}",
+                             BarColumn(),
+                             "{task.completed}/{task.total}",
+                             console=self.console)
+    checkTask = checkProgress.add_task("Checking liveries for updates...", total=len(self.lm.Liveries.keys()))
+    with checkProgress:
+      for l in self.lm.Liveries.values():
+        reqDCSUF = DCSUFParser().get_dcsuserfile_from_url(str(l.dcsuf.id))
+        if l.dcsuf.datetime < reqDCSUF.datetime:
+          liveryStatus.append({'livery': l, 'update': True})
+        else:
+          liveryStatus.append({'livery': l, 'update': False})
+        checkProgress.update(checkTask, advance=1)
+    return liveryStatus
+
   def check_liveries(self):
     # TODO: Make multi-threaded
     if not len(self.lm.LiveryData['liveries']):
       self.console.print("[red]No liveries registered to check.")
       return
+    liveryStatus = self._check_all_liveries_updates()
     statusTable = Table(title="Livery Update Status", expand=True, box=box.ROUNDED)
     statusTable.add_column("Livery Title", justify="center", no_wrap=True)
     statusTable.add_column("Status", justify="center", no_wrap=True)
     numToUpdate = 0
-    with Live(statusTable, console=self.console, refresh_per_second=20):
-      for l in self.lm.Liveries.values():
-        reqDCSUF = DCSUFParser().get_dcsuserfile_from_url(str(l.dcsuf.id))
-        if l.dcsuf.datetime < reqDCSUF.datetime:
-          statusTable.add_row(l.dcsuf.title, "[red]Out of date")
-          numToUpdate += 1
-        else:
-          statusTable.add_row(l.dcsuf.title, "[green]Up to date")
+    for l in liveryStatus:
+      if l['update']:
+        statusTable.add_row(l['livery'].dcsuf.title, "[red]Out of date")
+        numToUpdate += 1
+      else:
+        statusTable.add_row(l['livery'].dcsuf.title, "[green]Up to date")
+    self.console.print(statusTable)
     if numToUpdate > 0:
       if numToUpdate > 1:
         self.console.print(str(numToUpdate) + " liveries have updates! Run the \'update\' command to get " +
