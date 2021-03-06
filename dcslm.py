@@ -475,58 +475,62 @@ class DCSLMApp:
     return
 
   def scan_for_liveries(self):
-    if self.lm.LiveryData['config']['ovgme']:
-      with self.console.status("Scanning for \'OVGME\' directories with .dcslm registry files..."):
-        rootFolders = glob.glob("./*/")
-        liveryFolders = []
+    with self.console.status("Scanning directories for DCSLM installed liveries..."):
+      liveryFolders = []
+      rootFolders = glob.glob("./*/")
+      if self.lm.LiveryData['config']['ovgme']:
+        self.console.print("Scanning for \'OVGME\' directories with .dcslm registry files...")
         for f in rootFolders:
           cDirs = glob.glob(f + "*/")
           for c in cDirs:
             if "\\Liveries\\" in c:
               liveryFolders.append(c)
-        self.console.print("Found " + str(len(liveryFolders)) + " directories with a \'Liveries\' subdirectory.")
-        unitFolders = []
-        for lF in liveryFolders:
-          unitDirs = glob.glob(lF + "*/")
-          for uD in unitDirs:
-            splitUDPath = str.split(uD, '\\')
-            if len(splitUDPath) >= 2:
-              unitName = str.split(uD, '\\')[-2]
-              unit = Units.get_unit_from_liveries_dir(unitName)
-              if unit:
-                unitFolders.append(uD)
-        self.console.print("Matched " + str(len(unitFolders)) + " known unit directories.")
-        installedDCSLMFiles = []
-        for uF in unitFolders:
-          livDirs = glob.glob(uF + "/*/")
-          for lD in livDirs:
-            regFiles = glob.glob(lD + ".dcslm*")
-            if regFiles:
-              installedDCSLMFiles.append(regFiles[0])
-        self.console.print("Found " + str(len(installedDCSLMFiles)) + " \'.dcslm\' registry files.")
-        registeredLiveries = {'success':{}, 'failed':[], 'existing':{}}
-        for dF in installedDCSLMFiles:
-          livery = self.lm.load_livery_from_livery_registry_file(dF)
-          if livery:
-            if not self.lm.is_livery_registered(livery=livery):
-              self.lm.register_livery(livery)
-              registeredLiveries['success'][livery.dcsuf.id] = livery
-            else:
-              if livery not in registeredLiveries['success']:
-                registeredLiveries['existing'][livery.dcsuf.id] = livery
+      else:
+        self.console.print("Scanning \'Livery\' directory for unit liveries with .dcslm registry files...")
+        for f in rootFolders:
+          if "\\Liveries\\" in f:
+            liveryFolders.append(f)
+      self.console.print("Found " + str(len(liveryFolders)) + " directories with a \'Liveries\' subdirectory.")
+      unitFolders = []
+      for lF in liveryFolders:
+        unitDirs = glob.glob(lF + "*/")
+        for uD in unitDirs:
+          splitUDPath = str.split(uD, '\\')
+          if len(splitUDPath) >= 2:
+            unitName = str.split(uD, '\\')[-2]
+            unit = Units.get_unit_from_liveries_dir(unitName)
+            if unit:
+              unitFolders.append(uD)
+      self.console.print("Matched " + str(len(unitFolders)) + " known unit directories.")
+      installedDCSLMFiles = []
+      for uF in unitFolders:
+        livDirs = glob.glob(uF + "/*/")
+        for lD in livDirs:
+          regFiles = glob.glob(lD + ".dcslm*")
+          if regFiles:
+            installedDCSLMFiles.append(regFiles[0])
+      self.console.print("Found " + str(len(installedDCSLMFiles)) + " \'.dcslm\' registry files.")
+      registeredLiveries = {'success':{}, 'failed':[], 'existing':{}}
+      for dF in installedDCSLMFiles:
+        livery = self.lm.load_livery_from_livery_registry_file(dF)
+        if livery:
+          if not self.lm.is_livery_registered(livery=livery):
+            self.lm.register_livery(livery)
+            registeredLiveries['success'][livery.dcsuf.id] = livery
           else:
-            registeredLiveries['failed'].append(dF)
-        reportStr = ""
-        if len(registeredLiveries['success']):
-          reportStr += "Registered " + str(len(registeredLiveries['success'])) + " missing liveries. "
-        if len(registeredLiveries['existing']):
-          reportStr += "Matched " + str(len(registeredLiveries['existing'])) + " existing registered liveries. "
-        if len(registeredLiveries['failed']):
-          reportStr += "Failed to register " + str(len(registeredLiveries['failed'])) + " liveries from \'.dcslm\' files:\n"
-          reportStr += ', '.join(registeredLiveries['failed'])
-        self.console.print(reportStr)
-    else:
-      self.console.print("Scanning \'Livery\' directory for unit liveries with .dcslm registry files...")
+            if livery not in registeredLiveries['success']:
+              registeredLiveries['existing'][livery.dcsuf.id] = livery
+        else:
+          registeredLiveries['failed'].append(dF)
+      reportStr = ""
+      if len(registeredLiveries['success']):
+        reportStr += "Registered " + str(len(registeredLiveries['success'])) + " missing liveries. "
+      if len(registeredLiveries['existing']):
+        reportStr += "Matched " + str(len(registeredLiveries['existing'])) + " existing registered liveries. "
+      if len(registeredLiveries['failed']):
+        reportStr += "Failed to register " + str(len(registeredLiveries['failed'])) + " liveries from \'.dcslm\' files:\n"
+        reportStr += ', '.join(registeredLiveries['failed'])
+      self.console.print(reportStr)
 
   def func_test(self, sArgs):
     return None
