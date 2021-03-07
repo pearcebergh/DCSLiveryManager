@@ -10,6 +10,7 @@ import patoolib
 from patoolib.programs import *
 import requests
 
+# TODO: Move this to within LiveryManager
 DCSLMFolderName = "DCSLM_Root"
 
 class LiveryManager:
@@ -213,7 +214,6 @@ class LiveryManager:
         if self.is_valid_livery_directory(files):
           liverySize = self.get_size_of_livery_files(livery, extractPath, files)
           liveryDirectories.append({'name': liveryName, 'size': liverySize})
-          #liveryDirectories.append(liveryName)
     return liveryDirectories
 
   def does_archive_exist(self, archiveName):
@@ -334,7 +334,7 @@ class LiveryManager:
       return l
     raise RuntimeError("Unable to get livey data from url " + url)
 
-  def request_archive_size(self, livery):
-    if livery.dcsuf.archive:
-      return Utilities.request_file_size(livery.dcsuf.archive)
+  def request_archive_size(self, archiveURL):
+    if len(archiveURL):
+      return Utilities.request_file_size(archiveURL)
     return 0
