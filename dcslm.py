@@ -426,6 +426,7 @@ class DCSLMApp:
                            "the latest version from \'DCS User Files\'.")
 
   def update_liveries(self):
+    # TODO: Display changes in title on updated liveries
     if not len(self.lm.Liveries.keys()):
       self.console.print("[red]No liveries registered to update.")
       return
@@ -444,13 +445,13 @@ class DCSLMApp:
     self._print_livery_install_report(updateData, "Livery Update Report")
 
   def list_liveries(self, sArgs):
+    # TODO: Add summary of all installed liveries after end of table
     def sort_list_by_unit_then_title(e):
       return e[0] + " - " + e[1]
 
     if not len(self.lm.Liveries.keys()):
       self.console.print("[red]No liveries registered to list.")
       return
-
     if len(sArgs):
       if len(sArgs) == 1 and sArgs[0] == "ids":
         self.console.print("Printing the IDs of " + str(len(self.lm.Liveries)) + " registered liveries.")
@@ -470,7 +471,6 @@ class DCSLMApp:
     statusTable.add_column("ID", justify="center", no_wrap=True, style="green", width=11)
     statusTable.add_column("Livery Title", justify="center", no_wrap=True, overflow='ellipsis')
     statusTable.add_column("Size", justify="right", no_wrap=True, style="gold1", width=10)
-
     liveryRows.sort(key=sort_list_by_unit_then_title)
     for i in range(0, len(liveryRows)):
       l = liveryRows[i]
@@ -731,13 +731,13 @@ class DCSLMApp:
             if len(splitCommand) > 1:
               argList = splitCommand[1:]
             if commandData['exec']:
-              #try:
+              try:
                 if len(commandData['args']) or len(commandData['flags']):
                   commandData['exec'](sArgs=argList)
                 else:
                   commandData['exec']()
-              #except Exception as e:
-                #self.console.print(e, style="bold red")
+              except Exception as e:
+                self.console.print(e, style="bold red")
             if splitCommand[0] == "exit":
               runCommands = False
           else:
@@ -748,7 +748,6 @@ class DCSLMApp:
 
 
 if __name__ == '__main__':
-  #os.chdir(os.path.dirname(os.path.abspath(sys.executable)))
   os.chdir(os.path.dirname(os.path.abspath(sys.argv[0])))
   set_terminal_title(f'DCS Livery Manager v{__version__}')
   dcslmapp = DCSLMApp()
