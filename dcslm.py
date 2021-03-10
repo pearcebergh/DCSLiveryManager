@@ -420,7 +420,6 @@ class DCSLMApp:
                            "the latest version from \'DCS User Files\'.")
 
   def update_liveries(self):
-    # TODO: Display changes in title on updated liveries
     if not len(self.lm.Liveries.keys()):
       self.console.print("[red]No liveries registered to update.")
       return
