@@ -9,6 +9,8 @@ DCSLM is setup to handle multiple archive types (see pre-requisites) and any sor
 # Pre-Requisites
 DCSLM relies on the [patool](https://pypi.org/project/patool/), which in turn relies on the installed archive programs you have on your computer. It's **highly** recommended you install [7-Zip](https://www.7-zip.org/download.html) as it's a free, open-source program that can handle any archive you will encounter on DCS User Files. You must make sure the 7z install directory is on your path for it to work correctly.
 
+Your anti-virus software may flag *DCSLM.exe* and attempt to remove it due to it being a unsigned and untrusted executable. Very understandable! You may need to add an exception to stop that from happening. I promise nothing funky is going on in this program, check the source code!
+
 # Installation
 DCSLM is packaged as a single Windows EXE that needs to be placed in the proper directory depending on your setup:
 * Place *DCSLM.exe* in your DCS Saved Games directory (i.e. C:\Users\sneep\Saved Games\DCS)
