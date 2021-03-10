@@ -1,14 +1,12 @@
 from requests import get
+import re
 
 def correct_dcs_user_files_url(fileURL):
-  # TODO: Better url parsing as sometimes there is a trailing /?... in the url
   DCSFilesURLRoot = "https://www.digitalcombatsimulator.com/en/files/"
-  if fileURL[-1] == '/':
-    fileURL = fileURL[:-1]
-  splitFileURL = str.split(fileURL, "/")[-1] # strip down url to just the ID
-  if str.isnumeric(splitFileURL): # check if it's ID-like
-    return DCSFilesURLRoot + splitFileURL + "/" # put it back together
-  return None
+  fileID = re.findall(r'[0-9]+', fileURL)
+  if len(fileID):
+    if str.isnumeric(fileID[0]):
+      return DCSFilesURLRoot + fileID[0] + "/"
 
 def size_text_to_bytes(sizeText):
   if len(sizeText):
