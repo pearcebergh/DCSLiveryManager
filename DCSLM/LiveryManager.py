@@ -170,10 +170,10 @@ class LiveryManager:
                   if dlCallback:
                     dlCallback['exec'](livery, dlCallback, len(chunk))
             return destinationFilename
-          except:
+          except (KeyboardInterrupt, IOError, ConnectionError, FileNotFoundError) as e:
             if os.path.isfile(destinationFilename):
               os.remove(destinationFilename)
-            raise RuntimeError("Failed during download of archive " + livery.dcsuf.download)
+            raise RuntimeError("Failed during download of archive " + livery.dcsuf.download + ": " + str(e))
     raise RuntimeError("Unable to get downloaded archive path for livery \'" + livery.dcsuf.title + "\'.")
 
   def _remove_existing_extracted_files(self, livery, extractedRoot):

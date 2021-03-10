@@ -273,8 +273,11 @@ class DCSLMApp:
           if livery:
             if livery.destination:
               self.console.print("Removing temporarily extracted folder.")
-              self.lm.remove_extracted_livery_archive(livery)
-              # TODO: Check if failed to remove all files (desktop.ini, install 3314431)
+              if not self.lm.remove_extracted_livery_archive(livery):
+                failedExtractPath = os.path.join(os.getcwd(), self.lm.FolderRoot, "extract", str(livery.dcsuf.id))
+                failedMsg = "Failed to remove all extracted files to directory " + failedExtractPath
+                self.console.print(failedMsg, style="red")
+                installData['failed'].append({'url': livery.dcsuf.id, 'error': failedMsg})
             if livery.archive and not keepFiles:
               self.console.print("Removing downloaded archive file \'" + os.path.split(livery.archive)[1] + "\'.")
               self.lm.remove_downloaded_archive(livery, livery.archive)
