@@ -305,6 +305,7 @@ class DCSLMApp:
     self.console.print("")
 
   def _parse_install_args(self, sArgs):
+    try:
       installArgsParser = argparse.ArgumentParser(usage=self.commands['install']['usage'],
                                                   description=self.commands['install']['desc'],
                                                   exit_on_error=False)
@@ -316,6 +317,8 @@ class DCSLMApp:
         self.console.print("Failed to parse the following args for \'install\':", style="bold red")
         self.console.print("\t" + str(parsedArgs[1]), style="bold red")
       return parsedArgs[0]
+    except SystemExit:
+      raise RuntimeError("Unable to parse \'uninstall\' command.")
 
   def install_liveries(self, sArgs):
     installArgs = self._parse_install_args(sArgs)
@@ -326,18 +329,21 @@ class DCSLMApp:
     self._print_livery_install_report(installData, "Livery Install Report")
 
   def _parse_uninstall_args(self, sArgs):
-      installArgsParser = argparse.ArgumentParser(usage=self.commands['uninstall']['usage'],
+    try:
+      uninstallArgsParser = argparse.ArgumentParser(usage=self.commands['uninstall']['usage'],
                                                   description=self.commands['uninstall']['desc'],
                                                   exit_on_error=False)
-      installArgsParser.add_argument(*self.commands['uninstall']['flags']['keep']['tags'], action="store_true",
+      uninstallArgsParser.add_argument(*self.commands['uninstall']['flags']['keep']['tags'], action="store_true",
                                      help=self.commands['uninstall']['flags']['keep']['desc'], dest='keep')
-      installArgsParser.add_argument('livery', type=str, nargs="+",
+      uninstallArgsParser.add_argument('livery', type=str, nargs="+",
                                      help=self.commands['uninstall']['args']['livery']['desc'])
-      parsedArgs = installArgsParser.parse_known_args(sArgs)
+      parsedArgs = uninstallArgsParser.parse_known_args(sArgs)
       if len(parsedArgs[1]):
         self.console.print("Failed to parse the following args for \'uninstall\':", style="bold red")
         self.console.print("\t" + str(parsedArgs[1]), style="bold red")
       return parsedArgs[0]
+    except SystemExit:
+      raise RuntimeError("Unable to parse \'uninstall\' command.")
 
   def uninstall_liveries(self, sArgs):
     uninstallArgs = self._parse_uninstall_args(sArgs)
@@ -659,7 +665,7 @@ class DCSLMApp:
       self.console.print("If you use a mod manager, like OVGME, to manage your DCS mod installs, you can enable " +
                          "\'OVGME Mode\' to have it create a root directory named with the format " +
                          "[bold purple]{aircraft} - {livery title}[/bold purple].")
-      self.console.print("\n[gold1]Make sure you've placed \'DCSLM.exe\' inside your mod manager's directory that is " +
+      self.console.print("\n[gold1]For \'OVGME Mode\' make sure you've placed \'DCSLM.exe\' inside your mod manager's directory that is " +
                          "configured for the [/gold1]\'DCS Saved Games\'[gold1] directory, " +
                          "not the DCS install directory.[/gold1]")
       ovgme = Prompt.ask("\n[bold]Do you want to enable OVGME (Mod Manager) Mode?[/bold]", choices=["Yes", "No"])
