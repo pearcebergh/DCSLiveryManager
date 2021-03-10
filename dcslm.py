@@ -34,28 +34,23 @@ from DCSLM.LiveryManager import LiveryManager, DCSLMFolderName
 from DCSLM.UnitConfig import Units
 from DCSLM.DCSUFParser import DCSUFParser
 
-
-if platform.system() == 'Windows':
-  from ctypes import windll, wintypes
-
-def set_terminal_title(title):
+def set_console_title(title):
   if platform.system() == 'Windows':
     os.system(f'title {title}')
   else:
     os.system(f'echo "\033]0;{title}\007"')
 
-def clear():
+def clear_console():
   if platform.system() == 'Windows':
     os.system('cls')
   else:
     os.system('clear')
 
-def set_terminal_size(w, h):
+def set_console_size(w, h):
   if platform.system() == 'Windows':
     os.system(f'mode con: cols={w} lines={h}')
   else:
     os.system(f'printf \'\033[8;{h};{w}t\'')
-
 
 class DCSLMApp:
   def __init__(self):
@@ -71,7 +66,6 @@ class DCSLMApp:
     self.setup_console_window()
     self.clear_and_print_header()
     self.setup_livery_manager()
-    #self.print_help()
     self.run()
 
   def setup_commands(self):
@@ -626,10 +620,6 @@ class DCSLMApp:
     if livery:
       self.console.print(self._make_dcsuf_panel(livery))
 
-  def print_livery(self, livery):
-    if livery:
-      self.console.print(Panel("tHIS IS A LIVERY PUT YOUR HANDS UP!", title=livery.ovgme,expand=False, highlight=True))
-
   def setup_command_completer(self):
     completerDict = {}
     for k, v in self.commands.items():
@@ -637,7 +627,7 @@ class DCSLMApp:
     self.completer = NestedCompleter.from_nested_dict(completerDict)
 
   def clear_and_print_header(self):
-    clear()
+    clear_console()
     self.console.print(
            Rule(f'[bold gold1]DCS Livery Manager[/bold gold1] [bold sky_blue1]v{__version__}[/bold sky_blue1]',
            characters="~═~*", style="deep_pink2"))
@@ -755,6 +745,6 @@ class DCSLMApp:
 
 if __name__ == '__main__':
   os.chdir(os.path.dirname(os.path.abspath(sys.argv[0])))
-  set_terminal_title(f'DCS Livery Manager v{__version__}')
+  set_console_title(f'DCS Livery Manager v{__version__}')
   dcslmapp = DCSLMApp()
   dcslmapp.start()
