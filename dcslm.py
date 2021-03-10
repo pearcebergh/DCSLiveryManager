@@ -30,7 +30,7 @@ from prompt_toolkit.shortcuts import confirm
 from prompt_toolkit.completion import WordCompleter, NestedCompleter
 from DCSLM import Utilities
 from DCSLM.Livery import DCSUserFile, Livery
-from DCSLM.LiveryManager import LiveryManager, DCSLMFolderName
+from DCSLM.LiveryManager import LiveryManager
 from DCSLM.UnitConfig import Units
 from DCSLM.DCSUFParser import DCSUFParser
 

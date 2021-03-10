@@ -10,13 +10,11 @@ import patoolib
 from patoolib.programs import *
 import requests
 
-# TODO: Move this to within LiveryManager
-DCSLMFolderName = "DCSLM_Root"
-
 class LiveryManager:
   def __init__(self):
     self.LiveryData = self.make_default_data()
     self.Liveries = {}
+    self.FolderRoot = "DCSLM"
 
   def make_default_data(self):
     ld = {
@@ -28,8 +26,7 @@ class LiveryManager:
     return ld
 
   def load_data(self):
-    global DCSLMFolderName
-    configPath = os.path.join(os.getcwd(), DCSLMFolderName, "dcslm.json")
+    configPath = os.path.join(os.getcwd(), self.FolderRoot, "dcslm.json")
     if os.path.isfile(configPath):
       try:
         with open(configPath, "r") as configFile:
@@ -42,8 +39,7 @@ class LiveryManager:
     return None
 
   def write_data(self):
-    global DCSLMFolderName
-    configPath = os.path.join(os.getcwd(), DCSLMFolderName, "dcslm.json")
+    configPath = os.path.join(os.getcwd(), self.FolderRoot, "dcslm.json")
     try:
       with open(configPath, "w") as configFile:
         outJson = {}
@@ -54,8 +50,7 @@ class LiveryManager:
       raise RuntimeError("Unable to write DCSLM config file to \'" + configPath + "\'")
 
   def make_dcslm_dirs(self):
-    global DCSLMFolderName
-    dcslmPath = os.path.join(os.getcwd(), DCSLMFolderName)
+    dcslmPath = os.path.join(os.getcwd(), self.FolderRoot)
     archivesPath = os.path.join(dcslmPath, "archives")
     extractPath = os.path.join(dcslmPath, "extract")
     try:
@@ -85,7 +80,6 @@ class LiveryManager:
 
   def register_livery(self, livery):
     if livery:
-      #if not self.is_livery_registered(livery.dcsuf.id):
       self.LiveryData["liveries"][str(livery.dcsuf.id)] = livery.to_JSON()
       self.Liveries[str(livery.dcsuf.id)] = livery
 
@@ -163,7 +157,7 @@ class LiveryManager:
       if livery.dcsuf.download:
         archiveType = '.' + str.split(livery.dcsuf.download, '.')[-1]
         if archiveType in ArchiveExtensions:
-          destinationPath = os.path.join(os.getcwd(), DCSLMFolderName, "archives")
+          destinationPath = os.path.join(os.getcwd(), self.FolderRoot, "archives")
           archiveFilename = str.split(livery.dcsuf.download, '/')[-1]
           destinationFilename = os.path.join(destinationPath, archiveFilename)
           with requests.get(livery.dcsuf.download, stream=True) as req:
@@ -185,9 +179,9 @@ class LiveryManager:
   def extract_livery_archive(self, livery):
     if livery:
       if len(livery.archive):
-        archivePath = os.path.join(os.getcwd(), DCSLMFolderName, "archives", livery.archive)
+        archivePath = os.path.join(os.getcwd(), self.FolderRoot, "archives", livery.archive)
         if os.path.isfile(archivePath):
-          extractRoot = os.path.join(os.getcwd(), DCSLMFolderName, "extract", str(livery.dcsuf.id))
+          extractRoot = os.path.join(os.getcwd(), self.FolderRoot, "extract", str(livery.dcsuf.id))
           if not os.path.isdir(extractRoot):
             os.makedirs(extractRoot, exist_ok=True)
           archiveFile = livery.archive
@@ -217,7 +211,7 @@ class LiveryManager:
     return liveryDirectories
 
   def does_archive_exist(self, archiveName):
-    archiveFiles = glob.glob(os.path.join(os.getcwd(), DCSLMFolderName, "archives") + "/*.*")
+    archiveFiles = glob.glob(os.path.join(os.getcwd(), self.FolderRoot, "archives") + "/*.*")
     for a in archiveFiles:
       if archiveName in a:
         return a
@@ -288,16 +282,16 @@ class LiveryManager:
 
   def remove_extracted_livery_archive(self, livery):
     if livery:
-      extractRoot = os.path.join(os.getcwd(), DCSLMFolderName, "extract", str(livery.dcsuf.id))
+      extractRoot = os.path.join(os.getcwd(), self.FolderRoot, "extract", str(livery.dcsuf.id))
       shutil.rmtree(extractRoot, ignore_errors=True)
       return True
     return False
 
   def remove_downloaded_archive(self, livery, downloadPath):
     if livery:
-      archivePath = os.path.join(os.getcwd(), DCSLMFolderName, "archives", livery.archive)
+      archivePath = os.path.join(os.getcwd(), self.FolderRoot, "archives", livery.archive)
       if os.path.isfile(archivePath):
-        #os.remove(archivePath)
+        os.remove(archivePath)
         return True
       else:
         raise RuntimeWarning("Unable to remove archive file \'" + archivePath + "\' as it doesn't exist.")
