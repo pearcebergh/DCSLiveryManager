@@ -152,7 +152,6 @@ class LiveryManager:
             raise RuntimeError("Unable to find livery registry file \'" + installPath + "\'.")
 
   def download_livery_archive(self, livery, dlCallback=None):
-    # TODO: Make archive path relative
     if livery:
       if livery.dcsuf.download:
         archiveType = '.' + str.split(livery.dcsuf.download, '.')[-1]
@@ -160,16 +159,21 @@ class LiveryManager:
           destinationPath = os.path.join(os.getcwd(), self.FolderRoot, "archives")
           archiveFilename = str.split(livery.dcsuf.download, '/')[-1]
           destinationFilename = os.path.join(destinationPath, archiveFilename)
-          with requests.get(livery.dcsuf.download, stream=True) as req:
-            req.raise_for_status()
-            with open(destinationFilename, 'wb') as f:
-              if dlCallback:
-                dlCallback['progress'].start_task(dlCallback['task'])
-              for chunk in req.iter_content(chunk_size=8192):
-                f.write(chunk)
+          try:
+            with requests.get(livery.dcsuf.download, stream=True) as req:
+              req.raise_for_status()
+              with open(destinationFilename, 'wb') as f:
                 if dlCallback:
-                  dlCallback['exec'](livery, dlCallback, len(chunk))
-          return destinationFilename
+                  dlCallback['progress'].start_task(dlCallback['task'])
+                for chunk in req.iter_content(chunk_size=8192):
+                  f.write(chunk)
+                  if dlCallback:
+                    dlCallback['exec'](livery, dlCallback, len(chunk))
+            return destinationFilename
+          except:
+            if os.path.isfile(destinationFilename):
+              os.remove(destinationFilename)
+            raise RuntimeError("Failed during download of archive " + livery.dcsuf.download)
     raise RuntimeError("Unable to get downloaded archive path for livery \'" + livery.dcsuf.title + "\'.")
 
   def _remove_existing_extracted_files(self, livery, extractedRoot):

@@ -265,7 +265,7 @@ class DCSLMApp:
               else:
                 raise RuntimeError("Failed to detect valid livery directories from extracted livery archive!")
             else:
-              raise RuntimeError("Failed to extract livery archive[/bold red] \'" + livery.archive + "\'[bold red].")
+              raise RuntimeError("Failed to extract livery archive \'" + livery.archive + "\'.")
         except Exception as e:
           installData['failed'].append({'url': correctedLiveryURL, 'error': e})
           self.console.print(e, style="bold red")
