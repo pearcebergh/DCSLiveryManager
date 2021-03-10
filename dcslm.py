@@ -1,6 +1,6 @@
 from rich.console import Console
 from rich.rule import Rule
-from rich.prompt import Prompt
+from rich.prompt import Prompt, Confirm
 from rich.panel import Panel, Padding, PaddingDimensions
 from rich.table import Table
 from rich.console import RenderGroup
@@ -177,28 +177,13 @@ class DCSLMApp:
         'flags': {},
         'args': {},
         'exec': None
-      },
-      'test': {
-        'completer': None,
-        'usage': "",
-        'desc': "This is a test",
-        'flags': {},
-        'args': {
-          'text': {
-            'type': "string",
-            'optional': False,
-            'desc': "A string of text"
-          },
-        },
-        'exec': self.func_test
       }
     }
 
   def _install_liveries(self, liveryStrings, keepFiles=False, forceDownload=False):
     installData = {'success': [], 'failed': []}
-    # TODO: Check for duplicate url/IDs in list
     for liveryStr in liveryStrings:
-      correctedLiveryURL = Utilities.correct_dcs_user_files_url(liveryStr)
+      correctedLiveryURL, urlID = Utilities.correct_dcs_user_files_url(liveryStr)
       if not correctedLiveryURL:
         errorMsg = "Failed to get DCS User Files url or ID from \'" + liveryStr + "\'."
         installData['failed'].append({'url': liveryStr, 'error': errorMsg})
@@ -211,9 +196,16 @@ class DCSLMApp:
             livery = self.lm.get_livery_data_from_dcsuf_url(correctedLiveryURL)
           self.console.print(getUFStr + "\n")
           self.print_dcsuf_panel(livery)
+          existingLivery = self.lm.get_registered_livery(id=int(urlID))
+          if existingLivery:
+            if existingLivery.dcsuf.datetime == livery.dcsuf.datetime:
+              if not self.prompt_existing_livery(existingLivery):
+                raise RuntimeError("Skipping reinstalling livery.")
           unitLiveries = Units.Units['aircraft'][livery.dcsuf.unit]['liveries']
           if len(unitLiveries) > 1:
             unitLiveries = self.prompt_aircraft_livery_choice(livery, unitLiveries)
+          if len(unitLiveries) == 0:
+            raise RuntimeError("No units selected for install.")
           livery.installs['units'] = unitLiveries
           archivePath = self.lm.does_archive_exist(livery.dcsuf.download.split('/')[-1])
           if archivePath:
@@ -347,7 +339,6 @@ class DCSLMApp:
     self.console.print("Attempting to uninstall " + str(len(uninstallArgs.livery)) +
                        (" registered liveries" if len(uninstallArgs.livery) > 1 else " registered livery") + ".")
     uninstallData = {'success': [], 'failed': []}
-    # TODO: Check for duplicate liveries in list
     for liveryStr in uninstallArgs.livery:
       if str.isnumeric(liveryStr):
         try:
@@ -498,7 +489,7 @@ class DCSLMApp:
       archiveStyle = "[green]"
     liveryTable.add_row("Archive", archiveStyle + livery.archive)
     if self.lm.LiveryData['config']['ovgme']:
-      liveryTable.add_row("OVGME Directory", livery.ovgme)
+      liveryTable.add_row("Mod Managed Directory", livery.ovgme)
     liveryTable.add_row("Destination", livery.destination)
     liveryTable.add_row("Units", "[" + ', '.join(livery.installs['units']) + "]")
     liveryTable.add_row("Liveries", "[" + ', '.join(livery.installs['liveries'].keys()) + "]")
@@ -654,29 +645,35 @@ class DCSLMApp:
 
   def prompt_livery_manager_defaults(self):
     if self.lm:
-      self.console.print("\n\n[bold green underline]OVGME (Mod Manager) Mode:")
-      self.console.print("If you use a mod manager, like OVGME, to manage your DCS mod installs, you can enable " +
-                         "\'OVGME Mode\' to have it create a root directory named with the format " +
+      self.console.print("\n\n[bold green underline]Mod Manager Mode:")
+      self.console.print("If you use a mod manager, like \'OVGME\' or \'JSGME\', to manage your DCS mod installs, " +
+                         "you can enable \'Mod Manager Mode\' to have it create a root directory named with the format " +
                          "[bold purple]{aircraft} - {livery title}[/bold purple].")
-      self.console.print("\n[gold1]For \'OVGME Mode\' make sure you've placed \'DCSLM.exe\' inside your mod manager's directory that is " +
+      self.console.print("\n[gold1]For \'Mod Manager Mode\' make sure you've placed \'DCSLM.exe\' inside your " +
+                         "mod manager's directory that is " +
                          "configured for the [/gold1]\'DCS Saved Games\'[gold1] directory, " +
                          "not the DCS install directory.[/gold1]")
-      ovgme = Prompt.ask("\n[bold]Do you want to enable OVGME (Mod Manager) Mode?[/bold]", choices=["Yes", "No"])
-      ovgme = (True if ovgme == "Yes" else False)
+      ovgme = Confirm.ask("\n[bold]Do you want to enable Mod Manager Mode?[/bold]")
       self.lm.LiveryData['config']['ovgme'] = ovgme
       if ovgme:
-        self.console.print("[green]Enabling OVGME (Mod Manager) mode.")
+        self.console.print("[green]Enabling Mod Manager mode.")
+
+  def prompt_existing_livery(self, livery):
+    if self.lm:
+      self.console.print("\nThe livery \'" + livery.dcsuf.title + "\' is already installed and up to date.")
+      return Confirm.ask("\n[bold]Do you still want to install the livery?[/bold]")
+    return True
 
   def prompt_aircraft_livery_choice(self, livery, unitLiveries):
-    # TODO: Add choice for none
     choosenLiveries = []
-    liveryChoices = ["All"]
+    liveryChoices = ["[white]None"]
     for u in unitLiveries:
       if u in Units.Units['aircraft'].keys():
         liveryChoices.append(Units.Units['aircraft'][u]['friendly'])
       else:
         liveryChoices.append(u)
-    if len(liveryChoices) > 2:
+    liveryChoices.append("All")
+    if len(liveryChoices) > 3:
       choiceText = ""
       for i in range(0, len(liveryChoices)):
         choiceText += "[" + str(i) + "]" + liveryChoices[i] + " "
@@ -684,9 +681,14 @@ class DCSLMApp:
                          Units.Units['aircraft'][livery.dcsuf.unit]['friendly'] + "[/bold magenta]. " +
                          "Please choose from one of the following choices by inputting the corresponding index number:")
       self.console.print("\n\t" + choiceText)
-      choice = Prompt.ask("\n[bold]Which aircraft do you want the livery to be installed to?[/bold]",
-                          choices=[str(i) for i in range(0,len(liveryChoices))])
+      try:
+        choice = Prompt.ask("\n[bold]Which aircraft do you want the livery to be installed to?[/bold]",
+                            choices=[str(i) for i in range(0,len(liveryChoices))])
+      except KeyboardInterrupt:
+        return []
       if choice == "0":
+        return []
+      elif choice == str(len(liveryChoices) - 1):
         choosenLiveries = unitLiveries
       else:
         choosenLiveries = [unitLiveries[int(choice) - 1]]

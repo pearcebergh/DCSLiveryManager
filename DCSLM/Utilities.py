@@ -6,7 +6,7 @@ def correct_dcs_user_files_url(fileURL):
   fileID = re.findall(r'[0-9]+', fileURL)
   if len(fileID):
     if str.isnumeric(fileID[0]):
-      return DCSFilesURLRoot + fileID[0] + "/"
+      return DCSFilesURLRoot + fileID[0] + "/", fileID[0]
 
 def size_text_to_bytes(sizeText):
   if len(sizeText):

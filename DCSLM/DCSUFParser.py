@@ -79,7 +79,7 @@ class DCSUFParser():
       raise RuntimeError("Unable to parse html from " + url)
 
   def get_dcsuserfile_from_url(self, url):
-    correctedURL = correct_dcs_user_files_url(url)
+    correctedURL, id = correct_dcs_user_files_url(url)
     if len(correctedURL):
       dcsufHTML = self._request_html_from_url(correctedURL)
       dcsuf = self._parse_html_for_dcsuf(correctedURL, dcsufHTML)
