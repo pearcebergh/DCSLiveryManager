@@ -41,10 +41,9 @@ class DCSUFParser():
 
   def _request_html_from_url(self, url):
     try:
-        with requests.Session() as session:
-            r = session.get(url)
-            dcsufHTML = BeautifulSoup(r.text, 'html.parser')
-            return dcsufHTML
+      r = requests.get(url)
+      dcsufHTML = BeautifulSoup(r.text, 'html.parser')
+      return dcsufHTML
     except:
       raise RuntimeError("Unable to request html from url " + url)
 

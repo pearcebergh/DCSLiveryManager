@@ -3,6 +3,7 @@ import glob
 import os
 import platform
 import sys
+import requests
 from prompt_toolkit import PromptSession, HTML
 from prompt_toolkit.completion import NestedCompleter
 from rich import box
@@ -28,6 +29,7 @@ from DCSLM.DCSUFParser import DCSUFParser
 from DCSLM.LiveryManager import LiveryManager
 from DCSLM.UnitConfig import Units
 
+# TODO: Convert all y/n prompts to Confirm.ask
 
 def set_console_title(title):
   if platform.system() == 'Windows':
@@ -579,7 +581,34 @@ class DCSLMApp:
       self.lm.write_data()
       self.console.print(reportStr)
 
-  def upgrade_dcslm(self, sArgs):
+  def upgrade_dcslm(self):
+    import requests
+    from distutils.version import StrictVersion
+    from bs4 import BeautifulSoup
+    try:
+      releaseData = []
+      relReq = requests.get("https://github.com/pearcebergh/DCSLiveryManager/releases", timeout=5)
+      relHTML = BeautifulSoup(relReq.text, 'html.parser')
+      relDivs = relHTML.find_all('div', {'class': "release-entry"})
+      for r in relDivs:
+        rData = {}
+        rData['name'] = r.find('div', {'class': "f1 flex-auto min-width-0 text-normal"}).text[:-1]
+        rData['version'] = r.find('span', {'class': "css-truncate-target"}).text
+        rData['desc'] = r.find('div', {'class': "markdown-body"}).text
+        rData['date'] = r.find('relative-time').text
+        if StrictVersion(rData['version']) > StrictVersion(__version__):
+          releaseData.append(rData)
+      if not len(releaseData):
+        self.console.print("Current DCSLM version " + __version__ + " is the available latest version.")
+      else:
+        for rd in releaseData:
+          self.console.print(rd['name'] + " (" + rd['version'] + ") " + rd['date'])
+          self.console.print(rd['desc'])
+        upgradeConf = Confirm.ask("Do you want to download and upgrade to the latest version of DCSLM?")
+        if upgradeConf:
+          self.console.print("upgradingz")
+    except Exception as e:
+      self.console.print("[bold red]DCSLM upgrade failed:[/bold red] [red]" + str(e))
     return None
 
   def func_test(self, sArgs):
