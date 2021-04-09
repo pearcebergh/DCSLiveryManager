@@ -3,13 +3,12 @@ import glob
 import os
 import platform
 import sys
-import requests
 from prompt_toolkit import PromptSession, HTML
 from prompt_toolkit.completion import NestedCompleter
 from rich import box
 from rich.align import Align
-from rich.console import Console
-from rich.console import RenderGroup
+from rich.console import Console, RenderGroup
+from rich.columns import Columns
 from rich.panel import Panel
 from rich.progress import (
   BarColumn,
@@ -22,10 +21,12 @@ from rich.progress import (
 )
 from rich.prompt import Prompt, Confirm
 from rich.rule import Rule
+from rich.status import Status
 from rich.table import Table
 from DCSLM import Utilities
 from DCSLM import __version__
 from DCSLM.DCSUFParser import DCSUFParser
+from DCSLM.Livery import DCSUserFile, Livery
 from DCSLM.LiveryManager import LiveryManager
 from DCSLM.UnitConfig import Units
 
@@ -582,7 +583,11 @@ class DCSLMApp:
       self.console.print(reportStr)
 
   def upgrade_dcslm(self):
+    import re
+    import shutil
     import requests
+    import time
+    import subprocess
     from distutils.version import StrictVersion
     from bs4 import BeautifulSoup
     try:
@@ -596,6 +601,8 @@ class DCSLMApp:
         rData['version'] = r.find('span', {'class': "css-truncate-target"}).text
         rData['desc'] = r.find('div', {'class': "markdown-body"}).text
         rData['date'] = r.find('relative-time').text
+        rData['download'] = "https://github.com/" +  r.find('a', {'class': "d-flex flex-items-center min-width-0"},
+                                                            href = re.compile(r'[/]([a-z]|[A-Z])\w+')).attrs['href']
         if StrictVersion(rData['version']) > StrictVersion(__version__):
           releaseData.append(rData)
       if not len(releaseData):
@@ -606,7 +613,21 @@ class DCSLMApp:
           self.console.print(rd['desc'])
         upgradeConf = Confirm.ask("Do you want to download and upgrade to the latest version of DCSLM?")
         if upgradeConf:
-          self.console.print("upgradingz")
+          oldExec = sys.executable + '.old'
+          if os.path.isfile(oldExec):
+            os.remove(oldExec)
+          shutil.move(sys.executable, oldExec)
+          dlFilename = "DCSLM.exe"
+          with self.console.status("Downloading DCSLM v" + releaseData[0]['version']):
+            latestExe = requests.get(releaseData[0]['download'], timeout=5)
+          with open(dlFilename, 'wb') as f:
+            f.write(latestExe.content)
+          os.chmod(dlFilename, 0o775)
+          self.console.print("[bold green]DCSLM Upgrade complete to version " + releaseData[0]['version'])
+          self.console.print("[bold red]DCSLM will be restarted in a few moments...")
+          time.sleep(5)
+          subprocess.call(dlFilename)
+          sys.exit(0)
     except Exception as e:
       self.console.print("[bold red]DCSLM upgrade failed:[/bold red] [red]" + str(e))
     return None

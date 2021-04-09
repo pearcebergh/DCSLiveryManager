@@ -1,4 +1,4 @@
-__version__ = '0.1.1'
+__version__ = '0.2.0'
 __license__ = 'BSD-3'
 __copyright__ = '2021, Pearce Bergh <pearce@pearce.cool>'
 __docformat__ = 'restructuredtext en'
