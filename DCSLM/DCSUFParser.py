@@ -1,8 +1,8 @@
-from .Livery import Livery, DCSUserFile
-from .UnitConfig import Units
-from .Utilities import correct_dcs_user_files_url
 import requests
 from bs4 import BeautifulSoup
+from .Livery import DCSUserFile
+from .UnitConfig import Units
+from .Utilities import correct_dcs_user_files_url
 
 ArchiveExtensions = [".zip", ".rar", ".7z"]
 

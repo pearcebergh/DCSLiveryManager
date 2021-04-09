@@ -1,6 +1,7 @@
-from .UnitConfig import Units
 import json
 from datetime import datetime
+from .UnitConfig import Units
+
 
 class DCSUserFile:
   def __init__(self):

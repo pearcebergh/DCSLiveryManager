@@ -1,38 +1,33 @@
-from rich.console import Console
-from rich.rule import Rule
-from rich.prompt import Prompt, Confirm
-from rich.panel import Panel, Padding, PaddingDimensions
-from rich.table import Table
-from rich.console import RenderGroup
-from rich.live import Live
+import argparse
+import glob
+import os
+import platform
+import sys
+from prompt_toolkit import PromptSession, HTML
+from prompt_toolkit.completion import NestedCompleter
 from rich import box
 from rich.align import Align
-from rich.columns import Columns
+from rich.console import Console
+from rich.console import RenderGroup
+from rich.panel import Panel
 from rich.progress import (
-    BarColumn,
-    DownloadColumn,
-    TextColumn,
-    TransferSpeedColumn,
-    TimeRemainingColumn,
-    Progress,
-    TaskID,
-    track,
-    SpinnerColumn
+  BarColumn,
+  DownloadColumn,
+  TextColumn,
+  TransferSpeedColumn,
+  TimeRemainingColumn,
+  Progress,
+  SpinnerColumn
 )
-import argparse
-import os
-import sys
-import platform
-import glob
-from DCSLM import __version__
-from prompt_toolkit import PromptSession, HTML
-from prompt_toolkit.shortcuts import confirm
-from prompt_toolkit.completion import WordCompleter, NestedCompleter
+from rich.prompt import Prompt, Confirm
+from rich.rule import Rule
+from rich.table import Table
 from DCSLM import Utilities
-from DCSLM.Livery import DCSUserFile, Livery
+from DCSLM import __version__
+from DCSLM.DCSUFParser import DCSUFParser
 from DCSLM.LiveryManager import LiveryManager
 from DCSLM.UnitConfig import Units
-from DCSLM.DCSUFParser import DCSUFParser
+
 
 def set_console_title(title):
   if platform.system() == 'Windows':
@@ -161,6 +156,14 @@ class DCSLMApp:
         'flags': {},
         'args': {},
         'exec': self.scan_for_liveries
+      },
+      'upgrade': {
+        'completer': None,
+        'usage': "",
+        'desc': "Upgrade DCSLM to the latest version",
+        'flags': {},
+        'args': {},
+        'exec': self.upgrade_dcslm
       },
       'help': {
         'completer': None,
@@ -575,6 +578,9 @@ class DCSLMApp:
         reportStr += ', '.join(registeredLiveries['failed'])
       self.lm.write_data()
       self.console.print(reportStr)
+
+  def upgrade_dcslm(self, sArgs):
+    return None
 
   def func_test(self, sArgs):
     return None

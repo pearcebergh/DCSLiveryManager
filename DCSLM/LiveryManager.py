@@ -1,14 +1,13 @@
-from .Livery import Livery
-from .UnitConfig import Units
-from .DCSUFParser import DCSUFParser, ArchiveExtensions
-import DCSLM.Utilities as Utilities
-import os, sys
-import json
 import glob
+import json
+import os
 import shutil
 import patoolib
-from patoolib.programs import *
 import requests
+import DCSLM.Utilities as Utilities
+from .DCSUFParser import DCSUFParser, ArchiveExtensions
+from .Livery import Livery
+
 
 class LiveryManager:
   def __init__(self):

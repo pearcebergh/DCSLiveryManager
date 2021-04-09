@@ -1,5 +1,6 @@
-from requests import get
 import re
+from requests import get
+
 
 def correct_dcs_user_files_url(fileURL):
   DCSFilesURLRoot = "https://www.digitalcombatsimulator.com/en/files/"
