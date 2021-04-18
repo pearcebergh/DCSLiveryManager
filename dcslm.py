@@ -155,7 +155,7 @@ class DCSLMApp:
       'optimize': {
         'completer': None,
         'usage': "",
-        'desc': "Attempt to optimize an installed livery by looking for shared files between liveries within packs.",
+        'desc': "Attempt to optimize an installed livery by looking for unused or shared files between liveries within packs.",
         'flags': {},
         'args': {
           'livery': {

@@ -339,55 +339,57 @@ class LiveryManager:
       return Utilities.request_file_size(archiveURL)
     return 0
 
-  def _get_file_refs_from_description(self, descPath):
-    if os.path.isfile(descPath):
-      fileRefs = {}
-      with open(descPath, "r") as descFile:
+  def _get_file_lines(self, filePath):
+    if os.path.isfile(filePath):
+      with open(filePath, "r") as descFile:
+        return descFile.readlines()
+    return []
+
+  def _get_file_refs_from_description(self, descLines):
+    fileRefs = {}
+    inCommentBlock = False
+    for line in descLines:
+      reStatement = re.findall("(.+;)", line)
+      commentStart = str.find(line, "--")
+      blockStart = str.find(line, "--[[")
+      if blockStart != -1:
+        blockStart -= 2
+        inCommentBlock = True
+      else:
+        blockStart = len(line) + 1
+        if inCommentBlock:
+          blockStart = -1
+      blockEnd = str.find(line, "]]")
+      if blockEnd > -1:
+        commentStart = str.find(line, "--", blockEnd - 2)
         inCommentBlock = False
-        line = descFile.readline()
-        while line:
-          reStatement = re.findall("(.+;)", line)
-          commentStart = str.find(line, "--")
-          blockStart = str.find(line, "--[[")
-          if blockStart != -1:
-            blockStart -= 2
-            inCommentBlock = True
-          else:
-            blockStart = len(line) + 1
-          blockEnd = str.find(line, "]]") - 2
-          if blockEnd > -1:
-            commentStart = str.find(line, "--", blockEnd)
-            inCommentBlock = False
-          if commentStart < 0:
-            commentStart = len(line) + 1
-          if len(reStatement):
-            for rs in reStatement:
-              luaStatement = str.strip(rs)
-              luaStatements = str.split(luaStatement, ';')
-              for s in luaStatements:
-                s = s[str.find(s, '{'):]
-                subStrStart = str.find(line, s)
-                if subStrStart > commentStart - 2 or inCommentBlock or \
-                    (subStrStart > blockStart and subStrStart < blockEnd):
-                  commentedStatement = True
+      if commentStart < 0:
+        commentStart = len(line) + 1
+      if len(reStatement):
+        for rs in reStatement:
+          luaStatement = str.strip(rs)
+          luaStatements = str.split(luaStatement, ';')
+          for s in luaStatements:
+            s = s[str.find(s, '{'):]
+            subStrStart = str.find(line, s)
+            if subStrStart > commentStart - 2 or inCommentBlock or (subStrStart > blockStart and subStrStart < blockEnd - 2):
+              commentedStatement = True
+            else:
+              commentedStatement = False
+            splitStatement = str.split(s[1:-1], ',')
+            if len(splitStatement) == 4 and not commentedStatement:
+              splitStatement[0] = re.search("\".+\"", splitStatement[0]).group()[1:-1]
+              splitStatement[1] = str.strip(splitStatement[1])
+              splitStatement[2] = re.search("\".+\"", splitStatement[2]).group()[1:-1]
+              splitStatement[3] = False if (splitStatement[3] == "false") else True
+              if not splitStatement[3]:
+                if not splitStatement[2] in fileRefs.keys():
+                  fileRefs[splitStatement[2]] = {'count': 1, 'parts': [splitStatement[0]]}
                 else:
-                  commentedStatement = False
-                splitStatement = str.split(s[1:-1], ',')
-                if len(splitStatement) == 4 and not commentedStatement:
-                  splitStatement[0] = re.search("\".+\"", splitStatement[0]).group()[1:-1]
-                  splitStatement[1] = str.strip(splitStatement[1])
-                  splitStatement[2] = re.search("\".+\"", splitStatement[2]).group()[1:-1]
-                  splitStatement[3] = False if (splitStatement[3] == "false") else True
-                  if not splitStatement[3]:
-                    if not splitStatement[2] in fileRefs.keys():
-                      fileRefs[splitStatement[2]] = {'count': 1, 'parts': [splitStatement[0]]}
-                    else:
-                      fileRefs[splitStatement[2]]['count'] += 1
-                      if not splitStatement[0] in fileRefs[splitStatement[2]]['parts']:
-                        fileRefs[splitStatement[2]]['parts'].append(splitStatement[0])
-          line = descFile.readline()
-      return fileRefs
-    return None
+                  fileRefs[splitStatement[2]]['count'] += 1
+                  if not splitStatement[0] in fileRefs[splitStatement[2]]['parts']:
+                    fileRefs[splitStatement[2]]['parts'].append(splitStatement[0])
+    return fileRefs
 
   def _generate_file_hashes_for_optimization(self, installRoot, liveryTitle, fileRefs):
     fileHashes = {}
@@ -403,18 +405,47 @@ class LiveryManager:
             fileHashes[fileHash].append(liveryTitle)
     return fileHashes
 
+  def _find_unused_livery_files(self, livery, liveryFilesData):
+    skipFiles = ["description.lua", ".dcslm"]
+    unusedFiles = []
+    liveryFiles = {}
+    for l,lfd in liveryFilesData.items():
+      liveryFiles[l] = []
+      for lf in lfd.keys():
+        liveryFiles[l].append(lf)
+    pprint(liveryFiles)
+    for t, l in livery.installs['liveries'].items():
+      for p in l['paths']:
+        installRoot = os.path.join(os.getcwd(), livery.destination, p)
+        installedFiles = glob.glob(installRoot + "\\*.*")
+        for iF in installedFiles:
+          splitPath = str.split(iF, "\\")
+          if splitPath[-1] in skipFiles:
+            continue
+          splitLivery = splitPath[-2]
+          shortName = os.path.splitext(splitPath[-1])[0]
+          print(shortName)
+          if splitLivery in liveryFiles.keys():
+            if shortName not in liveryFiles[splitLivery]:
+              unusedFiles.append(os.path.join(livery.destination, p, splitPath[-1]))
+      break
+    return unusedFiles
+
+
   def optimize_livery(self, livery):
     if livery:
       print("Attempting to optimize livery " + livery.dcsuf.title)
-      filesData = {'liveries': {}, 'hashes': {} }
+      filesData = {'liveries': {}, 'hashes': {}, 'stats': {} }
       for t, l in livery.installs['liveries'].items():
         for p in l['paths']:
           installRoot = os.path.join(os.getcwd(), livery.destination, p)
           descPath = os.path.join(installRoot, "description.lua")
           print(descPath)
           if os.path.isfile(descPath):
-            fileRefs = self._get_file_refs_from_description(descPath)
+            descLines = self._get_file_lines(descPath)
+            fileRefs = self._get_file_refs_from_description(descLines)
             if fileRefs:
+              print("Generating file hashes for " + t)
               fileHashes = self._generate_file_hashes_for_optimization(installRoot, t, fileRefs)
               for fh, lf in fileHashes.items():
                 if fh not in filesData['hashes'].keys():
@@ -422,7 +453,9 @@ class LiveryManager:
                 else:
                   filesData['hashes'][fh].extend(lf)
               filesData['liveries'][t] = fileRefs
-        #break
+        break
+      filesData['stats']['same_hash'] = [h for h,l in filesData['hashes'].items() if len(l) > 1]
+      filesData['unused'] = self._find_unused_livery_files(livery, filesData['liveries'])
       pprint(filesData)
 
 
