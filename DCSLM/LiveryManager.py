@@ -2,9 +2,12 @@ import glob
 import json
 import os
 import shutil
+import sys
+import re
 import patoolib
 import requests
 import DCSLM.Utilities as Utilities
+from pprint import pprint
 from .DCSUFParser import DCSUFParser, ArchiveExtensions
 from .Livery import Livery
 
@@ -335,3 +338,91 @@ class LiveryManager:
     if len(archiveURL):
       return Utilities.request_file_size(archiveURL)
     return 0
+
+  def _get_file_refs_from_description(self, descPath):
+    if os.path.isfile(descPath):
+      fileRefs = {}
+      with open(descPath, "r") as descFile:
+        inCommentBlock = False
+        line = descFile.readline()
+        while line:
+          reStatement = re.findall("(.+;)", line)
+          commentStart = str.find(line, "--")
+          blockStart = str.find(line, "--[[")
+          if blockStart != -1:
+            blockStart -= 2
+            inCommentBlock = True
+          else:
+            blockStart = len(line) + 1
+          blockEnd = str.find(line, "]]") - 2
+          if blockEnd > -1:
+            commentStart = str.find(line, "--", blockEnd)
+            inCommentBlock = False
+          if commentStart < 0:
+            commentStart = len(line) + 1
+          if len(reStatement):
+            for rs in reStatement:
+              luaStatement = str.strip(rs)
+              luaStatements = str.split(luaStatement, ';')
+              for s in luaStatements:
+                s = s[str.find(s, '{'):]
+                subStrStart = str.find(line, s)
+                if subStrStart > commentStart - 2 or inCommentBlock or \
+                    (subStrStart > blockStart and subStrStart < blockEnd):
+                  commentedStatement = True
+                else:
+                  commentedStatement = False
+                splitStatement = str.split(s[1:-1], ',')
+                if len(splitStatement) == 4 and not commentedStatement:
+                  splitStatement[0] = re.search("\".+\"", splitStatement[0]).group()[1:-1]
+                  splitStatement[1] = str.strip(splitStatement[1])
+                  splitStatement[2] = re.search("\".+\"", splitStatement[2]).group()[1:-1]
+                  splitStatement[3] = False if (splitStatement[3] == "false") else True
+                  if not splitStatement[3]:
+                    if not splitStatement[2] in fileRefs.keys():
+                      fileRefs[splitStatement[2]] = {'count': 1, 'parts': [splitStatement[0]]}
+                    else:
+                      fileRefs[splitStatement[2]]['count'] += 1
+                      if not splitStatement[0] in fileRefs[splitStatement[2]]['parts']:
+                        fileRefs[splitStatement[2]]['parts'].append(splitStatement[0])
+          line = descFile.readline()
+      return fileRefs
+    return None
+
+  def _generate_file_hashes_for_optimization(self, installRoot, liveryTitle, fileRefs):
+    fileHashes = {}
+    for f, d in fileRefs.items():
+      filepath = os.path.join(installRoot, f) + ".dds"
+      if os.path.isfile(filepath):
+        fileHash = Utilities.hash_file(filepath)
+        if fileHash:
+          d['hash'] = fileHash
+          if not fileHash in fileHashes.keys():
+            fileHashes[fileHash] = [liveryTitle]
+          else:
+            fileHashes[fileHash].append(liveryTitle)
+    return fileHashes
+
+  def optimize_livery(self, livery):
+    if livery:
+      print("Attempting to optimize livery " + livery.dcsuf.title)
+      filesData = {'liveries': {}, 'hashes': {} }
+      for t, l in livery.installs['liveries'].items():
+        for p in l['paths']:
+          installRoot = os.path.join(os.getcwd(), livery.destination, p)
+          descPath = os.path.join(installRoot, "description.lua")
+          print(descPath)
+          if os.path.isfile(descPath):
+            fileRefs = self._get_file_refs_from_description(descPath)
+            if fileRefs:
+              fileHashes = self._generate_file_hashes_for_optimization(installRoot, t, fileRefs)
+              for fh, lf in fileHashes.items():
+                if fh not in filesData['hashes'].keys():
+                  filesData['hashes'][fh] = lf
+                else:
+                  filesData['hashes'][fh].extend(lf)
+              filesData['liveries'][t] = fileRefs
+        #break
+      pprint(filesData)
+
+

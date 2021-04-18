@@ -1,6 +1,15 @@
 import re
+import os
+import hashlib
 from requests import get
 
+def hash_file(filePath):
+  if os.path.isfile(filePath):
+    with open(filePath, "rb") as hashFile:
+      hashData = hashFile.read()
+      fileHash = hashlib.md5(hashData).hexdigest()
+      return fileHash
+  return None
 
 def correct_dcs_user_files_url(fileURL):
   DCSFilesURLRoot = "https://www.digitalcombatsimulator.com/en/files/"

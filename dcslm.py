@@ -152,6 +152,20 @@ class DCSLMApp:
         'args': {},
         'exec': self.update_liveries
       },
+      'optimize': {
+        'completer': None,
+        'usage': "",
+        'desc': "Attempt to optimize an installed livery by looking for shared files between liveries within packs.",
+        'flags': {},
+        'args': {
+          'livery': {
+            'type': "string",
+            'optional': False,
+            'desc': "DCS User Files livery title"
+          },
+        },
+        'exec': self.optimize_livery
+      },
       'scan': {
         'completer': None,
         'usage': "",
@@ -630,6 +644,17 @@ class DCSLMApp:
           sys.exit(0)
     except Exception as e:
       self.console.print("[bold red]DCSLM upgrade failed:[/bold red] [red]" + str(e))
+
+  def optimize_livery(self, sArgs):
+    sArgs = ["3307868"]
+    if len(sArgs) == 1 and str.lower(sArgs[0]) == "all":
+      self.console.print("Attempting to optimize all installed liveries")
+    else:
+      for l in sArgs:
+        self.console.print("Optimize " + l)
+        livery = self.lm.get_registered_livery(id=l)
+        if livery:
+          self.lm.optimize_livery(livery)
     return None
 
   def func_test(self, sArgs):
