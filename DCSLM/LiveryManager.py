@@ -363,6 +363,26 @@ class LiveryManager:
             luaStatements.append(s)
     return luaStatements
 
+  def _optimize_get_py_statements_from_line(self, line, commentStart=None, commentEnd=None):
+    luaStatements = self._optimize_get_lua_statements_from_line(line, commentStart, commentEnd)
+    pyStatements = []
+    for ls in luaStatements:
+      ps = self._optimize_lua_statement_to_py(ls)
+      if len(ps) == 4:
+        pyStatements.append(ps)
+    return pyStatements
+
+  def _optimize_py_statement_to_lua(self, pyStatement) -> str:
+    if len(pyStatement) == 4:
+      luaStatement = "{\"" + pyStatement[0] + "\", " + pyStatement[1] + " , \"" + pyStatement[2] + "\","
+      if pyStatement[3]:
+        luaStatement = luaStatement + "true"
+      else:
+        luaStatement = luaStatement + "false"
+      luaStatement = luaStatement + "};"
+      return luaStatement
+    return ""
+
   def _optimize_lua_statement_to_py(self, luaStatement):
     luaData = []
     splitStatement = str.split(luaStatement[1:-1], ',')
@@ -390,12 +410,7 @@ class LiveryManager:
       if commentStart < 0:
         commentStart = len(line) + 1
       if not inCommentBlock:
-        luaStatements = self._optimize_get_lua_statements_from_line(line, commentStart, blockEnd)
-        pyStatements = []
-        for ls in luaStatements:
-          ps = self._optimize_lua_statement_to_py(ls)
-          if len(ps) == 4:
-            pyStatements.append(ps)
+        pyStatements = self._optimize_get_py_statements_from_line(line, commentStart, blockEnd)
         for ps in pyStatements:
           if not ps[3]:
             if not ps[2] in fileRefs.keys():
@@ -404,33 +419,6 @@ class LiveryManager:
               fileRefs[ps[2]]['count'] += 1
               if not ps[0] in fileRefs[ps[2]]['parts']:
                 fileRefs[ps[2]]['parts'].append(ps[0])
-      '''
-      reStatement = re.findall("(.+;)", line)
-      if len(reStatement):
-        for rs in reStatement:
-          luaStatement = str.strip(rs)
-          luaStatements = str.split(luaStatement, ';')
-          for s in luaStatements:
-            s = s[str.find(s, '{'):]
-            subStrStart = str.find(line, s)
-            if subStrStart > commentStart - 2 or inCommentBlock or (subStrStart > blockStart and subStrStart < blockEnd - 2):
-              commentedStatement = True
-            else:
-              commentedStatement = False
-            splitStatement = str.split(s[1:-1], ',')
-            if len(splitStatement) == 4 and not commentedStatement:
-              splitStatement[0] = re.search("\".+\"", splitStatement[0]).group()[1:-1]
-              splitStatement[1] = str.strip(splitStatement[1])
-              splitStatement[2] = re.search("\".+\"", splitStatement[2]).group()[1:-1]
-              splitStatement[3] = False if (splitStatement[3] == "false") else True
-              if not splitStatement[3]:
-                if not splitStatement[2] in fileRefs.keys():
-                  fileRefs[splitStatement[2]] = {'count': 1, 'parts': [splitStatement[0]]}
-                else:
-                  fileRefs[splitStatement[2]]['count'] += 1
-                  if not splitStatement[0] in fileRefs[splitStatement[2]]['parts']:
-                    fileRefs[splitStatement[2]]['parts'].append(splitStatement[0])
-      '''
     return fileRefs
 
   def _optimize_generate_file_hashes(self, installRoot, liveryTitle, fileRefs):
@@ -455,7 +443,6 @@ class LiveryManager:
       liveryFiles[l] = []
       for lf in lfd.keys():
         liveryFiles[l].append(lf)
-    pprint(liveryFiles)
     for t, l in livery.installs['liveries'].items():
       installRoot = os.path.join(os.getcwd(), livery.destination, l['paths'][0])
       installedFiles = glob.glob(installRoot + "\\*.*")
@@ -465,18 +452,61 @@ class LiveryManager:
           continue
         splitLivery = splitPath[-2]
         shortName = os.path.splitext(splitPath[-1])[0]
-        print(shortName)
         if splitLivery in liveryFiles.keys():
           if shortName not in liveryFiles[splitLivery]:
             unusedFiles.append(os.path.join(livery.destination, l['paths'][0], splitPath[-1]))
-      break
     return unusedFiles
 
   def _optimize_correct_desc_lines(self, filesData, descLines):
-    optimizedLines = []
-    #for line in descLines:
+    optimizedLines = {}
+    for t in descLines.keys():
+      optimizedLines[t] = []
+    for t, dL in descLines.items():
+      for line in dL:
+        if line[:2] == '--':
+          continue
+        pyStatements = self._optimize_get_py_statements_from_line(line)
+        optimizeStatement = False
+        for ps in pyStatements:
+          for l, fd in filesData['liveries'].items():
+            if ps[2] in fd.keys():
+              matchedData = fd[ps[2]]
+              if matchedData['hash'] in filesData['hashes'].keys():
+                matchedHash = filesData['hashes'][matchedData['hash']]
+                if len(matchedHash) > 1:
+                  replacementTitle = matchedHash[0]
+                  if replacementTitle == t:
+                    continue
+                  replacementPath = "../" + replacementTitle + "/" + ps[2]
+                  ps[2] = replacementPath
+                  optimizeStatement = True
+        if not optimizeStatement:
+          optimizedLines[t].append(line)
+        else:
+          optimizedLines[t].append("--" + line)
+          correctedLuaStatements = []
+          for ps in pyStatements:
+            ls = self._optimize_py_statement_to_lua(ps)
+            if len(ls):
+              correctedLuaStatements.append(ls)
+          correctedLuaLine = '\t' + ' '.join(correctedLuaStatements) + '\n'
+          optimizedLines[t].append(correctedLuaLine)
     return optimizedLines
 
+  def _optimize_write_corrected_desc_files(self, livery, descLines, keepCopy=True):
+    for t, lines in descLines.items():
+      for p in livery.installs['liveries'][t]['paths']:
+        descRoot = os.path.join(os.getcwd(), livery.destination, p)
+        descPath = os.path.join(descRoot, "description.lua")
+        if os.path.isfile(descPath):
+          if keepCopy:
+            shutil.move(descPath, os.path.join(descRoot, "orig_description.lua"))
+          with open(descPath, "w") as descFile:
+            print("Writing " + descPath)
+            descFile.writelines(lines)
+
+  # TODO: Compare sizes before and after optimization
+  # TODO: Correct for relative paths somewhere
   def optimize_livery(self, livery):
     if livery:
       print("Attempting to optimize livery " + livery.dcsuf.title)
@@ -485,7 +515,6 @@ class LiveryManager:
       for t, l in livery.installs['liveries'].items():
         installRoot = os.path.join(os.getcwd(), livery.destination, l['paths'][0])
         descPath = os.path.join(installRoot, "description.lua")
-        print(descPath)
         if os.path.isfile(descPath):
           lines = self._get_file_lines(descPath)
           descLines[t] = lines
@@ -499,12 +528,9 @@ class LiveryManager:
               else:
                 filesData['hashes'][fh].extend(lf)
             filesData['liveries'][t] = fileRefs
-        break
-      # TODO: Correct for relative paths somewhere
       filesData['stats']['same_hash'] = [h for h,l in filesData['hashes'].items() if len(l) > 1]
       if len(filesData['stats']['same_hash']):
         correctedLines = self._optimize_correct_desc_lines(filesData, descLines)
+        self._optimize_write_corrected_desc_files(livery, correctedLines)
       filesData['unused'] = self._optimize_find_unused_livery_files(livery, filesData['liveries'])
       pprint(filesData)
-
-
