@@ -58,6 +58,7 @@ class DCSLMApp:
     self.commands = None
     self.lm = None
 
+  # TODO: Add quick upgrade check
   def start(self):
     self.setup_commands()
     self.setup_command_completer()

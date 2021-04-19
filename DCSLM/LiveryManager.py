@@ -345,26 +345,67 @@ class LiveryManager:
         return descFile.readlines()
     return []
 
+  def _optimize_get_lua_statements_from_line(self, line, commentStart=None, commentEnd=None):
+    if not commentStart:
+      commentStart = len(line) + 1
+    if not commentEnd:
+      commentEnd = -1
+    luaStatements = []
+    reStatement = re.findall("(.+;)", line)
+    if len(reStatement):
+      for rs in reStatement:
+        luaStatement = str.strip(rs)
+        splitStatements = str.split(luaStatement, ';')
+        for s in splitStatements:
+          s = s[str.find(s, '{'):]
+          subStrStart = str.find(line, s)
+          if not (subStrStart > commentStart and subStrStart < commentEnd - 2) and len(s):
+            luaStatements.append(s)
+    return luaStatements
+
+  def _optimize_lua_statement_to_py(self, luaStatement):
+    luaData = []
+    splitStatement = str.split(luaStatement[1:-1], ',')
+    if len(splitStatement) == 4:
+      splitStatement[0] = re.search("\".+\"", splitStatement[0]).group()[1:-1]
+      splitStatement[1] = str.strip(splitStatement[1])
+      splitStatement[2] = re.search("\".+\"", splitStatement[2]).group()[1:-1]
+      splitStatement[3] = False if (splitStatement[3] == "false") else True
+      luaData = splitStatement
+    return luaData
+
   def _get_file_refs_from_description(self, descLines):
     fileRefs = {}
     inCommentBlock = False
     for line in descLines:
-      reStatement = re.findall("(.+;)", line)
       commentStart = str.find(line, "--")
       blockStart = str.find(line, "--[[")
       if blockStart != -1:
         blockStart -= 2
         inCommentBlock = True
-      else:
-        blockStart = len(line) + 1
-        if inCommentBlock:
-          blockStart = -1
       blockEnd = str.find(line, "]]")
       if blockEnd > -1:
         commentStart = str.find(line, "--", blockEnd - 2)
         inCommentBlock = False
       if commentStart < 0:
         commentStart = len(line) + 1
+      if not inCommentBlock:
+        luaStatements = self._optimize_get_lua_statements_from_line(line, commentStart, blockEnd)
+        pyStatements = []
+        for ls in luaStatements:
+          ps = self._optimize_lua_statement_to_py(ls)
+          if len(ps) == 4:
+            pyStatements.append(ps)
+        for ps in pyStatements:
+          if not ps[3]:
+            if not ps[2] in fileRefs.keys():
+              fileRefs[ps[2]] = {'count': 1, 'parts': [ps[0]]}
+            else:
+              fileRefs[ps[2]]['count'] += 1
+              if not ps[0] in fileRefs[ps[2]]['parts']:
+                fileRefs[ps[2]]['parts'].append(ps[0])
+      '''
+      reStatement = re.findall("(.+;)", line)
       if len(reStatement):
         for rs in reStatement:
           luaStatement = str.strip(rs)
@@ -389,9 +430,10 @@ class LiveryManager:
                   fileRefs[splitStatement[2]]['count'] += 1
                   if not splitStatement[0] in fileRefs[splitStatement[2]]['parts']:
                     fileRefs[splitStatement[2]]['parts'].append(splitStatement[0])
+      '''
     return fileRefs
 
-  def _generate_file_hashes_for_optimization(self, installRoot, liveryTitle, fileRefs):
+  def _optimize_generate_file_hashes(self, installRoot, liveryTitle, fileRefs):
     fileHashes = {}
     for f, d in fileRefs.items():
       filepath = os.path.join(installRoot, f) + ".dds"
@@ -405,7 +447,7 @@ class LiveryManager:
             fileHashes[fileHash].append(liveryTitle)
     return fileHashes
 
-  def _find_unused_livery_files(self, livery, liveryFilesData):
+  def _optimize_find_unused_livery_files(self, livery, liveryFilesData):
     skipFiles = ["description.lua", ".dcslm"]
     unusedFiles = []
     liveryFiles = {}
@@ -415,47 +457,54 @@ class LiveryManager:
         liveryFiles[l].append(lf)
     pprint(liveryFiles)
     for t, l in livery.installs['liveries'].items():
-      for p in l['paths']:
-        installRoot = os.path.join(os.getcwd(), livery.destination, p)
-        installedFiles = glob.glob(installRoot + "\\*.*")
-        for iF in installedFiles:
-          splitPath = str.split(iF, "\\")
-          if splitPath[-1] in skipFiles:
-            continue
-          splitLivery = splitPath[-2]
-          shortName = os.path.splitext(splitPath[-1])[0]
-          print(shortName)
-          if splitLivery in liveryFiles.keys():
-            if shortName not in liveryFiles[splitLivery]:
-              unusedFiles.append(os.path.join(livery.destination, p, splitPath[-1]))
+      installRoot = os.path.join(os.getcwd(), livery.destination, l['paths'][0])
+      installedFiles = glob.glob(installRoot + "\\*.*")
+      for iF in installedFiles:
+        splitPath = str.split(iF, "\\")
+        if splitPath[-1] in skipFiles:
+          continue
+        splitLivery = splitPath[-2]
+        shortName = os.path.splitext(splitPath[-1])[0]
+        print(shortName)
+        if splitLivery in liveryFiles.keys():
+          if shortName not in liveryFiles[splitLivery]:
+            unusedFiles.append(os.path.join(livery.destination, l['paths'][0], splitPath[-1]))
       break
     return unusedFiles
 
+  def _optimize_correct_desc_lines(self, filesData, descLines):
+    optimizedLines = []
+    #for line in descLines:
+    return optimizedLines
 
   def optimize_livery(self, livery):
     if livery:
       print("Attempting to optimize livery " + livery.dcsuf.title)
       filesData = {'liveries': {}, 'hashes': {}, 'stats': {} }
+      descLines = {}
       for t, l in livery.installs['liveries'].items():
-        for p in l['paths']:
-          installRoot = os.path.join(os.getcwd(), livery.destination, p)
-          descPath = os.path.join(installRoot, "description.lua")
-          print(descPath)
-          if os.path.isfile(descPath):
-            descLines = self._get_file_lines(descPath)
-            fileRefs = self._get_file_refs_from_description(descLines)
-            if fileRefs:
-              print("Generating file hashes for " + t)
-              fileHashes = self._generate_file_hashes_for_optimization(installRoot, t, fileRefs)
-              for fh, lf in fileHashes.items():
-                if fh not in filesData['hashes'].keys():
-                  filesData['hashes'][fh] = lf
-                else:
-                  filesData['hashes'][fh].extend(lf)
-              filesData['liveries'][t] = fileRefs
+        installRoot = os.path.join(os.getcwd(), livery.destination, l['paths'][0])
+        descPath = os.path.join(installRoot, "description.lua")
+        print(descPath)
+        if os.path.isfile(descPath):
+          lines = self._get_file_lines(descPath)
+          descLines[t] = lines
+          fileRefs = self._get_file_refs_from_description(lines)
+          if fileRefs:
+            print("Generating file hashes for " + t)
+            fileHashes = self._optimize_generate_file_hashes(installRoot, t, fileRefs)
+            for fh, lf in fileHashes.items():
+              if fh not in filesData['hashes'].keys():
+                filesData['hashes'][fh] = lf
+              else:
+                filesData['hashes'][fh].extend(lf)
+            filesData['liveries'][t] = fileRefs
         break
+      # TODO: Correct for relative paths somewhere
       filesData['stats']['same_hash'] = [h for h,l in filesData['hashes'].items() if len(l) > 1]
-      filesData['unused'] = self._find_unused_livery_files(livery, filesData['liveries'])
+      if len(filesData['stats']['same_hash']):
+        correctedLines = self._optimize_correct_desc_lines(filesData, descLines)
+      filesData['unused'] = self._optimize_find_unused_livery_files(livery, filesData['liveries'])
       pprint(filesData)
 
 
