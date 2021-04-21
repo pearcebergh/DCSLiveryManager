@@ -33,6 +33,8 @@ from DCSLM.UnitConfig import Units
 
 # TODO: Convert all y/n prompts to Confirm.ask
 
+# Fail install 3314968
+
 def set_console_title(title):
   if platform.system() == 'Windows':
     os.system(f'title {title}')
@@ -301,12 +303,13 @@ class DCSLMApp:
   def _print_livery_install_report(self, installData, tableTitle):
     if len(installData['success']):
       installTable = Table(title=tableTitle,expand=False, box=box.ROUNDED)
-      installTable.add_column("Unit", justify="left", no_wrap=True, style="cyan")
-      installTable.add_column("Livery Title", justify="left", style="green")
+      installTable.add_column("Unit", justify="left", no_wrap=True, style="green")
+      installTable.add_column("ID", justify="center", no_wrap=True, style="sky_blue1")
+      installTable.add_column("Livery Title", justify="left", style="")
       installTable.add_column("# Liveries", justify="center", no_wrap=True, style="magenta")
       installTable.add_column("Size (MB)", justify="right", no_wrap=True, style="gold1")
       for l in installData['success']:
-        installTable.add_row(Units.Units['aircraft'][l.dcsuf.unit]['friendly'], l.dcsuf.title,
+        installTable.add_row(Units.Units['aircraft'][l.dcsuf.unit]['friendly'], str(l.dcsuf.id), l.dcsuf.title,
                              str(l.get_num_liveries()), Utilities.bytes_to_mb_string(l.get_size_installed_liveries()))
       self.console.print(installTable)
     if len(installData['failed']):
@@ -482,8 +485,8 @@ class DCSLMApp:
         longestUnit = friendlyUnit
     unitColWidth = max(8, min(13, len(longestUnit)))
     statusTable = Table(title="List of Registered Liveries", expand=True, box=box.ROUNDED, highlight=False)
-    statusTable.add_column("Unit", justify="center", no_wrap=True, style="cyan", width=unitColWidth)
-    statusTable.add_column("ID", justify="center", no_wrap=True, style="green", width=11)
+    statusTable.add_column("Unit", justify="center", no_wrap=True, style="green", width=unitColWidth)
+    statusTable.add_column("ID", justify="center", no_wrap=True, style="sky_blue1", width=8)
     statusTable.add_column("Livery Title", justify="center", no_wrap=True, overflow='ellipsis')
     statusTable.add_column("Size", justify="right", no_wrap=True, style="gold1", width=10)
     liveryRows.sort(key=sort_list_by_unit_then_title)
@@ -648,11 +651,11 @@ class DCSLMApp:
     except Exception as e:
       self.console.print("[bold red]DCSLM upgrade failed:[/bold red] [red]" + str(e))
 
-  # 3307868, 3315963
+  # 3307868 (m2000), 3315963 (uh-1h), 3314521 (breaks hash)
   def optimize_livery(self, sArgs):
-    removeFiles = False
+    removeFiles = True
     keepDesc = True
-    verboseOutput = True
+    verboseOutput = False
     if not len(sArgs):
       raise RuntimeWarning("No liveries provided for \'optimize\' command.")
     if len(sArgs) == 1 and str.lower(sArgs[0]) == "all":
@@ -664,9 +667,9 @@ class DCSLMApp:
         if livery:
           filesData = self.lm.optimize_livery(livery, removeUnused = removeFiles, copyDesc = keepDesc)
           self.console.print("\nOptimization Report for \'" + livery.dcsuf.title + "\' (" + str(livery.dcsuf.id) + "):")
-          self.console.print("Found " + str(len(filesData['same_hash'])) + " files with the same content.")
+          self.console.print("Matched " + str(len(filesData['same_hash'])) + " .dds files with the same content.")
           if removeFiles:
-            self.console.print("Removed " + str(len(filesData['unused'])) + " files.")
+            self.console.print("Removed " + str(len(filesData['unused'])) + " unused files.")
           self.console.print("Size Before: " + str(0.0) + "Mb \tSize After: " + str(0.0) + "Mb")
           if verboseOutput:
             pprint(filesData)

@@ -423,9 +423,7 @@ class LiveryManager:
         for ps in pyStatements:
           if not ps[3]:
             if not ps[2] in fileRefs.keys():
-              fileRefs[ps[2]] = {'count': 1, 'parts': [], 'relative': []}
-            else:
-              fileRefs[ps[2]]['count'] += 1
+              fileRefs[ps[2]] = {'parts': []}
             if not ps[0] in fileRefs[ps[2]]['parts']:
               fileRefs[ps[2]]['parts'].append(ps[0])
     return fileRefs
