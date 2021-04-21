@@ -31,3 +31,19 @@ def bytes_to_mb_string(sizeBytes):
 
 def request_file_size(fileURL):
   return int(get(fileURL, stream=True).headers['Content-length'])
+
+def validate_remove_path(filepath):
+  if len(filepath):
+    if os.getcwd() in filepath:
+      return True
+  return False
+
+def remove_file(filepath):
+  if validate_remove_path(filepath):
+    os.remove(filepath)
+    return
+  raise RuntimeWarning("Tried to remove file not in path of DCSLM! " + str(filepath))
+
+def remove_files(fileList):
+  for f in fileList:
+    remove_file(f)

@@ -630,7 +630,8 @@ class DCSLMApp:
         if upgradeConf:
           oldExec = sys.executable + '.old'
           if os.path.isfile(oldExec):
-            os.remove(oldExec)
+            Utilities.remove_file(oldExec)
+            #os.remove(oldExec)
           shutil.move(sys.executable, oldExec)
           dlFilename = "DCSLM.exe"
           with self.console.status("Downloading DCSLM v" + releaseData[0]['version']):
