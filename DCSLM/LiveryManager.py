@@ -244,6 +244,10 @@ class LiveryManager:
       return directoryFiles
     return None
 
+  # TODO: Fill this out
+  def _get_size_of_directory(self, dirPath):
+    return 0
+
   def get_size_of_livery_files(self, livery, extractPath, fileList):
     totalSize = 0
     for f in fileList:
@@ -332,7 +336,7 @@ class LiveryManager:
       l.dcsuf = DCSUFParser().get_dcsuserfile_from_url(url)
       l.ovgme = l.generate_ovgme_folder()
       return l
-    raise RuntimeError("Unable to get livey data from url " + url)
+    raise RuntimeError("Unable to get livery data from url " + url)
 
   def request_archive_size(self, archiveURL):
     if len(archiveURL):
@@ -374,7 +378,7 @@ class LiveryManager:
 
   def _optimize_py_statement_to_lua(self, pyStatement) -> str:
     if len(pyStatement) == 4:
-      luaStatement = "{\"" + pyStatement[0] + "\", " + pyStatement[1] + " , \"" + pyStatement[2] + "\","
+      luaStatement = "{\"" + pyStatement[0] + "\", " + pyStatement[1] + " ,\"" + pyStatement[2] + "\","
       if pyStatement[3]:
         luaStatement = luaStatement + "true"
       else:
@@ -414,11 +418,11 @@ class LiveryManager:
         for ps in pyStatements:
           if not ps[3]:
             if not ps[2] in fileRefs.keys():
-              fileRefs[ps[2]] = {'count': 1, 'parts': [ps[0]]}
+              fileRefs[ps[2]] = {'count': 1, 'parts': [], 'relative': []}
             else:
               fileRefs[ps[2]]['count'] += 1
-              if not ps[0] in fileRefs[ps[2]]['parts']:
-                fileRefs[ps[2]]['parts'].append(ps[0])
+            if not ps[0] in fileRefs[ps[2]]['parts']:
+              fileRefs[ps[2]]['parts'].append(ps[0])
     return fileRefs
 
   def _optimize_generate_file_hashes(self, installRoot, liveryTitle, fileRefs):
@@ -436,7 +440,7 @@ class LiveryManager:
     return fileHashes
 
   def _optimize_find_unused_livery_files(self, livery, liveryFilesData):
-    skipFiles = ["description.lua", ".dcslm"]
+    skipFiles = ["description.lua", "orig_description.lua", ".dcslm"]
     unusedFiles = []
     liveryFiles = {}
     for l,lfd in liveryFilesData.items():
@@ -457,13 +461,14 @@ class LiveryManager:
             unusedFiles.append(os.path.join(livery.destination, l['paths'][0], splitPath[-1]))
     return unusedFiles
 
-  def _optimize_correct_desc_lines(self, filesData, descLines):
+  def _optimize_correct_desc_lines(self, filesData, descLines, commentLine=False):
     optimizedLines = {}
     for t in descLines.keys():
       optimizedLines[t] = []
     for t, dL in descLines.items():
       for line in dL:
         if line[:2] == '--':
+          optimizedLines[t].append(line)
           continue
         pyStatements = self._optimize_get_py_statements_from_line(line)
         optimizeStatement = False
@@ -475,15 +480,18 @@ class LiveryManager:
                 matchedHash = filesData['hashes'][matchedData['hash']]
                 if len(matchedHash) > 1:
                   replacementTitle = matchedHash[0]
+                  partStr = str.split(ps[2], "/")[-1]
                   if replacementTitle == t:
-                    continue
-                  replacementPath = "../" + replacementTitle + "/" + ps[2]
+                    replacementPath = partStr
+                  else:
+                    replacementPath = "../" + replacementTitle + "/" + partStr
                   ps[2] = replacementPath
                   optimizeStatement = True
         if not optimizeStatement:
           optimizedLines[t].append(line)
         else:
-          optimizedLines[t].append("--" + line)
+          if commentLine:
+            optimizedLines[t].append("--" + line)
           correctedLuaStatements = []
           for ps in pyStatements:
             ls = self._optimize_py_statement_to_lua(ps)
@@ -506,7 +514,6 @@ class LiveryManager:
             descFile.writelines(lines)
 
   # TODO: Compare sizes before and after optimization
-  # TODO: Correct for relative paths somewhere
   def optimize_livery(self, livery):
     if livery:
       print("Attempting to optimize livery " + livery.dcsuf.title)
