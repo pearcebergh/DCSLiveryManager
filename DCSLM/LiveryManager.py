@@ -556,22 +556,20 @@ class LiveryManager:
     return filesData
 
   # TODO: Compare sizes before and after optimization
-  def optimize_livery(self, livery, removeUnused=True):
+  def optimize_livery(self, livery, removeUnused=True, copyDesc=False):
     if livery:
-      print("Attempting to optimize livery " + livery.dcsuf.title)
-      filesData = {'liveries': {}, 'hashes': {}, 'stats': {'same_hash':[]} }
+      filesData = {'liveries': {}, 'hashes': {}, 'same_hash':[] }
       descLines = self._optimize_get_desclines_from_livery(livery)
       filesData['liveries'] = self._optimize_get_filerefs_from_desclines(livery, descLines)
       filesData['hashes'] = self._optimize_calculate_fileref_hashes(livery, filesData['liveries'])
-      filesData['stats']['same_hash'] = [h for h,l in filesData['hashes'].items() if len(l) > 1]
-      if len(filesData['stats']['same_hash']):
+      filesData['same_hash'] = [h for h,l in filesData['hashes'].items() if len(l) > 1]
+      if len(filesData['same_hash']):
         correctedLines = self._optimize_correct_desc_lines(filesData, descLines)
-        self._optimize_write_corrected_desc_files(livery, correctedLines)
+        self._optimize_write_corrected_desc_files(livery, correctedLines, keepCopy=copyDesc)
       if removeUnused:
         newDescLines = self._optimize_get_desclines_from_livery(livery)
         filesData['new_liveries'] = self._optimize_get_filerefs_from_desclines(livery, newDescLines)
         filesData['unused'] = self._optimize_find_unused_livery_files(livery, filesData['new_liveries'])
         self._optimize_remove_unused_files(filesData['unused'])
-      pprint(filesData)
       return filesData
     return None

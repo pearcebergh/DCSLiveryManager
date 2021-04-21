@@ -648,16 +648,23 @@ class DCSLMApp:
       self.console.print("[bold red]DCSLM upgrade failed:[/bold red] [red]" + str(e))
 
   def optimize_livery(self, sArgs):
-    sArgs = ["3307868"]
+    removeFiles = True
+    keepDesc = True
+    if not len(sArgs):
+      raise RuntimeWarning("No liveries provided for \'optimize\' command.")
     if len(sArgs) == 1 and str.lower(sArgs[0]) == "all":
       self.console.print("Attempting to optimize all installed liveries")
     else:
       for l in sArgs:
-        self.console.print("Optimize " + l)
+        self.console.print("Attempting to optimize livery " + l)
         livery = self.lm.get_registered_livery(id=l)
         if livery:
-          self.lm.optimize_livery(livery)
-    return None
+          filesData = self.lm.optimize_livery(livery, removeUnused = removeFiles, copyDesc = keepDesc)
+          self.console.print("\nOptimization Report for \'" + livery.dcsuf.title + "\' (" + str(livery.dcsuf.id) + "):")
+          self.console.print("Found " + str(len(filesData['same_hash'])) + " files with the same content.")
+          if removeFiles:
+            self.console.print("Removed " + str(len(filesData['unused'])) + " files.")
+          self.console.print("Size Before: " + str(0.0) + "Mb \tSize After: " + str(0.0) + "Mb")
 
   def func_test(self, sArgs):
     return None
