@@ -513,31 +513,56 @@ class LiveryManager:
             print("Writing " + descPath)
             descFile.writelines(lines)
 
+  def _optimize_remove_unused_files(self, livery, unusedData):
+    return None
+
+  def _optimize_get_desclines_from_livery(self, livery):
+    descLines = {}
+    for t, l in livery.installs['liveries'].items():
+      installRoot = os.path.join(os.getcwd(), livery.destination, l['paths'][0])
+      descPath = os.path.join(installRoot, "description.lua")
+      if os.path.isfile(descPath):
+        lines = self._get_file_lines(descPath)
+        descLines[t] = lines
+    return descLines
+
+  def _optimize_get_filerefs_from_desclines(self, livery, descLines):
+    filesData = {'liveries': {}}
+    for t, l in livery.installs['liveries'].items():
+      if t in descLines.keys():
+        fileRefs = self._get_file_refs_from_description(descLines[t])
+        filesData['liveries'][t] = fileRefs
+    return filesData
+
+  def _optimize_calculate_fileref_hashes(self, livery, fileRefs):
+    filesData = {'hashes': {}}
+    for t, l in livery.installs['liveries'].items():
+      if t in fileRefs.keys():
+        installRoot = os.path.join(os.getcwd(), livery.destination, l['paths'][0])
+        print("Generating file hashes for " + t)
+        fileHashes = self._optimize_generate_file_hashes(installRoot, t, fileRefs)
+        for fh, lf in fileHashes.items():
+          if fh not in filesData['hashes'].keys():
+            filesData['hashes'][fh] = lf
+          else:
+            filesData['hashes'][fh].extend(lf)
+    return filesData
+
   # TODO: Compare sizes before and after optimization
-  def optimize_livery(self, livery):
+  def optimize_livery(self, livery, removeUnused=True):
     if livery:
       print("Attempting to optimize livery " + livery.dcsuf.title)
-      filesData = {'liveries': {}, 'hashes': {}, 'stats': {} }
-      descLines = {}
-      for t, l in livery.installs['liveries'].items():
-        installRoot = os.path.join(os.getcwd(), livery.destination, l['paths'][0])
-        descPath = os.path.join(installRoot, "description.lua")
-        if os.path.isfile(descPath):
-          lines = self._get_file_lines(descPath)
-          descLines[t] = lines
-          fileRefs = self._get_file_refs_from_description(lines)
-          if fileRefs:
-            print("Generating file hashes for " + t)
-            fileHashes = self._optimize_generate_file_hashes(installRoot, t, fileRefs)
-            for fh, lf in fileHashes.items():
-              if fh not in filesData['hashes'].keys():
-                filesData['hashes'][fh] = lf
-              else:
-                filesData['hashes'][fh].extend(lf)
-            filesData['liveries'][t] = fileRefs
+      filesData = {'liveries': {}, 'hashes': {}, 'stats': {'same_hash':[]} }
+      descLines = self._optimize_get_desclines_from_livery(livery)
+      filesData['liveries'] = self._optimize_get_filerefs_from_desclines(livery, descLines)
+      filesData['hashes'] = self._optimize_calculate_fileref_hashes(livery, filesData['liveries'])
       filesData['stats']['same_hash'] = [h for h,l in filesData['hashes'].items() if len(l) > 1]
       if len(filesData['stats']['same_hash']):
         correctedLines = self._optimize_correct_desc_lines(filesData, descLines)
         self._optimize_write_corrected_desc_files(livery, correctedLines)
-      filesData['unused'] = self._optimize_find_unused_livery_files(livery, filesData['liveries'])
+      if removeUnused:
+        filesData['unused'] = self._optimize_find_unused_livery_files(livery, filesData['liveries'])
+        self._optimize_remove_unused_files(livery, filesData['unused'])
       pprint(filesData)
+      return filesData
+    return None
