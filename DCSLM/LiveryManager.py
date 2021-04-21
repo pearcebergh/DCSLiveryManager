@@ -518,8 +518,10 @@ class LiveryManager:
             print("Writing " + descPath)
             descFile.writelines(lines)
 
-  def _optimize_remove_unused_files(self, livery, unusedData):
-    return None
+  def _optimize_remove_unused_files(self, unusedData):
+    for f in unusedData:
+      fPath = os.path.join(os.getcwd(), f)
+      Utilities.remove_file(fPath)
 
   def _optimize_get_desclines_from_livery(self, livery):
     descLines = {}
@@ -569,7 +571,7 @@ class LiveryManager:
         newDescLines = self._optimize_get_desclines_from_livery(livery)
         filesData['new_liveries'] = self._optimize_get_filerefs_from_desclines(livery, newDescLines)
         filesData['unused'] = self._optimize_find_unused_livery_files(livery, filesData['new_liveries'])
-        self._optimize_remove_unused_files(livery, filesData['unused'])
+        self._optimize_remove_unused_files(filesData['unused'])
       pprint(filesData)
       return filesData
     return None
