@@ -3,6 +3,7 @@ import glob
 import os
 import platform
 import sys
+from pprint import pprint
 from prompt_toolkit import PromptSession, HTML
 from prompt_toolkit.completion import NestedCompleter
 from rich import box
@@ -647,9 +648,11 @@ class DCSLMApp:
     except Exception as e:
       self.console.print("[bold red]DCSLM upgrade failed:[/bold red] [red]" + str(e))
 
+  # 3307868, 3315963
   def optimize_livery(self, sArgs):
-    removeFiles = True
+    removeFiles = False
     keepDesc = True
+    verboseOutput = True
     if not len(sArgs):
       raise RuntimeWarning("No liveries provided for \'optimize\' command.")
     if len(sArgs) == 1 and str.lower(sArgs[0]) == "all":
@@ -665,6 +668,9 @@ class DCSLMApp:
           if removeFiles:
             self.console.print("Removed " + str(len(filesData['unused'])) + " files.")
           self.console.print("Size Before: " + str(0.0) + "Mb \tSize After: " + str(0.0) + "Mb")
+          if verboseOutput:
+            pprint(filesData)
+    self.console.print("")
 
   def func_test(self, sArgs):
     return None

@@ -396,10 +396,10 @@ class LiveryManager:
     luaData = []
     splitStatement = str.split(luaStatement[1:-1], ',')
     if len(splitStatement) == 4:
-      splitStatement[0] = re.search("\".+\"", splitStatement[0]).group()[1:-1]
-      splitStatement[1] = str.strip(splitStatement[1])
-      splitStatement[2] = re.search("\".+\"", splitStatement[2]).group()[1:-1]
-      splitStatement[3] = False if (splitStatement[3] == "false") else True
+      splitStatement[0] = re.search("\".+\"", str.strip(splitStatement[0])).group()[1:-1]
+      splitStatement[1] = str.strip(str.strip(splitStatement[1]))
+      splitStatement[2] = re.search("\".+\"", str.strip(splitStatement[2])).group()[1:-1]
+      splitStatement[3] = False if (str.strip(splitStatement[3]) == "false") else True
       luaData = splitStatement
     return luaData
 
