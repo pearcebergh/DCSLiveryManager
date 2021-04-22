@@ -97,7 +97,6 @@ class Livery:
         jsonLivery[var] = selfVars[var].to_JSON()
       else:
         jsonLivery[var] = selfVars[var]
-    pprint(jsonLivery)
     return jsonLivery
 
   def from_JSON(self, jsonData):

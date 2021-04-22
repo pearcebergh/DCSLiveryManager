@@ -68,6 +68,7 @@ class DCSLMApp:
     self.setup_console_window()
     self.clear_and_print_header()
     self.setup_livery_manager()
+    self.quick_check_upgrade_available()
     self.run()
 
   def setup_commands(self):
@@ -601,12 +602,16 @@ class DCSLMApp:
       self.lm.write_data()
       self.console.print(reportStr)
 
-  def upgrade_dcslm(self):
+  def quick_check_upgrade_available(self):
+    relData = self.request_upgrade_information()
+    if relData:
+      if len(relData):
+        self.console.print("\nYour DCSLM [bold red]v" + str(__version__) + "[/bold red] is out of date!\n" +
+                           "Use the \'upgrade\' command to upgrade DCSLM to [bold green]v" + relData[0]['version'] + "[/bold green]")
+
+  def request_upgrade_information(self):
     import re
-    import shutil
     import requests
-    import time
-    import subprocess
     from distutils.version import StrictVersion
     from bs4 import BeautifulSoup
     try:
@@ -620,10 +625,21 @@ class DCSLMApp:
         rData['version'] = r.find('span', {'class': "css-truncate-target"}).text
         rData['desc'] = r.find('div', {'class': "markdown-body"}).text
         rData['date'] = r.find('relative-time').text
-        rData['download'] = "https://github.com/" +  r.find('a', {'class': "d-flex flex-items-center min-width-0"},
-                                                            href = re.compile(r'[/]([a-z]|[A-Z])\w+')).attrs['href']
+        rData['download'] = "https://github.com/" + r.find('a', {'class': "d-flex flex-items-center min-width-0"},
+                                                           href=re.compile(r'[/]([a-z]|[A-Z])\w+')).attrs['href']
         if StrictVersion(rData['version']) > StrictVersion(__version__):
           releaseData.append(rData)
+      return releaseData
+    except Exception as e:
+      raise e
+
+  def upgrade_dcslm(self):
+    import shutil
+    import time
+    import requests
+    import subprocess
+    try:
+      releaseData = self.request_upgrade_information()
       if not len(releaseData):
         self.console.print("Current DCSLM version " + __version__ + " is the available latest version.")
       else:
