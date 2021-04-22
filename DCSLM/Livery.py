@@ -2,6 +2,7 @@ import json
 import os
 from datetime import datetime
 from .UnitConfig import Units
+from pprint import pprint
 import DCSLM.Utilities as Utilities
 
 class DCSUserFile:
@@ -85,25 +86,30 @@ class Livery:
     self.ovgme = None
     self.destination = None
     self.dcsuf = DCSUserFile()
-    self.installs = { 'units': [], 'liveries': {} }
+    self.installs = { 'units': [], 'liveries': {}, 'optimized': False }
 
   def to_JSON(self):
-    return {
-      'archive': self.archive,
-      'ovgme': self.ovgme,
-      'destination': self.destination,
-      'dcsuf': self.dcsuf.to_JSON(),
-      'installs': self.installs
-    }
+    liveryVars = vars(Livery())
+    selfVars = vars(self)
+    jsonLivery = {}
+    for var in liveryVars.keys():
+      if var == "dcsuf":
+        jsonLivery[var] = selfVars[var].to_JSON()
+      else:
+        jsonLivery[var] = selfVars[var]
+    pprint(jsonLivery)
+    return jsonLivery
 
   def from_JSON(self, jsonData):
     if jsonData:
-      self.archive = jsonData['archive']
-      self.ovgme = jsonData['ovgme']
-      self.destination = jsonData['destination']
-      self.dcsuf = DCSUserFile().from_JSON(jsonData['dcsuf'])
-      self.installs = jsonData['installs']
-      return self
+      liveryVars = vars(Livery())
+      for var, data in liveryVars.items():
+        if var in jsonData.keys():
+          if var == "dcsuf":
+            setattr(self, var, DCSUserFile().from_JSON(jsonData[var]))
+          else:
+            setattr(self, var, jsonData[var])
+    return self
 
   def from_JSON_String(self, jsonStr):
     jsonData = json.loads(jsonStr)

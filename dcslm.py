@@ -659,24 +659,27 @@ class DCSLMApp:
     removeFiles = True
     keepDesc = True
     verboseOutput = False
+    liveryIDs = []
     if not len(sArgs):
       raise RuntimeWarning("No liveries provided for \'optimize\' command.")
     if len(sArgs) == 1 and str.lower(sArgs[0]) == "all":
-      self.console.print("Attempting to optimize all installed liveries")
+      self.console.print("Attempting to optimize all installed liveries...")
+      liveryIDs = self.lm.get_registered_livery_ids()
     else:
-      for l in sArgs:
-        self.console.print("Attempting to optimize livery " + l)
-        livery = self.lm.get_registered_livery(id=l)
-        if livery:
-          filesData = self.lm.optimize_livery(livery, removeUnused = removeFiles, copyDesc = keepDesc)
-          self.console.print("\nOptimization Report for \'" + livery.dcsuf.title + "\' (" + str(livery.dcsuf.id) + "):")
-          self.console.print("Matched " + str(len(filesData['same_hash'])) + " .dds files with the same content.")
-          if removeFiles:
-            self.console.print("Removed " + str(len(filesData['unused'])) + " unused files.")
-            self.console.print("Size Before: " + Utilities.bytes_to_mb_string(filesData['size']['before']) + " Mb\t" +
-                               "Size After: " + Utilities.bytes_to_mb_string(filesData['size']['after']) + " Mb")
-          if verboseOutput:
-            pprint(filesData)
+      liveryIDs = sArgs
+    for l in liveryIDs:
+      self.console.print("Attempting to optimize livery " + l)
+      livery = self.lm.get_registered_livery(id=l)
+      if livery:
+        filesData = self.lm.optimize_livery(livery, removeUnused = removeFiles, copyDesc = keepDesc)
+        self.console.print("\nOptimization Report for \'" + livery.dcsuf.title + "\' (" + str(livery.dcsuf.id) + "):")
+        self.console.print("Matched " + str(len(filesData['same_hash'])) + " .dds files with the same content.")
+        if removeFiles:
+          self.console.print("Removed " + str(len(filesData['unused'])) + " unused files.")
+          self.console.print("Size Before: " + Utilities.bytes_to_mb_string(filesData['size']['before']) + " Mb\t" +
+                             "Size After: " + Utilities.bytes_to_mb_string(filesData['size']['after']) + " Mb")
+        if verboseOutput:
+          pprint(filesData)
     self.console.print("")
 
   def func_test(self, sArgs):
@@ -778,7 +781,7 @@ class DCSLMApp:
     if len(liveryChoices) > 3:
       choiceText = ""
       for i in range(0, len(liveryChoices)):
-        choiceText += "[" + str(i) + "]" + liveryChoices[i] + " "
+        choiceText += "[[sky_blue1]" + str(i) + "[/sky_blue1]]" + liveryChoices[i] + " "
       self.console.print("\nThere are multiple livery install locations for the [bold magenta]" +
                          Units.Units['aircraft'][livery.dcsuf.unit]['friendly'] + "[/bold magenta]. " +
                          "Please choose from one of the following choices by inputting the corresponding index number:")

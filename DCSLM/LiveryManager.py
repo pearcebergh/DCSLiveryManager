@@ -90,7 +90,7 @@ class LiveryManager:
       if os.path.isdir(installPath) and Utilities.validate_remove_path(installPath):
         shutil.rmtree(installPath, ignore_errors=True)
       else:
-        raise RuntimeError("Install path \'" + installPath + "\' is not a valid directory.")
+        print("Warning: Livery uninstall path \'" + installPath + "\' is not a valid directory.")
 
   def remove_installed_livery_directories(self, livery):
     for i in livery.installs['liveries'].values():
@@ -102,6 +102,7 @@ class LiveryManager:
 
   def unregister_livery(self, livery):
     if livery:
+      print(livery.dcsuf)
       if self.is_livery_registered(livery.dcsuf.id):
         del self.Liveries[str(livery.dcsuf.id)]
         del self.LiveryData["liveries"][str(livery.dcsuf.id)]
@@ -179,6 +180,9 @@ class LiveryManager:
               #os.remove(destinationFilename)
             raise RuntimeError("Failed during download of archive " + livery.dcsuf.download + ": " + str(e))
     raise RuntimeError("Unable to get downloaded archive path for livery \'" + livery.dcsuf.title + "\'.")
+
+  def get_registered_livery_ids(self):
+    return self.LiveryData['liveries'].keys()
 
   def _remove_existing_extracted_files(self, livery, extractedRoot):
     if os.path.isdir(extractedRoot) and Utilities.validate_remove_path(extractedRoot):
@@ -554,7 +558,6 @@ class LiveryManager:
             filesData[fh].extend(lf)
     return filesData
 
-  # TODO: Compare sizes before and after optimization
   def optimize_livery(self, livery, removeUnused=True, copyDesc=False):
     if livery:
       filesData = {'liveries': {}, 'hashes': {}, 'same_hash':[], 'size': {} }
