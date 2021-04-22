@@ -478,6 +478,8 @@ class LiveryManager:
           for l, fd in filesData['liveries'].items():
             if ps[2] in fd.keys():
               matchedData = fd[ps[2]]
+              if not 'hash' in matchedData.keys():
+                continue
               if matchedData['hash'] in filesData['hashes'].keys():
                 matchedHash = filesData['hashes'][matchedData['hash']]
                 if len(matchedHash) > 1:

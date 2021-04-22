@@ -634,8 +634,11 @@ class DCSLMApp:
         if upgradeConf:
           oldExec = sys.executable + '.old'
           if os.path.isfile(oldExec):
-            Utilities.remove_file(oldExec)
-            #os.remove(oldExec)
+            try:
+              Utilities.remove_file(oldExec)
+              # os.remove(oldExec)
+            except Exception as e:
+              self.console.print("[bold red]Failed to remove old executable:[/bold red] [red]" + str(e))
           shutil.move(sys.executable, oldExec)
           dlFilename = "DCSLM.exe"
           with self.console.status("Downloading DCSLM v" + releaseData[0]['version']):
@@ -645,13 +648,13 @@ class DCSLMApp:
           os.chmod(dlFilename, 0o775)
           self.console.print("[bold green]DCSLM Upgrade complete to version " + releaseData[0]['version'])
           self.console.print("[bold red]DCSLM will be restarted in a few moments...")
-          time.sleep(5)
+          time.sleep(2.5)
           subprocess.call(dlFilename)
           sys.exit(0)
     except Exception as e:
       self.console.print("[bold red]DCSLM upgrade failed:[/bold red] [red]" + str(e))
 
-  # 3307868 (m2000), 3315963 (uh-1h), 3314521 (breaks hash)
+  # 3307868 (m2000), 3315963 (uh-1h), 3314521 (lua ref missing file)
   def optimize_livery(self, sArgs):
     removeFiles = True
     keepDesc = True
@@ -670,8 +673,8 @@ class DCSLMApp:
           self.console.print("Matched " + str(len(filesData['same_hash'])) + " .dds files with the same content.")
           if removeFiles:
             self.console.print("Removed " + str(len(filesData['unused'])) + " unused files.")
-          self.console.print("Size Before: " + Utilities.bytes_to_mb_string(filesData['size']['before']) + "Mb \t" +
-                             "Size After: " + Utilities.bytes_to_mb_string(filesData['size']['after']) + "Mb")
+            self.console.print("Size Before: " + Utilities.bytes_to_mb_string(filesData['size']['before']) + " Mb\t" +
+                               "Size After: " + Utilities.bytes_to_mb_string(filesData['size']['after']) + " Mb")
           if verboseOutput:
             pprint(filesData)
     self.console.print("")
