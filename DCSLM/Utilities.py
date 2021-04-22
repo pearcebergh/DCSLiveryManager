@@ -1,6 +1,7 @@
 import re
 import os
 import hashlib
+import glob
 from requests import get
 
 def hash_file(filePath):
@@ -47,3 +48,17 @@ def remove_file(filepath):
 def remove_files(fileList):
   for f in fileList:
     remove_file(f)
+
+def get_size_of_filelist(fileList):
+  filelistSize = 0
+  for dF in fileList:
+    if os.path.isfile(dF):
+      filelistSize += os.path.getsize(dF)
+  return filelistSize
+
+def get_size_of_directory(dirPath):
+  dirSize = 0
+  if os.path.isdir(dirPath):
+    dirFiles = glob.glob(dirPath + "/**/*", recursive=True)
+    dirSize += get_size_of_filelist(dirFiles)
+  return dirSize

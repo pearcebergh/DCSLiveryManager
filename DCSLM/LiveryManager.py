@@ -183,6 +183,8 @@ class LiveryManager:
   def _remove_existing_extracted_files(self, livery, extractedRoot):
     if os.path.isdir(extractedRoot) and Utilities.validate_remove_path(extractedRoot):
       shutil.rmtree(extractedRoot)
+    #else:
+      #raise RuntimeError("Invalid path for removing existing extracted files: " + extractedRoot)
 
   def extract_livery_archive(self, livery):
     if livery:
@@ -214,7 +216,7 @@ class LiveryManager:
         liveryName = str.split(root,"\\")[-1]
       if len(liveryName):
         if self.is_valid_livery_directory(files):
-          liverySize = self.get_size_of_livery_files(livery, extractPath, files)
+          liverySize = self._get_size_of_extracted_livery_files(livery, extractPath, files)
           liveryDirectories.append({'name': liveryName, 'size': liverySize})
     return liveryDirectories
 
@@ -246,11 +248,7 @@ class LiveryManager:
       return directoryFiles
     return None
 
-  # TODO: Fill this out
-  def _get_size_of_directory(self, dirPath):
-    return 0
-
-  def get_size_of_livery_files(self, livery, extractPath, fileList):
+  def _get_size_of_extracted_livery_files(self, livery, extractPath, fileList):
     totalSize = 0
     for f in fileList:
       extractedFilepath = os.path.join(extractPath, f[1:])
@@ -292,13 +290,14 @@ class LiveryManager:
               copiedLiveries.append(install)
     return copiedLiveries
 
-
   def remove_extracted_livery_archive(self, livery):
     if livery:
       extractRoot = os.path.join(os.getcwd(), self.FolderRoot, "extract", str(livery.dcsuf.id))
       if Utilities.validate_remove_path(extractRoot):
         shutil.rmtree(extractRoot, ignore_errors=True)
         return True
+      else:
+        raise RuntimeError("Invalid path provided to remove extracted livery archive: " + extractRoot)
     return False
 
   def remove_downloaded_archive(self, livery, downloadPath):
@@ -350,8 +349,8 @@ class LiveryManager:
 
   def _get_file_lines(self, filePath):
     if os.path.isfile(filePath):
-      with open(filePath, "r") as descFile:
-        return descFile.readlines()
+      with open(filePath, "r") as readFile:
+        return readFile.readlines()
     return []
 
   def _optimize_get_lua_statements_from_line(self, line, commentStart=None, commentEnd=None):
@@ -556,11 +555,13 @@ class LiveryManager:
   # TODO: Compare sizes before and after optimization
   def optimize_livery(self, livery, removeUnused=True, copyDesc=False):
     if livery:
-      filesData = {'liveries': {}, 'hashes': {}, 'same_hash':[] }
+      filesData = {'liveries': {}, 'hashes': {}, 'same_hash':[], 'size': {} }
       descLines = self._optimize_get_desclines_from_livery(livery)
       filesData['liveries'] = self._optimize_get_filerefs_from_desclines(livery, descLines)
       filesData['hashes'] = self._optimize_calculate_fileref_hashes(livery, filesData['liveries'])
       filesData['same_hash'] = [h for h,l in filesData['hashes'].items() if len(l) > 1]
+      livery.calculate_size_installed_liveries()
+      filesData['size']['before'] = livery.get_size_installed_liveries()
       if len(filesData['same_hash']):
         correctedLines = self._optimize_correct_desc_lines(filesData, descLines)
         self._optimize_write_corrected_desc_files(livery, correctedLines, keepCopy=copyDesc)
@@ -569,5 +570,7 @@ class LiveryManager:
         filesData['new_liveries'] = self._optimize_get_filerefs_from_desclines(livery, newDescLines)
         filesData['unused'] = self._optimize_find_unused_livery_files(livery, filesData['new_liveries'])
         self._optimize_remove_unused_files(filesData['unused'])
+        livery.calculate_size_installed_liveries()
+        filesData['size']['after'] = livery.get_size_installed_liveries()
       return filesData
     return None

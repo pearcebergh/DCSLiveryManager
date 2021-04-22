@@ -24,12 +24,12 @@ from rich.prompt import Prompt, Confirm
 from rich.rule import Rule
 from rich.status import Status
 from rich.table import Table
-from DCSLM import Utilities
 from DCSLM import __version__
 from DCSLM.DCSUFParser import DCSUFParser
 from DCSLM.Livery import DCSUserFile, Livery
 from DCSLM.LiveryManager import LiveryManager
 from DCSLM.UnitConfig import Units
+import DCSLM.Utilities as Utilities
 
 # TODO: Convert all y/n prompts to Confirm.ask
 
@@ -670,7 +670,8 @@ class DCSLMApp:
           self.console.print("Matched " + str(len(filesData['same_hash'])) + " .dds files with the same content.")
           if removeFiles:
             self.console.print("Removed " + str(len(filesData['unused'])) + " unused files.")
-          self.console.print("Size Before: " + str(0.0) + "Mb \tSize After: " + str(0.0) + "Mb")
+          self.console.print("Size Before: " + Utilities.bytes_to_mb_string(filesData['size']['before']) + "Mb \t" +
+                             "Size After: " + Utilities.bytes_to_mb_string(filesData['size']['after']) + "Mb")
           if verboseOutput:
             pprint(filesData)
     self.console.print("")

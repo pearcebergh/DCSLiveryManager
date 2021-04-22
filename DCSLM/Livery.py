@@ -1,7 +1,8 @@
 import json
+import os
 from datetime import datetime
 from .UnitConfig import Units
-
+import DCSLM.Utilities as Utilities
 
 class DCSUserFile:
   def __init__(self):
@@ -128,6 +129,11 @@ class Livery:
     for ac, data in self.installs['liveries'].items():
       liveryCount += len(data['paths'])
     return liveryCount
+
+  def calculate_size_installed_liveries(self):
+    for i, v in self.installs['liveries'].items():
+      if len(v['paths']):
+        v['size'] = Utilities.get_size_of_directory(os.path.join(os.getcwd(), self.destination, v['paths'][0]))
 
   def get_size_installed_liveries(self):
     totalSize = 0
