@@ -308,7 +308,7 @@ class DCSLMApp:
       installTable.add_column("ID", justify="center", no_wrap=True, style="sky_blue1")
       installTable.add_column("Livery Title", justify="left", style="")
       installTable.add_column("# Liveries", justify="center", no_wrap=True, style="magenta")
-      installTable.add_column("Size (MB)", justify="right", no_wrap=True, style="gold1")
+      installTable.add_column("Size (MB)", justify="right", no_wrap=True, style="bold gold1")
       for l in installData['success']:
         installTable.add_row(Units.Units['aircraft'][l.dcsuf.unit]['friendly'], str(l.dcsuf.id), l.dcsuf.title,
                              str(l.get_num_liveries()), Utilities.bytes_to_mb_string(l.get_size_installed_liveries()))
@@ -489,7 +489,7 @@ class DCSLMApp:
     statusTable.add_column("Unit", justify="center", no_wrap=True, style="green", width=unitColWidth)
     statusTable.add_column("ID", justify="center", no_wrap=True, style="sky_blue1", width=8)
     statusTable.add_column("Livery Title", justify="center", no_wrap=True, overflow='ellipsis')
-    statusTable.add_column("Size", justify="right", no_wrap=True, style="gold1", width=10)
+    statusTable.add_column("Size", justify="right", no_wrap=True, style="bold gold1", width=10)
     liveryRows.sort(key=sort_list_by_unit_then_title)
     for i in range(0, len(liveryRows)):
       l = liveryRows[i]
@@ -670,12 +670,31 @@ class DCSLMApp:
     except Exception as e:
       self.console.print("[bold red]DCSLM upgrade failed:[/bold red] [red]" + str(e))
 
+  def _print_optimization_report(self, optimizationReport):
+    if len(optimizationReport):
+      optimizationTable = Table(title="Livery Optimization Report",expand=False, box=box.ROUNDED)
+      optimizationTable.add_column("ID", justify="center", no_wrap=True, style="sky_blue1")
+      optimizationTable.add_column("Livery Title", justify="center", style="")
+      optimizationTable.add_column("# Liveries", justify="center", style="magenta")
+      optimizationTable.add_column("Matching Files", justify="center", no_wrap=False, style="green")
+      optimizationTable.add_column("Size Before (MB)", justify="right", no_wrap=True, style="gold1")
+      optimizationTable.add_column("Size After (MB)", justify="right", no_wrap=True, style="bold gold1")
+      self.console.print("")
+      for op in optimizationReport:
+        l = op['livery']
+        optimizationTable.add_row(str(l.dcsuf.id), l.dcsuf.title, str(l.get_num_liveries()), str(op['matches']),
+                                  Utilities.bytes_to_mb_string(op['size_before']),
+                                  Utilities.bytes_to_mb_string(op['size_after']))
+      self.console.print(optimizationTable)
+    self.console.print("")
+
   # 3307868 (m2000), 3315963 (uh-1h), 3314521 (lua ref missing file)
   def optimize_livery(self, sArgs):
     removeFiles = True
     keepDesc = True
     verboseOutput = False
-    liveryIDs = []
+    reoptimizeLiveries = False
+    optimizationReports = []
     if not len(sArgs):
       raise RuntimeWarning("No liveries provided for \'optimize\' command.")
     if len(sArgs) == 1 and str.lower(sArgs[0]) == "all":
@@ -687,16 +706,31 @@ class DCSLMApp:
       self.console.print("Attempting to optimize livery " + l)
       livery = self.lm.get_registered_livery(id=l)
       if livery:
-        filesData = self.lm.optimize_livery(livery, removeUnused = removeFiles, copyDesc = keepDesc)
-        self.console.print("\nOptimization Report for \'" + livery.dcsuf.title + "\' (" + str(livery.dcsuf.id) + "):")
-        self.console.print("Matched " + str(len(filesData['same_hash'])) + " .dds files with the same content.")
-        if removeFiles:
-          self.console.print("Removed " + str(len(filesData['unused'])) + " unused files.")
-          self.console.print("Size Before: " + Utilities.bytes_to_mb_string(filesData['size']['before']) + " Mb\t" +
-                             "Size After: " + Utilities.bytes_to_mb_string(filesData['size']['after']) + " Mb")
-        if verboseOutput:
-          pprint(filesData)
+        if not 'optimized' in livery.installs.keys() or not livery.installs['optimized'] or reoptimizeLiveries:
+          filesData = self.lm.optimize_livery(livery, removeUnused = removeFiles, copyDesc = keepDesc)
+          if filesData:
+            livery.installs['optimized'] = True
+            optimizationData = {'matches': len(filesData['same_hash']),
+                                'size_before': filesData['size']['before'],
+                                'size_after': filesData['size']['after'],
+                                'livery': livery}
+            optimizationReports.append(optimizationData)
+            liveryReportStr = "Matched " + str(len(filesData['same_hash'])) + " .dds files with the same content."
+            if removeFiles:
+              liveryReportStr += "Removed " + str(len(filesData['unused'])) + " unused files.\n"
+              liveryReportStr += "Size Before: " + Utilities.bytes_to_mb_string(filesData['size']['before']) + " Mb\t"
+              liveryReportStr += "Size After: " + Utilities.bytes_to_mb_string(filesData['size']['after']) + " Mb"
+            self.console.print(liveryReportStr)
+            if verboseOutput:
+              pprint(filesData)
+        else:
+          self.console.print("Skipping re-optimizing livery \'" + livery.dcsuf.title + "\'.")
+    self._print_optimization_report(optimizationReports)
     self.console.print("")
+    for op in optimizationReports:
+      l = op['livery']
+      self.lm.write_livery_registry_files(l)
+    self.lm.write_data()
 
   def func_test(self, sArgs):
     return None
@@ -770,10 +804,10 @@ class DCSLMApp:
       self.console.print("If you use a mod manager, like \'OVGME\' or \'JSGME\', to manage your DCS mod installs, " +
                          "you can enable \'Mod Manager Mode\' to have it create a root directory named with the format " +
                          "[bold purple]{aircraft} - {livery title}[/bold purple].")
-      self.console.print("\n[gold1]For \'Mod Manager Mode\' make sure you've placed \'DCSLM.exe\' inside your " +
+      self.console.print("\n[bold gold1]For \'Mod Manager Mode\' make sure you've placed \'DCSLM.exe\' inside your " +
                          "mod manager's directory that is " +
-                         "configured for the [/gold1]\'DCS Saved Games\'[gold1] directory, " +
-                         "not the DCS install directory.[/gold1]")
+                         "configured for the [/bold gold1]\'DCS Saved Games\'[bold gold1] directory, " +
+                         "not the DCS install directory.[/bold gold1]")
       ovgme = Confirm.ask("\n[bold]Do you want to enable Mod Manager Mode?[/bold]")
       self.lm.LiveryData['config']['ovgme'] = ovgme
       if ovgme:
