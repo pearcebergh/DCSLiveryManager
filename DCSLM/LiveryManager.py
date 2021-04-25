@@ -507,7 +507,8 @@ class LiveryManager:
             ls = self._optimize_py_statement_to_lua(ps)
             if len(ls):
               correctedLuaStatements.append(ls)
-          correctedLuaLine = '\t' + ' '.join(correctedLuaStatements) + '\n'
+          linePrefix = str.find(line, '{')
+          correctedLuaLine = line[:linePrefix] + ' '.join(correctedLuaStatements) + '\n'
           optimizedLines[t].append(correctedLuaLine)
     return optimizedLines
 
