@@ -675,9 +675,14 @@ class DCSLMApp:
         self.console.print("Current DCSLM version " + __version__ + " is the available latest version.")
       else:
         for rd in releaseData:
-          self.console.print(rd['name'] + " (" + rd['version'] + ") " + rd['date'])
-          self.console.print(rd['desc'])
+          self.console.print(rd['name'] + " (" + rd['version'] + ") " + rd['date'] + ":")
+          splitDesc = str.split(rd['desc'], '\n')
+          for descLine in splitDesc:
+            if len(descLine):
+              self.console.print(" - " + descLine)
+        self.console.print("")
         upgradeConf = Confirm.ask("Do you want to download and upgrade to the latest version of DCSLM?")
+        self.console.print("")
         if upgradeConf:
           oldExec = sys.executable + '.old'
           if os.path.isfile(oldExec):
