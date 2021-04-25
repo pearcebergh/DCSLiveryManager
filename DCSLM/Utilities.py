@@ -19,16 +19,14 @@ def correct_dcs_user_files_url(fileURL):
     if str.isnumeric(fileID[0]):
       return DCSFilesURLRoot + fileID[0] + "/", fileID[0]
 
-def size_text_to_bytes(sizeText):
-  if len(sizeText):
-    if 'mb' in str.lower(sizeText):
-      sizeText = sizeText.split(' ')[0]
-    sizeInt = int(float(sizeText) * 100) * (10**4)
-    return sizeInt
-  return 0
+def bytes_to_mb(sizeBytes):
+  return float(sizeBytes/(10**6))
 
 def bytes_to_mb_string(sizeBytes):
   return "{:.2f}".format(float(sizeBytes/(10**6)))
+
+def mb_to_mb_string(sizeMegabytes):
+  return "{:.2f}".format(sizeMegabytes)
 
 def request_file_size(fileURL):
   return int(get(fileURL, stream=True).headers['Content-length'])

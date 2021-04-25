@@ -161,7 +161,23 @@ class DCSLMApp:
         'completer': None,
         'usage': "",
         'desc': "Attempt to optimize an installed livery by looking for unused or shared files between liveries within packs.",
-        'flags': {},
+        'flags': {
+          'reoptimize': {
+            'tags': ['-r','--reoptimize'],
+            'desc': "Optimize liveries even if they have already been optimized.",
+            'confirm': False
+          },
+          'keepdesc': {
+            'tags': ['-k','--keepdesc'],
+            'desc': "Keep a copy of the original, unmodified description.lua files.",
+            'confirm': False
+          },
+          'verbose': {
+            'tags': ['-v', '--verbose'],
+            'desc': "Verbose printing of livery file reference data for debugging purposes.",
+            'confirm': False
+          },
+        },
         'args': {
           'livery': {
             'type': "string",
@@ -672,42 +688,70 @@ class DCSLMApp:
 
   def _print_optimization_report(self, optimizationReport):
     if len(optimizationReport):
-      optimizationTable = Table(title="Livery Optimization Report",expand=False, box=box.ROUNDED)
+      optimizationTable = Table(title="Livery Optimization Report", expand=True, box=box.ROUNDED)
       optimizationTable.add_column("ID", justify="center", no_wrap=True, style="sky_blue1")
       optimizationTable.add_column("Livery Title", justify="center", style="")
       optimizationTable.add_column("# Liveries", justify="center", style="magenta")
       optimizationTable.add_column("Matching Files", justify="center", no_wrap=False, style="green")
-      optimizationTable.add_column("Size Before (MB)", justify="right", no_wrap=True, style="gold1")
-      optimizationTable.add_column("Size After (MB)", justify="right", no_wrap=True, style="bold gold1")
+      optimizationTable.add_column("Size Before (MB)", justify="right", no_wrap=False, style="gold1")
+      optimizationTable.add_column("Size After (MB)", justify="right", no_wrap=False, style="bold gold1")
       self.console.print("")
+      totalSizeBefore, totalSizeAfter, totalSizeDelta = 0.0, 0.0, 0.0
       for op in optimizationReport:
         l = op['livery']
+        sb = Utilities.bytes_to_mb(op['size_before'])
+        sa = Utilities.bytes_to_mb(op['size_after'])
+        totalSizeBefore += sb
+        totalSizeAfter += sa
+        totalSizeDelta += sa - sb
         optimizationTable.add_row(str(l.dcsuf.id), l.dcsuf.title, str(l.get_num_liveries()), str(op['matches']),
-                                  Utilities.bytes_to_mb_string(op['size_before']),
-                                  Utilities.bytes_to_mb_string(op['size_after']))
+                                  Utilities.mb_to_mb_string(sb),
+                                  Utilities.mb_to_mb_string(sa))
       self.console.print(optimizationTable)
-    self.console.print("")
+      self.console.print("Total Size Before: " + Utilities.mb_to_mb_string(totalSizeBefore) +
+                         " Mb\tTotal Size After: " + Utilities.mb_to_mb_string(totalSizeAfter) +
+                         " Mb\t Total Size Delta: " + Utilities.mb_to_mb_string(totalSizeDelta) + " Mb")
+
+  def _parse_optimize_args(self, sArgs):
+    try:
+      optimizeArgsParser = argparse.ArgumentParser(usage=self.commands['optimize']['usage'],
+                                                   description=self.commands['optimize']['desc'],
+                                                   exit_on_error=False)
+      for oA in self.commands['optimize']['flags'].keys():
+        optimizeArgsParser.add_argument(*self.commands['optimize']['flags'][oA]['tags'],
+                                        help=self.commands['optimize']['flags'][oA]['desc'],
+                                        action="store_true", dest=oA)
+      optimizeArgsParser.add_argument('livery', type=str, nargs="+",
+                                      help=self.commands['optimize']['args']['livery']['desc'])
+      parsedArgs = optimizeArgsParser.parse_known_args(sArgs)
+      if len(parsedArgs[1]):
+        self.console.print("Failed to parse the following args for \'optimize\':", style="bold red")
+        self.console.print("\t" + str(parsedArgs[1]), style="bold red")
+      return parsedArgs[0]
+    except SystemExit:
+      raise RuntimeError("Unable to parse \'optimize\' command.")
 
   # 3307868 (m2000), 3315963 (uh-1h), 3314521 (lua ref missing file)
   def optimize_livery(self, sArgs):
-    removeFiles = True
-    keepDesc = True
-    verboseOutput = False
-    reoptimizeLiveries = False
-    optimizationReports = []
     if not len(sArgs):
       raise RuntimeWarning("No liveries provided for \'optimize\' command.")
-    if len(sArgs) == 1 and str.lower(sArgs[0]) == "all":
+    optimizeArgs = self._parse_optimize_args(sArgs)
+    removeFiles = True
+    optimizationReports = []
+    liveryIDs = []
+    if len(optimizeArgs.livery) == 1 and str.lower(optimizeArgs.livery[0]) == "all":
       self.console.print("Attempting to optimize all installed liveries...")
       liveryIDs = self.lm.get_registered_livery_ids()
     else:
-      liveryIDs = sArgs
+      for l in optimizeArgs.livery:
+        if l not in liveryIDs:
+          liveryIDs.append(l)
     for l in liveryIDs:
-      self.console.print("Attempting to optimize livery " + l)
       livery = self.lm.get_registered_livery(id=l)
       if livery:
-        if not 'optimized' in livery.installs.keys() or not livery.installs['optimized'] or reoptimizeLiveries:
-          filesData = self.lm.optimize_livery(livery, removeUnused = removeFiles, copyDesc = keepDesc)
+        if not 'optimized' in livery.installs.keys() or not livery.installs['optimized'] or optimizeArgs.reoptimize:
+          self.console.print("Optimizing livery \'" + livery.dcsuf.title + "\'")
+          filesData = self.lm.optimize_livery(livery, copyDesc = optimizeArgs.keepdesc)
           if filesData:
             livery.installs['optimized'] = True
             optimizationData = {'matches': len(filesData['same_hash']),
@@ -719,12 +763,16 @@ class DCSLMApp:
             if removeFiles:
               liveryReportStr += "Removed " + str(len(filesData['unused'])) + " unused files.\n"
               liveryReportStr += "Size Before: " + Utilities.bytes_to_mb_string(filesData['size']['before']) + " Mb\t"
-              liveryReportStr += "Size After: " + Utilities.bytes_to_mb_string(filesData['size']['after']) + " Mb"
+              liveryReportStr += "Size After: " + Utilities.bytes_to_mb_string(filesData['size']['after']) + " Mb\t"
+              liveryReportStr += "Size Delta: " + Utilities.bytes_to_mb_string(filesData['size']['after'] - filesData['size']['before']) + " Mb"
             self.console.print(liveryReportStr)
-            if verboseOutput:
+            self.console.print("")
+            if optimizeArgs.verbose:
               pprint(filesData)
         else:
           self.console.print("Skipping re-optimizing livery \'" + livery.dcsuf.title + "\'.")
+      else:
+        self.console.print("No livery found for input \'" + l + "\'.")
     self._print_optimization_report(optimizationReports)
     self.console.print("")
     for op in optimizationReports:
@@ -787,6 +835,7 @@ class DCSLMApp:
     #set_terminal_size(80, 50)
 
   def setup_livery_manager(self):
+    self.console.print("DCSLM Directory: " + os.getcwd())
     self.lm = LiveryManager()
     lmData = self.lm.load_data()
     self.lm.make_dcslm_dirs()

@@ -353,7 +353,7 @@ class LiveryManager:
 
   def _get_file_lines(self, filePath):
     if os.path.isfile(filePath):
-      with open(filePath, "r") as readFile:
+      with open(filePath, "r", errors="ignore") as readFile:
         return readFile.readlines()
     return []
 
