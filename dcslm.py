@@ -78,16 +78,19 @@ class DCSLMApp:
           'keep': {
             'tags': ['-k', '--keep'],
             'desc': "Keep downloaded livery archive files",
+            'action': "store_false",
             'confirm': False
           },
           'reinstall': {
             'tags': ['-r', '--reinstall'],
             'desc': "Do not prompt if the livery is already registered.",
+            'action': "store_false",
             'confirm': False
           },
           'allunits': {
             'tags': ['-a', '--allunits'],
             'desc': "Do not prompt when given a choice to install to multiple units and install to all.",
+            'action': "store_false",
             'confirm': False
           },
         },
@@ -108,6 +111,7 @@ class DCSLMApp:
           'keep': {
             'tags': ['-k', '--keep'],
             'desc': "Keep livery files on disk (untrack them)",
+            'action': "store_false",
             'confirm': False
           },
         },
@@ -142,6 +146,7 @@ class DCSLMApp:
           'ids': {
             'tags': ['ids'],
             'desc': "List the IDs of all registered liveries for copying.",
+            'action': "store_false",
             'confirm': False
           },
         },
@@ -172,16 +177,19 @@ class DCSLMApp:
           'reoptimize': {
             'tags': ['-r','--reoptimize'],
             'desc': "Optimize liveries even if they have already been optimized.",
+            'action': "store_false",
             'confirm': False
           },
           'keepdesc': {
             'tags': ['-k','--keepdesc'],
             'desc': "Keep a copy of the original, unmodified description.lua files.",
+            'action': "store_false",
             'confirm': False
           },
           'verbose': {
             'tags': ['-v', '--verbose'],
             'desc': "Verbose printing of livery file reference data for debugging purposes.",
+            'action': "store_false",
             'confirm': False
           },
         },
@@ -350,7 +358,7 @@ class DCSLMApp:
       for iA in self.commands['install']['flags'].keys():
         installArgsParser.add_argument(*self.commands['install']['flags'][iA]['tags'],
                                         help=self.commands['install']['flags'][iA]['desc'],
-                                        action="store_true", dest=iA)
+                                        action=self.commands['install']['flags'][iA]['action'], dest=iA)
       installArgsParser.add_argument('url', type=str, help=self.commands['install']['args']['url']['desc'], nargs="+")
       parsedArgs = installArgsParser.parse_known_args(sArgs)
       if len(parsedArgs[1]):
@@ -374,7 +382,7 @@ class DCSLMApp:
       uninstallArgsParser = argparse.ArgumentParser(usage=self.commands['uninstall']['usage'],
                                                   description=self.commands['uninstall']['desc'],
                                                   exit_on_error=False)
-      uninstallArgsParser.add_argument(*self.commands['uninstall']['flags']['keep']['tags'], action="store_true",
+      uninstallArgsParser.add_argument(*self.commands['uninstall']['flags']['keep']['tags'], action="store_false",
                                      help=self.commands['uninstall']['flags']['keep']['desc'], dest='keep')
       uninstallArgsParser.add_argument('livery', type=str, nargs="+",
                                      help=self.commands['uninstall']['args']['livery']['desc'])
@@ -727,7 +735,7 @@ class DCSLMApp:
       for oA in self.commands['optimize']['flags'].keys():
         optimizeArgsParser.add_argument(*self.commands['optimize']['flags'][oA]['tags'],
                                         help=self.commands['optimize']['flags'][oA]['desc'],
-                                        action="store_true", dest=oA)
+                                        action=self.commands['install']['flags'][oA]['action'], dest=oA)
       optimizeArgsParser.add_argument('livery', type=str, nargs="+",
                                       help=self.commands['optimize']['args']['livery']['desc'])
       parsedArgs = optimizeArgsParser.parse_known_args(sArgs)
