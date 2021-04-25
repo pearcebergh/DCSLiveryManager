@@ -78,19 +78,19 @@ class DCSLMApp:
           'keep': {
             'tags': ['-k', '--keep'],
             'desc': "Keep downloaded livery archive files",
-            'action': "store_false",
+            'action': "store_true",
             'confirm': False
           },
           'reinstall': {
             'tags': ['-r', '--reinstall'],
             'desc': "Do not prompt if the livery is already registered.",
-            'action': "store_false",
+            'action': "store_true",
             'confirm': False
           },
           'allunits': {
             'tags': ['-a', '--allunits'],
             'desc': "Do not prompt when given a choice to install to multiple units and install to all.",
-            'action': "store_false",
+            'action': "store_true",
             'confirm': False
           },
         },
@@ -111,7 +111,7 @@ class DCSLMApp:
           'keep': {
             'tags': ['-k', '--keep'],
             'desc': "Keep livery files on disk (untrack them)",
-            'action': "store_false",
+            'action': "store_true",
             'confirm': False
           },
         },
@@ -146,7 +146,7 @@ class DCSLMApp:
           'ids': {
             'tags': ['ids'],
             'desc': "List the IDs of all registered liveries for copying.",
-            'action': "store_false",
+            'action': "store_true",
             'confirm': False
           },
         },
@@ -177,19 +177,19 @@ class DCSLMApp:
           'reoptimize': {
             'tags': ['-r','--reoptimize'],
             'desc': "Optimize liveries even if they have already been optimized.",
-            'action': "store_false",
+            'action': "store_true",
             'confirm': False
           },
           'keepdesc': {
             'tags': ['-k','--keepdesc'],
             'desc': "Keep a copy of the original, unmodified description.lua files.",
-            'action': "store_false",
+            'action': "store_true",
             'confirm': False
           },
           'verbose': {
             'tags': ['-v', '--verbose'],
             'desc': "Verbose printing of livery file reference data for debugging purposes.",
-            'action': "store_false",
+            'action': "store_true",
             'confirm': False
           },
         },
@@ -740,7 +740,7 @@ class DCSLMApp:
       for oA in self.commands['optimize']['flags'].keys():
         optimizeArgsParser.add_argument(*self.commands['optimize']['flags'][oA]['tags'],
                                         help=self.commands['optimize']['flags'][oA]['desc'],
-                                        action=self.commands['install']['flags'][oA]['action'], dest=oA)
+                                        action=self.commands['optimize']['flags'][oA]['action'], dest=oA)
       optimizeArgsParser.add_argument('livery', type=str, nargs="+",
                                       help=self.commands['optimize']['args']['livery']['desc'])
       parsedArgs = optimizeArgsParser.parse_known_args(sArgs)
