@@ -116,7 +116,6 @@ class Livery:
       return self.from_JSON(jsonData)
 
   def generate_ovgme_folder(self):
-    # TODO: Don't add aircraft to ovgme title if it's already in the title
     if self.dcsuf and self.dcsuf.unit and self.dcsuf.title:
       return Units.Units['aircraft'][self.dcsuf.unit]['friendly'] + " - " + self.dcsuf.title
     else:

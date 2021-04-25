@@ -1,5 +1,6 @@
 import re
 import os
+import stat
 import hashlib
 import glob
 from requests import get
@@ -60,3 +61,7 @@ def get_size_of_directory(dirPath):
     dirFiles = glob.glob(dirPath + "/**/*", recursive=True)
     dirSize += get_size_of_filelist(dirFiles)
   return dirSize
+
+def remove_readonly(func, path, _):
+  os.chmod(path, stat.S_IWRITE)
+  func(path)

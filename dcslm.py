@@ -31,8 +31,6 @@ from DCSLM.LiveryManager import LiveryManager
 from DCSLM.UnitConfig import Units
 import DCSLM.Utilities as Utilities
 
-# TODO: Convert all y/n prompts to Confirm.ask
-
 # Fail install 3314968
 
 def set_console_title(title):
@@ -61,7 +59,6 @@ class DCSLMApp:
     self.commands = None
     self.lm = None
 
-  # TODO: Add quick upgrade check
   def start(self):
     self.setup_commands()
     self.setup_command_completer()
@@ -333,7 +330,6 @@ class DCSLMApp:
       installTable.add_column("Unit", justify="left", no_wrap=True, style="green")
       installTable.add_column("ID", justify="center", no_wrap=True, style="sky_blue1")
       installTable.add_column("Livery Title", justify="center", style="")
-      installTable.add_column("Livery Title", justify="center", style="")
       installTable.add_column("# Liveries", justify="center", no_wrap=True, style="magenta")
       installTable.add_column("Size (MB)", justify="right", no_wrap=True, style="bold gold1")
       for l in installData['success']:
@@ -494,7 +490,6 @@ class DCSLMApp:
     self._print_livery_install_report(updateData, "Livery Update Report")
 
   def list_liveries(self, sArgs):
-    # TODO: Add summary of all installed liveries after end of table
     def sort_list_by_unit_then_title(e):
       return e[0] + " - " + e[1]
 
@@ -525,7 +520,7 @@ class DCSLMApp:
       l = liveryRows[i]
       isEndSection = False
       if i != len(liveryRows) - 1:
-        nextUnit = nextL = liveryRows[i + 1][0]
+        nextUnit = liveryRows[i + 1][0]
         if nextUnit != l[0]:
           isEndSection = True
       if i == len(liveryRows) - 1: # for footer
@@ -847,16 +842,16 @@ class DCSLMApp:
     #set_terminal_size(80, 50)
 
   def setup_livery_manager(self):
-    self.console.print("DCSLM Directory: " + os.getcwd())
+    self.console.print("DCSLM.exe Directory: \'" + os.getcwd() + "\'")
     self.lm = LiveryManager()
     lmData = self.lm.load_data()
     self.lm.make_dcslm_dirs()
     if not lmData:
-      self.console.print("No existing \'DCSLM/dcslm.json\' file found with config and livery data. Loading defaults.")
+      self.console.print("No existing \'DCSLM\\dcslm.json\' file found with config and livery data. Loading defaults.")
       self.prompt_livery_manager_defaults()
       self.lm.write_data()
     else:
-      self.console.print("Loaded Livery Manager config and data from \'DCSLM/dcslm.json\'")
+      self.console.print("Loaded Livery Manager config and data from \'DCSLM\\dcslm.json\'")
       self.lm.LiveryData = lmData
 
   def prompt_livery_manager_defaults(self):
@@ -882,13 +877,13 @@ class DCSLMApp:
 
   def prompt_aircraft_livery_choice(self, livery, unitLiveries):
     choosenLiveries = []
-    liveryChoices = ["[white]None"]
+    liveryChoices = ["[white]None[/white]"]
     for u in unitLiveries:
       if u in Units.Units['aircraft'].keys():
-        liveryChoices.append(Units.Units['aircraft'][u]['friendly'])
+        liveryChoices.append("[white]" + Units.Units['aircraft'][u]['friendly'] + "[/white]")
       else:
         liveryChoices.append(u)
-    liveryChoices.append("All")
+    liveryChoices.append("[bold white]All[/bold white]")
     if len(liveryChoices) > 3:
       choiceText = ""
       for i in range(0, len(liveryChoices)):
