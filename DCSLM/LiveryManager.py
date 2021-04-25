@@ -365,13 +365,13 @@ class LiveryManager:
     if not commentEnd:
       commentEnd = -1
     luaStatements = []
-    reStatement = re.findall("(.+;)", line)
+    reStatement = re.findall("(.+[;\n])", line)
     if len(reStatement):
       for rs in reStatement:
         luaStatement = str.strip(rs)
         splitStatements = str.split(luaStatement, ';')
         for s in splitStatements:
-          s = s[str.find(s, '{'):]
+          s = s[str.find(s, '{'):str.find(s, '}') + 1]
           subStrStart = str.find(line, s)
           if not (subStrStart > commentStart and subStrStart < commentEnd - 2) and len(s):
             luaStatements.append(s)
@@ -390,10 +390,10 @@ class LiveryManager:
     if len(pyStatement) == 4:
       luaStatement = "{\"" + pyStatement[0] + "\", " + pyStatement[1] + " ,\"" + pyStatement[2] + "\","
       if pyStatement[3]:
-        luaStatement = luaStatement + "true"
+        luaStatement += "true"
       else:
-        luaStatement = luaStatement + "false"
-      luaStatement = luaStatement + "};"
+        luaStatement += "false"
+      luaStatement = luaStatement + "}"
       return luaStatement
     return ""
 
@@ -436,7 +436,9 @@ class LiveryManager:
   def _optimize_generate_file_hashes(self, installRoot, liveryTitle, fileRefs):
     fileHashes = {}
     for f, d in fileRefs.items():
-      filepath = os.path.join(installRoot, f) + ".dds"
+      filepath = os.path.join(installRoot, f)
+      if not ".dds" in filepath:
+        filepath += ".dds"
       if os.path.isfile(filepath):
         fileHash = Utilities.hash_file(filepath)
         if fileHash:
@@ -445,6 +447,8 @@ class LiveryManager:
             fileHashes[fileHash] = [liveryTitle]
           else:
             fileHashes[fileHash].append(liveryTitle)
+      else:
+        print("[red]Unable to hash file " + filepath)
     return fileHashes
 
   def _optimize_find_unused_livery_files(self, livery, liveryFilesData):
@@ -508,7 +512,8 @@ class LiveryManager:
             if len(ls):
               correctedLuaStatements.append(ls)
           linePrefix = str.find(line, '{')
-          correctedLuaLine = line[:linePrefix] + ' '.join(correctedLuaStatements) + '\n'
+          lastBracket = str.rfind(line, '}')
+          correctedLuaLine = line[:linePrefix] + ' '.join(correctedLuaStatements) + line[lastBracket + 1:]
           optimizedLines[t].append(correctedLuaLine)
     return optimizedLines
 
