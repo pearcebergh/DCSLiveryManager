@@ -82,7 +82,17 @@ class DCSLMApp:
             'tags': ['-k', '--keep'],
             'desc': "Keep downloaded livery archive files",
             'confirm': False
-          }
+          },
+          'reinstall': {
+            'tags': ['-r', '--reinstall'],
+            'desc': "Do not prompt if the livery is already registered.",
+            'confirm': False
+          },
+          'allunits': {
+            'tags': ['-a', '--allunits'],
+            'desc': "Do not prompt when given a choice to install to multiple units and install to all.",
+            'confirm': False
+          },
         },
         'args': {
           'url': {
@@ -221,7 +231,7 @@ class DCSLMApp:
       }
     }
 
-  def _install_liveries(self, liveryStrings, keepFiles=False, forceDownload=False):
+  def _install_liveries(self, liveryStrings, keepFiles=False, forceDownload=False, forceInstall=False, forceAllUnits=False):
     installData = {'success': [], 'failed': []}
     for liveryStr in liveryStrings:
       correctedLiveryURL, urlID = Utilities.correct_dcs_user_files_url(liveryStr)
@@ -238,12 +248,12 @@ class DCSLMApp:
           self.console.print(getUFStr + "\n")
           self.print_dcsuf_panel(livery)
           existingLivery = self.lm.get_registered_livery(id=int(urlID))
-          if existingLivery:
+          if existingLivery and not forceInstall:
             if existingLivery.dcsuf.datetime == livery.dcsuf.datetime:
               if not self.prompt_existing_livery(existingLivery):
                 raise RuntimeError("Skipping reinstalling livery.")
           unitLiveries = Units.Units['aircraft'][livery.dcsuf.unit]['liveries']
-          if len(unitLiveries) > 1:
+          if len(unitLiveries) > 1 and not forceAllUnits:
             unitLiveries = self.prompt_aircraft_livery_choice(livery, unitLiveries)
           if len(unitLiveries) == 0:
             raise RuntimeError("No units selected for install.")
@@ -322,7 +332,8 @@ class DCSLMApp:
       installTable = Table(title=tableTitle,expand=False, box=box.ROUNDED)
       installTable.add_column("Unit", justify="left", no_wrap=True, style="green")
       installTable.add_column("ID", justify="center", no_wrap=True, style="sky_blue1")
-      installTable.add_column("Livery Title", justify="left", style="")
+      installTable.add_column("Livery Title", justify="center", style="")
+      installTable.add_column("Livery Title", justify="center", style="")
       installTable.add_column("# Liveries", justify="center", no_wrap=True, style="magenta")
       installTable.add_column("Size (MB)", justify="right", no_wrap=True, style="bold gold1")
       for l in installData['success']:
@@ -340,8 +351,10 @@ class DCSLMApp:
       installArgsParser = argparse.ArgumentParser(usage=self.commands['install']['usage'],
                                                   description=self.commands['install']['desc'],
                                                   exit_on_error=False)
-      installArgsParser.add_argument(*self.commands['install']['flags']['keep']['tags'], action="store_true",
-                                     help=self.commands['install']['flags']['keep']['desc'], dest='keep')
+      for iA in self.commands['install']['flags'].keys():
+        installArgsParser.add_argument(*self.commands['install']['flags'][iA]['tags'],
+                                        help=self.commands['install']['flags'][iA]['desc'],
+                                        action="store_true", dest=iA)
       installArgsParser.add_argument('url', type=str, help=self.commands['install']['args']['url']['desc'], nargs="+")
       parsedArgs = installArgsParser.parse_known_args(sArgs)
       if len(parsedArgs[1]):
@@ -355,7 +368,8 @@ class DCSLMApp:
     installArgs = self._parse_install_args(sArgs)
     self.console.print("Attempting to install " + str(len(installArgs.url)) +
                        (" liveries" if len(installArgs.url) > 1 else " livery") + " from DCS User Files.")
-    installData = self._install_liveries(installArgs.url, keepFiles=installArgs.keep)
+    installData = self._install_liveries(installArgs.url, keepFiles=installArgs.keep,
+                                         forceInstall=installArgs.reinstall, forceAllUnits=installArgs.allunits)
     self.lm.write_data()
     self._print_livery_install_report(installData, "Livery Install Report")
 
@@ -517,8 +531,6 @@ class DCSLMApp:
       if i == len(liveryRows) - 1: # for footer
         isEndSection = True
       statusTable.add_row(*l, end_section=isEndSection)
-    #statusTable.add_row("3 Units", "47 Registered Liveries with 100 Installed Livery Directories",
-    #                    "3.02 GB", end_section=True)
     self.console.print(statusTable)
 
   def _make_livery_rendergroup(self, livery):
@@ -692,7 +704,7 @@ class DCSLMApp:
       optimizationTable.add_column("ID", justify="center", no_wrap=True, style="sky_blue1")
       optimizationTable.add_column("Livery Title", justify="center", style="")
       optimizationTable.add_column("# Liveries", justify="center", style="magenta")
-      optimizationTable.add_column("Matching Files", justify="center", no_wrap=False, style="green")
+      optimizationTable.add_column("Hash Matches", justify="center", no_wrap=False, style="green")
       optimizationTable.add_column("Size Before (MB)", justify="right", no_wrap=False, style="gold1")
       optimizationTable.add_column("Size After (MB)", justify="right", no_wrap=False, style="bold gold1")
       self.console.print("")
@@ -761,7 +773,7 @@ class DCSLMApp:
             optimizationReports.append(optimizationData)
             liveryReportStr = "Matched " + str(len(filesData['same_hash'])) + " .dds files with the same content."
             if removeFiles:
-              liveryReportStr += "Removed " + str(len(filesData['unused'])) + " unused files.\n"
+              liveryReportStr += " Removed " + str(len(filesData['unused'])) + " unused files.\n"
               liveryReportStr += "Size Before: " + Utilities.bytes_to_mb_string(filesData['size']['before']) + " Mb\t"
               liveryReportStr += "Size After: " + Utilities.bytes_to_mb_string(filesData['size']['after']) + " Mb\t"
               liveryReportStr += "Size Delta: " + Utilities.bytes_to_mb_string(filesData['size']['after'] - filesData['size']['before']) + " Mb"
