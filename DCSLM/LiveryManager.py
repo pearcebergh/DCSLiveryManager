@@ -265,7 +265,10 @@ class LiveryManager:
     if not os.path.isdir(installDirectory):
       os.makedirs(installDirectory, exist_ok=True)
     for f in fileList:
-      fileName = os.path.split(f)[1]
+      splitPath = os.path.split(f)
+      fileName = splitPath[1]
+      if not '.' in fileName:
+        continue
       badFileName = False
       for bF in badFiles:
         if bF in fileName:
@@ -279,7 +282,6 @@ class LiveryManager:
     return True
 
   def copy_detected_liveries(self, livery, extractPath, extractedLiveryFiles, installPaths):
-    # TODO: Fix copying directories within valid livery dirs (3300601, 3315181)
     copiedLiveries = []
     for install in installPaths:
       installPath = os.path.join(os.getcwd(), livery.destination, install)

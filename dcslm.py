@@ -424,7 +424,7 @@ class DCSLMApp:
     if len(uninstallData['failed']):
       self.console.print("[bold red]Failed Livery Uninstalls:")
       for l in uninstallData['failed']:
-        self.console.print("\t(" + l['livery'] + "[red]: " + str(l['error']))
+        self.console.print("\t" + l['livery'] + "[red]: " + str(l['error']))
 
   def _check_all_liveries_updates(self, verbose=False):
     # TODO: Make multi-threaded
