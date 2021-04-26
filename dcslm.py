@@ -31,8 +31,6 @@ from DCSLM.LiveryManager import LiveryManager
 from DCSLM.UnitConfig import Units
 import DCSLM.Utilities as Utilities
 
-# Fail install 3314968
-
 def set_console_title(title):
   if platform.system() == 'Windows':
     os.system(f'title {title}')
@@ -330,7 +328,6 @@ class DCSLMApp:
             if livery.archive and not keepFiles:
               self.console.print("Removing downloaded archive file \'" + os.path.split(livery.archive)[1] + "\'.")
               self.lm.remove_downloaded_archive(livery, livery.archive)
-          self.console.print("")
     return installData
 
   def _print_livery_install_report(self, installData, tableTitle):
@@ -377,6 +374,7 @@ class DCSLMApp:
                                          forceInstall=installArgs.reinstall, forceAllUnits=installArgs.allunits)
     self.lm.write_data()
     self._print_livery_install_report(installData, "Livery Install Report")
+    self.console.print("")
 
   def _parse_uninstall_args(self, sArgs):
     try:
@@ -434,6 +432,7 @@ class DCSLMApp:
       self.console.print("[bold red]Failed Livery Uninstalls:")
       for l in uninstallData['failed']:
         self.console.print("\t" + l['livery'] + "[red]: " + str(l['error']))
+    self.console.print("")
 
   def _check_all_liveries_updates(self, verbose=False):
     # TODO: Make multi-threaded
@@ -497,6 +496,7 @@ class DCSLMApp:
     updateData = self._install_liveries(updateList, forceDownload=True)
     self.lm.write_data()
     self._print_livery_install_report(updateData, "Livery Update Report")
+    self.console.print("")
 
   def list_liveries(self, sArgs):
     def sort_list_by_unit_then_title(e):
@@ -536,6 +536,7 @@ class DCSLMApp:
         isEndSection = True
       statusTable.add_row(*l, end_section=isEndSection)
     self.console.print(statusTable)
+    self.console.print("")
 
   def _make_livery_rendergroup(self, livery):
     liveryTable = Table.grid(expand=True, padding=(0,2,2,0), pad_edge=True)
@@ -633,6 +634,7 @@ class DCSLMApp:
         reportStr += ', '.join(registeredLiveries['failed'])
       self.lm.write_data()
       self.console.print(reportStr)
+      self.console.print("")
 
   def quick_check_upgrade_available(self):
     relData = self.request_upgrade_information()
@@ -752,7 +754,7 @@ class DCSLMApp:
     except SystemExit:
       raise RuntimeError("Unable to parse \'optimize\' command.")
 
-  # 3307868 (m2000), 3315963 (uh-1h), 3314521 (lua ref missing file)
+  # 3314521 (lua ref missing file)
   def optimize_livery(self, sArgs):
     if not len(sArgs):
       raise RuntimeWarning("No liveries provided for \'optimize\' command.")
@@ -794,12 +796,13 @@ class DCSLMApp:
           self.console.print("Skipping re-optimizing livery \'" + livery.dcsuf.title + "\'.")
       else:
         self.console.print("No livery found for input \'" + l + "\'.")
+    with self.console.status("Updating livery .dcslm files..."):
+      for op in optimizationReports:
+        l = op['livery']
+        self.lm.write_livery_registry_files(l)
+      self.lm.write_data()
     self._print_optimization_report(optimizationReports)
     self.console.print("")
-    for op in optimizationReports:
-      l = op['livery']
-      self.lm.write_livery_registry_files(l)
-    self.lm.write_data()
 
   def func_test(self, sArgs):
     return None
@@ -825,7 +828,7 @@ class DCSLMApp:
         self.console.print("\t[bold]Flags:[/bold]")
         for j, k in v['flags'].items():
           self.console.print("\t\t[bold]" + ', '.join(k['tags']) + "[/bold] - " + k['desc'])
-    self.console.print("\n")
+    self.console.print("")
 
   def _make_dcsuf_panel(self, livery):
     return Panel("ID: " +
@@ -971,7 +974,6 @@ class DCSLMApp:
     self.console.print("Writing out current config and livery data to dcslm.json")
     self.lm.write_data()
     self.console.print("Exiting DCS Livery Manager.")
-
 
 if __name__ == '__main__':
   os.chdir(os.path.dirname(os.path.abspath(sys.argv[0])))

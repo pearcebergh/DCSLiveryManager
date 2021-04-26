@@ -526,7 +526,7 @@ class LiveryManager:
           if keepCopy:
             shutil.move(descPath, os.path.join(descRoot, "orig_description.lua"))
           with open(descPath, "w") as descFile:
-            print("Writing " + descPath)
+            print("Writing \'" + descPath + "\'")
             descFile.writelines(lines)
 
   def _optimize_remove_unused_files(self, unusedData):
@@ -556,7 +556,7 @@ class LiveryManager:
     filesData = {}
     for t, l in livery.installs['liveries'].items():
       installRoot = os.path.join(os.getcwd(), livery.destination, l['paths'][0])
-      print("Generating file hashes for " + t)
+      print("Generating file hashes for \'" + t + "\'")
       if t in fileRefs.keys():
         fileHashes = self._optimize_generate_file_hashes(installRoot, t, fileRefs[t])
         for fh, lf in fileHashes.items():
