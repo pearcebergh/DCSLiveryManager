@@ -771,7 +771,7 @@ class DCSLMApp:
       if livery:
         if not 'optimized' in livery.installs.keys() or not livery.installs['optimized'] or optimizeArgs.reoptimize:
           self.console.print("Optimizing livery \'" + livery.dcsuf.title + "\'")
-          filesData = self.lm.optimize_livery(livery, copyDesc = optimizeArgs.keepdesc)
+          filesData = self.lm.optimize_livery(livery, copyDesc = optimizeArgs.keepdesc, removeUnused=removeFiles)
           if filesData:
             livery.installs['optimized'] = True
             optimizationData = {'matches': len(filesData['same_hash']),

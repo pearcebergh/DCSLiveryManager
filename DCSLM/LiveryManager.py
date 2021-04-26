@@ -469,7 +469,7 @@ class LiveryManager:
         splitLivery = splitPath[-2]
         shortName = os.path.splitext(splitPath[-1])[0]
         if splitLivery in liveryFiles.keys():
-          if shortName not in liveryFiles[splitLivery]:
+          if shortName not in liveryFiles[splitLivery] and shortName + ".dds" not in liveryFiles[splitLivery]:
             unusedFiles.append(os.path.join(livery.destination, l['paths'][0], splitPath[-1]))
     return unusedFiles
 
@@ -566,13 +566,14 @@ class LiveryManager:
             filesData[fh].extend(lf)
     return filesData
 
-  def optimize_livery(self, livery, removeUnused=True, copyDesc=False):
+  def optimize_livery(self, livery, removeUnused=False, copyDesc=False):
     if livery:
       filesData = {'liveries': {}, 'hashes': {}, 'same_hash':[], 'size': {} }
       descLines = self._optimize_get_desclines_from_livery(livery)
       filesData['liveries'] = self._optimize_get_filerefs_from_desclines(livery, descLines)
       filesData['hashes'] = self._optimize_calculate_fileref_hashes(livery, filesData['liveries'])
       filesData['same_hash'] = [h for h,l in filesData['hashes'].items() if len(l) > 1]
+      filesData['unused'] = self._optimize_find_unused_livery_files(livery, filesData['liveries'])
       livery.calculate_size_installed_liveries()
       filesData['size']['before'] = livery.get_size_installed_liveries()
       if len(filesData['same_hash']):
@@ -584,6 +585,6 @@ class LiveryManager:
         filesData['unused'] = self._optimize_find_unused_livery_files(livery, filesData['new_liveries'])
         self._optimize_remove_unused_files(filesData['unused'])
         livery.calculate_size_installed_liveries()
-        filesData['size']['after'] = livery.get_size_installed_liveries()
+      filesData['size']['after'] = livery.get_size_installed_liveries()
       return filesData
     return None
