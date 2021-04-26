@@ -268,6 +268,7 @@ class DCSLMApp:
             if not forceDownload and self.lm.compare_archive_sizes(archivePath, livery.dcsuf.download):
               self.console.print("\nArchive file \'" + livery.dcsuf.download.split('/')[-1] + "\' for \'" +
                                  livery.dcsuf.title + "\' already exists. Using that instead.")
+              keepFiles = True
             else:
               archivePath = None
           if not archivePath:
