@@ -169,7 +169,7 @@ class DCSLMApp:
       },
       'optimize': {
         'completer': None,
-        'usage': "",
+        'usage': "\[flags] livery",
         'desc': "Attempt to optimize an installed livery by looking for unused or shared files between liveries within packs.",
         'flags': {
           'reoptimize': {
