@@ -458,7 +458,7 @@ class LiveryManager:
     for l,lfd in liveryFilesData.items():
       liveryFiles[l] = []
       for lf in lfd.keys():
-        liveryFiles[l].append(lf)
+        liveryFiles[l].append(str.lower(lf))
     for t, l in livery.installs['liveries'].items():
       installRoot = os.path.join(os.getcwd(), livery.destination, l['paths'][0])
       installedFiles = glob.glob(installRoot + "\\*.*")
@@ -468,8 +468,9 @@ class LiveryManager:
           continue
         splitLivery = splitPath[-2]
         shortName = os.path.splitext(splitPath[-1])[0]
+        lowerName = str.lower(shortName)
         if splitLivery in liveryFiles.keys():
-          if shortName not in liveryFiles[splitLivery] and shortName + ".dds" not in liveryFiles[splitLivery]:
+          if lowerName not in liveryFiles[splitLivery] and lowerName + ".dds" not in liveryFiles[splitLivery]:
             unusedFiles.append(os.path.join(livery.destination, l['paths'][0], splitPath[-1]))
     return unusedFiles
 
@@ -583,6 +584,9 @@ class LiveryManager:
         newDescLines = self._optimize_get_desclines_from_livery(livery)
         filesData['new_liveries'] = self._optimize_get_filerefs_from_desclines(livery, newDescLines)
         filesData['unused'] = self._optimize_find_unused_livery_files(livery, filesData['new_liveries'])
+        if len(filesData['unused']):
+          print("Removing the following unused files:")
+          print(filesData['unused'])
         self._optimize_remove_unused_files(filesData['unused'])
         livery.calculate_size_installed_liveries()
       filesData['size']['after'] = livery.get_size_installed_liveries()

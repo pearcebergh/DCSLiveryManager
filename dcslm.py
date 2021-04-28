@@ -472,12 +472,11 @@ class DCSLMApp:
         statusTable.add_row(l['livery'].dcsuf.title, "[green]Up to date")
     self.console.print(statusTable)
     if numToUpdate > 0:
+      liveryStr = " livery"
       if numToUpdate > 1:
-        self.console.print(str(numToUpdate) + " liveries have updates! Run the \'update\' command to get " +
-                           "the latest versions from \'DCS User Files\'.")
-      else:
-        self.console.print(str(numToUpdate) + " livery has an update! Run the \'update\' command to get " +
-                           "the latest version from \'DCS User Files\'.")
+        liveryStr = " liveries"
+      self.console.print(str(numToUpdate) + liveryStr + " have updates! Run the \'update\' command to get " +
+                         "the latest versions from \'DCS User Files\'.")
 
   def update_liveries(self):
     if not len(self.lm.Liveries.keys()):
