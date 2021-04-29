@@ -23,3 +23,5 @@ Installing liveries is as simple as running the `install` command with any numbe
 `install https://www.digitalcombatsimulator.com/en/files/3312290/ 3313120 3313121 digitalcombatsimulator.com/en/files/3313122/`
 
 You can get a list of all available commands with descriptions using the `help` command.
+
+https://user-images.githubusercontent.com/37012295/116582045-cca21800-a8c9-11eb-83d0-62cc36679c68.mp4
