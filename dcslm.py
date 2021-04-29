@@ -328,6 +328,7 @@ class DCSLMApp:
             if livery.archive and not keepFiles:
               self.console.print("Removing downloaded archive file \'" + os.path.split(livery.archive)[1] + "\'.")
               self.lm.remove_downloaded_archive(livery, livery.archive)
+          self.console.print("")
     return installData
 
   def _print_livery_install_report(self, installData, tableTitle):
@@ -346,7 +347,6 @@ class DCSLMApp:
       self.console.print("[bold red]Failed Livery Installs:")
       for l in installData['failed']:
         self.console.print("[bold red]" + l['url'] + "[/bold red][red]: " + str(l['error']))
-    self.console.print("")
 
   def _parse_install_args(self, sArgs):
     try:
@@ -511,10 +511,17 @@ class DCSLMApp:
         return
     liveryRows = []
     longestUnit = ""
+    footerData = {'size': 0, 'units': [], 'installed': 0, 'registered': 0}
     for l in self.lm.Liveries.values():
       friendlyUnit = Units.Units['aircraft'][l.dcsuf.unit]['friendly']
+      liverySizeMB = Utilities.bytes_to_mb(l.get_size_installed_liveries())
+      footerData['size'] += liverySizeMB
+      footerData['registered'] += 1
+      footerData['installed'] += l.get_num_liveries()
+      if l.dcsuf.unit not in footerData['units']:
+        footerData['units'].append(l.dcsuf.unit)
       liveryRows.append((friendlyUnit, str(l.dcsuf.id), l.dcsuf.title,
-                         Utilities.bytes_to_mb_string(l.get_size_installed_liveries())))
+                         Utilities.mb_to_mb_string(liverySizeMB)))
       if len(friendlyUnit) > len(longestUnit):
         longestUnit = friendlyUnit
     unitColWidth = max(8, min(13, len(longestUnit)))
@@ -534,7 +541,11 @@ class DCSLMApp:
       if i == len(liveryRows) - 1: # for footer
         isEndSection = True
       statusTable.add_row(*l, end_section=isEndSection)
+    footerString = str(footerData['registered']) + " Registered Liveries    " + str(footerData['installed']) + \
+                   " Installed Livery Directories    " + str(len(footerData['units'])) + " Units    Total Size: " + \
+                   Utilities.mb_to_mb_string(footerData['size']) + " MB"
     self.console.print(statusTable)
+    self.console.print(footerString, justify="center")
     self.console.print("")
 
   def _make_livery_rendergroup(self, livery):
@@ -717,7 +728,6 @@ class DCSLMApp:
       optimizationTable.add_column("Hash Matches", justify="center", no_wrap=False, style="green")
       optimizationTable.add_column("Size Before (MB)", justify="right", no_wrap=False, style="gold1")
       optimizationTable.add_column("Size After (MB)", justify="right", no_wrap=False, style="bold gold1")
-      self.console.print("")
       totalSizeBefore, totalSizeAfter, totalSizeDelta = 0.0, 0.0, 0.0
       for op in optimizationReport:
         l = op['livery']
@@ -731,8 +741,9 @@ class DCSLMApp:
                                   Utilities.mb_to_mb_string(sa))
       self.console.print(optimizationTable)
       self.console.print("Total Size Before: " + Utilities.mb_to_mb_string(totalSizeBefore) +
-                         " Mb\tTotal Size After: " + Utilities.mb_to_mb_string(totalSizeAfter) +
-                         " Mb\t Total Size Delta: " + Utilities.mb_to_mb_string(totalSizeDelta) + " Mb")
+                         " Mb    Total Size After: " + Utilities.mb_to_mb_string(totalSizeAfter) +
+                         " Mb    Total Size Delta: " + Utilities.mb_to_mb_string(totalSizeDelta) + " Mb",
+                         justify="center")
 
   def _parse_optimize_args(self, sArgs):
     try:

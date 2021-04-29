@@ -586,7 +586,10 @@ class LiveryManager:
         filesData['unused'] = self._optimize_find_unused_livery_files(livery, filesData['new_liveries'])
         if len(filesData['unused']):
           print("Removing the following unused files:")
-          print(filesData['unused'])
+          shortUnused = []
+          for u in filesData['unused']:
+            shortUnused.append('\\'.join(str.split(u, "\\")[-2:]))
+          print(shortUnused)
         self._optimize_remove_unused_files(filesData['unused'])
         livery.calculate_size_installed_liveries()
       filesData['size']['after'] = livery.get_size_installed_liveries()
