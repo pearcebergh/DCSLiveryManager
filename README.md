@@ -14,7 +14,7 @@ Your anti-virus software may flag *DCSLM.exe* and attempt to remove it due to it
 # Installation
 DCSLM is packaged as a single Windows EXE that needs to be placed in the proper directory depending on your setup:
 * Place *DCSLM.exe* in your DCS Saved Games directory (i.e. C:\Users\sneep\Saved Games\DCS)
-* For user with a mod manager, like OVGME or JSGME, you should place *DCSLM.exe* in the folder that is configured to be installed to your DCS Saved Games directory. You must make sure to enable ***Mod Manager Mode*** when you first run DCSLM.
+* For use with a mod manager, like OVGME or JSGME, you should place *DCSLM.exe* in the folder that is configured to be installed to your DCS Saved Games directory. You must make sure to enable ***Mod Manager Mode*** when you first run DCSLM.
 * **Do NOT place it in your core DCS install directory**.
 
 # Usage
