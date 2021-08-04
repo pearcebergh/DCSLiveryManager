@@ -1,5 +1,6 @@
 import glob
 import json
+import logging
 import os
 import shutil
 import sys
@@ -102,7 +103,6 @@ class LiveryManager:
 
   def unregister_livery(self, livery):
     if livery:
-      print(livery.dcsuf)
       if self.is_livery_registered(livery.dcsuf.id):
         del self.Liveries[str(livery.dcsuf.id)]
         del self.LiveryData["liveries"][str(livery.dcsuf.id)]
@@ -202,9 +202,19 @@ class LiveryManager:
           archiveFolder = os.path.splitext(archiveFile)[0].split('\\')[-1]
           extractedPath = os.path.join(extractRoot, archiveFolder)
           self._remove_existing_extracted_files(livery, extractedPath)
-          patoolib.extract_archive(archivePath, 0, extractedPath)
+          self._extract_archive(livery, archivePath, extractedPath)
+          self._extract_extracted_archive(livery, extractedPath)
           return extractedPath
     return None
+
+  def _extract_archive(self, livery, archivePath, extractPath):
+    patoolib.extract_archive(archivePath, 0, extractPath)
+
+  def _extract_extracted_archive(self, livery, extractedPath):
+    extractedFiles = glob.glob(extractedPath + "/**/*", recursive=True)
+    for f in extractedFiles:
+      if os.path.splitext(f)[-1][1:] in patoolib.ArchiveFormats:
+        self._extract_archive(livery, f, extractedPath)
 
   def is_valid_livery_directory(self, fileList):
     for f in fileList:

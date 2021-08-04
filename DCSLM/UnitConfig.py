@@ -66,20 +66,6 @@ class UnitConfig:
           "liveries": ["C-101CC", "C-101EB"],
           "core": "CoreMods/aircraft/C-101"
         },
-        "c-101cc": {
-          "names": ["c-101cc"],
-          "friendly": "C-101CC",
-          "dcs_files": "",
-          "liveries": ["C-101CC"],
-          "core": "CoreMods/aircraft/C-101"
-        },
-        "c-101eb": {
-          "names": ["c-101eb"],
-          "friendly": "C-101EB",
-          "dcs_files": "",
-          "liveries": ["C-101EB"],
-          "core": "CoreMods/aircraft/C-101"
-        },
         "Christen Eagle II": {
           "names": ["Christen Eagle II"],
           "friendly": "Christen Eagle II",
@@ -92,20 +78,6 @@ class UnitConfig:
           "friendly": "F-14",
           "dcs_files": "F-14 Tomcat",
           "liveries": ["f-14b", "f-14a-135-gr"],
-          "core": "CoreMods/aircraft/F14"
-        },
-        "f-14a-135-gr": {
-          "names": ["f-14a-135-gr", "f-14a"],
-          "friendly": "F-14A",
-          "dcs_files": "",
-          "liveries": ["F-14A-135-GR"],
-          "core": "CoreMods/aircraft/F14"
-        },
-        "f-14b": {
-          "names": ["f-14b"],
-          "friendly": "F-14B",
-          "dcs_files": "",
-          "liveries": ["f-14b"],
           "core": "CoreMods/aircraft/F14"
         },
         "f-15c": {
@@ -197,20 +169,6 @@ class UnitConfig:
           "friendly": "L-39",
           "dcs_files": "L-39 Albatros",
           "liveries": ["L-39C", "L-39ZA"],
-          "core": "CoreMods/aircraft/L-39"
-        },
-        "l-39c": {
-          "names": ["l-39c"],
-          "friendly": "L-39C",
-          "dcs_files": "L-39C Albatros",
-          "liveries": ["L-39C"],
-          "core": "CoreMods/aircraft/L-39"
-        },
-        "l-39za": {
-          "names": ["l-39za"],
-          "friendly": "L-39ZA",
-          "dcs_files": "L-39ZA Albatros",
-          "liveries": ["L-39ZA"],
           "core": "CoreMods/aircraft/L-39"
         },
         "m-2000c": {

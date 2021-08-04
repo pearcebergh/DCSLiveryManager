@@ -112,8 +112,7 @@ class Livery:
 
   def from_JSON_String(self, jsonStr):
     jsonData = json.loads(jsonStr)
-    if jsonData:
-      return self.from_JSON(jsonData)
+    return self.from_JSON(jsonData)
 
   def generate_ovgme_folder(self):
     if self.dcsuf and self.dcsuf.unit and self.dcsuf.title:
