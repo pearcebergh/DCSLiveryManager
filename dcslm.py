@@ -179,8 +179,14 @@ class DCSLMApp:
             'confirm': False
           },
           'keepdesc': {
-            'tags': ['-k','--keepdesc'],
-            'desc': "Keep a copy of the original, unmodified description.lua files.",
+            'tags': ['-d','--keepdesc'],
+            'desc': "Keep a copy of the original unmodified description.lua files.",
+            'action': "store_true",
+            'confirm': False
+          },
+          'keepunused': {
+            'tags': ['-u', '--keepunused'],
+            'desc': "Keep unused files on disk at the end of optimization.",
             'action': "store_true",
             'confirm': False
           },
@@ -784,7 +790,7 @@ class DCSLMApp:
       if livery:
         if not 'optimized' in livery.installs.keys() or not livery.installs['optimized'] or optimizeArgs.reoptimize:
           self.console.print("Optimizing livery \'" + livery.dcsuf.title + "\'")
-          filesData = self.lm.optimize_livery(livery, copyDesc = optimizeArgs.keepdesc, removeUnused=removeFiles)
+          filesData = self.lm.optimize_livery(livery, copyDesc=optimizeArgs.keepdesc, removeUnused=not optimizeArgs.keepunused)
           if filesData:
             livery.installs['optimized'] = True
             optimizationData = {'matches': len(filesData['same_hash']),
