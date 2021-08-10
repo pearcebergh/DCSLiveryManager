@@ -21,21 +21,21 @@ class UnitConfig:
           "names": ["a-10a"],
           "friendly": "A-10A",
           "dcs_files": "A-10A",
-          "liveries": ["A-10A"],
+          "liveries": ["A-10A", "A-10C", "A-10CII"],
           "core": "CoreMods/aircraft/A-10"
         },
         "a-10c": {
           "names": ["a-10c"],
           "friendly": "A-10C",
           "dcs_files": "A-10C Warthog",
-          "liveries": ["A-10C"],
+          "liveries": ["A-10A", "A-10C", "A-10CII"],
           "core": "CoreMods/aircraft/A-10"
         },
         "a-10cii": {
           "names": ["a-10cii", "a-10c2"],
           "friendly": "A-10C II",
           "dcs_files": "A-10C II Tank Killer",
-          "liveries": ["A-10CII"],
+          "liveries": ["A-10A", "A-10C", "A-10CII"],
           "core": "CoreMods/aircraft/A-10"
         },
         "ajs-37": {
