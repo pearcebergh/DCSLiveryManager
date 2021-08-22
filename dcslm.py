@@ -535,7 +535,7 @@ class DCSLMApp:
     statusTable.add_column("Unit", justify="center", no_wrap=True, style="green", width=unitColWidth)
     statusTable.add_column("ID", justify="center", no_wrap=True, style="sky_blue1", width=8)
     statusTable.add_column("Livery Title", justify="center", no_wrap=True, overflow='ellipsis')
-    statusTable.add_column("Size", justify="right", no_wrap=True, style="bold gold1", width=10)
+    statusTable.add_column("Size (MB)", justify="right", no_wrap=True, style="bold gold1", width=10)
     liveryRows.sort(key=sort_list_by_unit_then_title)
     for i in range(0, len(liveryRows)):
       l = liveryRows[i]
@@ -976,13 +976,13 @@ class DCSLMApp:
             if len(splitCommand) > 1:
               argList = splitCommand[1:]
             if commandData['exec']:
-              try:
+              #try:
                 if len(commandData['args']) or len(commandData['flags']):
                   commandData['exec'](sArgs=argList)
                 else:
                   commandData['exec']()
-              except Exception as e:
-                self.console.print(e, style="bold red")
+              #except Exception as e:
+                #self.console.print(e, style="bold red")
             if splitCommand[0] == "exit":
               runCommands = False
           else:

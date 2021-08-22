@@ -135,8 +135,9 @@ class Livery:
 
   def calculate_size_installed_liveries(self):
     for i, v in self.installs['liveries'].items():
-      if len(v['paths']):
-        v['size'] = Utilities.get_size_of_directory(os.path.join(os.getcwd(), self.destination, v['paths'][0]))
+      v['size'] = 0
+      for p in v['paths']:
+        v['size'] += Utilities.get_size_of_directory(os.path.join(os.getcwd(), self.destination, p))
 
   def get_size_installed_liveries(self):
     totalSize = 0
