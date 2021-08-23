@@ -298,10 +298,10 @@ class LiveryManager:
       installLivery = str.split(installPath, "\\")[-1]
       for root, files in extractedLiveryFiles.items():
         if self.is_valid_livery_directory(files):
-          rootLivery = livery.dcsuf.title
+          rootUnit = livery.dcsuf.title
           if root != "\\":
-            rootLivery = str.split(root, "\\")[-1]
-          if installLivery == rootLivery:
+            rootUnit = str.split(root, "\\")[-1]
+          if installLivery == rootUnit:
             if self._copy_livery_files(livery, extractPath, files, installPath):
               copiedLiveries.append(install)
     return copiedLiveries
@@ -396,9 +396,12 @@ class LiveryManager:
         pyStatements.append(ps)
     return pyStatements
 
-  def _optimize_py_statement_to_lua(self, pyStatement, rootLiveryPath = "") -> str:
+  def _optimize_py_statement_to_lua(self, pyStatement, rootLivery = "", rootLiveryPath = "") -> str:
     if len(pyStatement) == 4:
-      luaStatement = "{\"" + pyStatement[0] + "\", " + pyStatement[1] + " ,\"" + rootLiveryPath + pyStatement[2] + "\","
+      if str.startswith("../", pyStatement[2]):
+        pyStatement[2] = pyStatement[2][3:]
+      correctedPath = rootLiveryPath + rootLivery + "/" + pyStatement[2]
+      luaStatement = "{\"" + pyStatement[0] + "\", " + pyStatement[1] + " ,\"" + correctedPath + "\","
       if pyStatement[3]:
         luaStatement += "true"
       else:
@@ -414,7 +417,7 @@ class LiveryManager:
       splitStatement[0] = re.search("\".+\"", str.strip(splitStatement[0])).group()[1:-1]
       splitStatement[1] = str.strip(str.strip(splitStatement[1]))
       splitStatement[2] = re.search("\".+\"", str.strip(splitStatement[2])).group()[1:-1]
-      splitStatement[3] = False if (str.strip(splitStatement[3]) == "false") else True
+      splitStatement[3] = False if (str.lower(str.strip(splitStatement[3])) == "false") else True
       luaData = splitStatement
     return luaData
 
@@ -496,12 +499,15 @@ class LiveryManager:
 
   def _optimize_correct_desc_lines(self, filesData, descLines, units, commentLine=False):
     optimizedLines = {}
+    rootLivery = None
     for t in descLines.keys():
+      if not rootLivery:
+        rootLivery = t
       optimizedLines[t] = {}
       for u in units:
         optimizedLines[t][u] = []
-    rootLivery = units[0]
-    rootLiveryPath = "../../" + rootLivery + "/"
+    rootUnit = units[0]
+    rootLiveryPath = "../../" + rootUnit + "/"
     for t, dL in descLines.items():
       for line in dL[units[0]]:
         if line[:2] == '--':
@@ -544,7 +550,7 @@ class LiveryManager:
               if u is units[0]:
                 ls = self._optimize_py_statement_to_lua(ps)
               else:
-                ls = self._optimize_py_statement_to_lua(ps, rootLiveryPath)
+                ls = self._optimize_py_statement_to_lua(ps, rootLivery, rootLiveryPath)
               if len(ls):
                 correctedLuaStatements.append(ls)
             correctedLuaLine = line[:linePrefix] + ' '.join(correctedLuaStatements) + line[lastBracket + 1:]
@@ -584,10 +590,10 @@ class LiveryManager:
 
   def _optimize_get_filerefs_from_desclines(self, livery, descLines):
     filesData = {}
-    rootLivery = livery.installs['units'][0]
+    rootUnit = livery.installs['units'][0]
     for t, l in livery.installs['liveries'].items():
       if t in descLines.keys():
-        fileRefs = self._get_file_refs_from_description(descLines[t][rootLivery])
+        fileRefs = self._get_file_refs_from_description(descLines[t][rootUnit])
         filesData[t] = fileRefs
     return filesData
 
