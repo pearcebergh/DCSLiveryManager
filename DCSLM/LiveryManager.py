@@ -398,9 +398,13 @@ class LiveryManager:
 
   def _optimize_py_statement_to_lua(self, pyStatement, rootLivery = "", rootLiveryPath = "") -> str:
     if len(pyStatement) == 4:
-      if str.startswith("../", pyStatement[2]):
-        pyStatement[2] = pyStatement[2][3:]
-      correctedPath = rootLiveryPath + rootLivery + "/" + pyStatement[2]
+      if pyStatement[2].startswith("../"):
+        splitExistingPath = str.split(pyStatement[2], '/')
+        detectedRootLivery = splitExistingPath[-2] + "/"
+        if detectedRootLivery != rootLivery and rootLivery:
+          rootLivery = detectedRootLivery
+          pyStatement[2] = splitExistingPath[-1]
+      correctedPath = rootLiveryPath + rootLivery + pyStatement[2]
       luaStatement = "{\"" + pyStatement[0] + "\", " + pyStatement[1] + " ,\"" + correctedPath + "\","
       if pyStatement[3]:
         luaStatement += "true"
@@ -499,16 +503,14 @@ class LiveryManager:
 
   def _optimize_correct_desc_lines(self, filesData, descLines, units, commentLine=False):
     optimizedLines = {}
-    rootLivery = None
     for t in descLines.keys():
-      if not rootLivery:
-        rootLivery = t
       optimizedLines[t] = {}
       for u in units:
         optimizedLines[t][u] = []
     rootUnit = units[0]
     rootLiveryPath = "../../" + rootUnit + "/"
     for t, dL in descLines.items():
+      rootLivery = t + '/'
       for line in dL[units[0]]:
         if line[:2] == '--':
           for u in units:
@@ -533,8 +535,8 @@ class LiveryManager:
                     replacementPath = "../" + replacementTitle + "/" + partStr
                   ps[2] = replacementPath
                   optimizeStatement = True
-          if len(units) > 1:
-            optimizeStatement = True
+              if len(units) > 1:
+                optimizeStatement = True
         if not optimizeStatement:
           for u in units:
             optimizedLines[t][u].append(line)
@@ -544,21 +546,24 @@ class LiveryManager:
               optimizedLines[t][u].append("--" + line)
           linePrefix = str.find(line, '{')
           lastBracket = str.rfind(line, '}')
-          for u in units:
+          for u in range(0, min(len(units), 2)):
             correctedLuaStatements = []
             for ps in pyStatements:
-              if u is units[0]:
+              if u == 0:
                 ls = self._optimize_py_statement_to_lua(ps)
               else:
                 ls = self._optimize_py_statement_to_lua(ps, rootLivery, rootLiveryPath)
               if len(ls):
                 correctedLuaStatements.append(ls)
             correctedLuaLine = line[:linePrefix] + ' '.join(correctedLuaStatements) + line[lastBracket + 1:]
-            optimizedLines[t][u].append(correctedLuaLine)
+            if u == 0:
+              optimizedLines[t][units[0]].append(correctedLuaLine)
+            else:
+              for aU in range(u, len(units)):
+                optimizedLines[t][units[aU]].append(correctedLuaLine)
     return optimizedLines
 
   def _optimize_write_corrected_desc_files(self, livery, descLines, keepCopy=True):
-    pprint(descLines)
     for t in descLines.keys():
       for u, lines in descLines[t].items():
         descRoot = os.path.join(os.getcwd(), livery.destination, u, t)

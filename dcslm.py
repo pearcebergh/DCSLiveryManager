@@ -372,6 +372,8 @@ class DCSLMApp:
     except SystemExit:
       raise RuntimeError("Unable to parse \'uninstall\' command.")
 
+  # TODO: Correct size to multiply by number of units installed to
+  # TODO: Allow selection of multiple numbers when installed to units with choices
   def install_liveries(self, sArgs):
     installArgs = self._parse_install_args(sArgs)
     self.console.print("Attempting to install " + str(len(installArgs.url)) +
@@ -503,6 +505,8 @@ class DCSLMApp:
     self._print_livery_install_report(updateData, "Livery Update Report")
     self.console.print("")
 
+  # TODO: Show if livery is installed to multiple units
+  # TODO: Show if livery is optimized
   def list_liveries(self, sArgs):
     def sort_list_by_unit_then_title(e):
       return e[0] + " - " + e[1]
@@ -976,13 +980,13 @@ class DCSLMApp:
             if len(splitCommand) > 1:
               argList = splitCommand[1:]
             if commandData['exec']:
-              #try:
+              try:
                 if len(commandData['args']) or len(commandData['flags']):
                   commandData['exec'](sArgs=argList)
                 else:
                   commandData['exec']()
-              #except Exception as e:
-                #self.console.print(e, style="bold red")
+              except Exception as e:
+                self.console.print(e, style="bold red")
             if splitCommand[0] == "exit":
               runCommands = False
           else:
