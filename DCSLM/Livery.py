@@ -142,5 +142,5 @@ class Livery:
   def get_size_installed_liveries(self):
     totalSize = 0
     for i, v in self.installs['liveries'].items():
-      totalSize += v['size'] * len(v['paths'])
+      totalSize += v['size']
     return totalSize

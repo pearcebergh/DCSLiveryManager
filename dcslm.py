@@ -310,6 +310,7 @@ class DCSLMApp:
                     self.lm.register_livery(livery)
                     self.console.print("[bold green]Livery[/bold green] \'" + str(livery.dcsuf.title) +
                                        "\' [bold green]Registered!")
+                    livery.calculate_size_installed_liveries()
                     installData['success'].append(livery)
                   else:
                     raise RuntimeError("Failed to copy livery files to install directories!")
@@ -372,7 +373,6 @@ class DCSLMApp:
     except SystemExit:
       raise RuntimeError("Unable to parse \'uninstall\' command.")
 
-  # TODO: Correct size to multiply by number of units installed to
   # TODO: Allow selection of multiple numbers when installed to units with choices
   def install_liveries(self, sArgs):
     installArgs = self._parse_install_args(sArgs)
