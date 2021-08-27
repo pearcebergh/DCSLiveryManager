@@ -444,10 +444,11 @@ class LiveryManager:
         pyStatements = self._optimize_get_py_statements_from_line(line, commentStart, blockEnd)
         for ps in pyStatements:
           if not ps[3]:
+            partStr = ps[0] + ':' + ps[1]
             if not ps[2] in fileRefs.keys():
               fileRefs[ps[2]] = {'parts': []}
-            if not ps[0] in fileRefs[ps[2]]['parts']:
-              fileRefs[ps[2]]['parts'].append(ps[0])
+            if not partStr in fileRefs[ps[2]]['parts']:
+              fileRefs[ps[2]]['parts'].append(partStr)
     return fileRefs
 
   def _optimize_generate_file_hashes(self, installRoot, liveryTitle, fileRefs):
@@ -463,7 +464,8 @@ class LiveryManager:
           if not fileHash in fileHashes.keys():
             fileHashes[fileHash] = [liveryTitle]
           else:
-            fileHashes[fileHash].append(liveryTitle)
+            if liveryTitle not in fileHashes[fileHash]:
+              fileHashes[fileHash].append(liveryTitle)
       else:
         print("Unable to hash file " + filepath)
     return fileHashes
@@ -526,13 +528,15 @@ class LiveryManager:
                 continue
               if matchedData['hash'] in filesData['hashes'].keys():
                 matchedHash = filesData['hashes'][matchedData['hash']]
+                if t not in matchedHash:
+                  continue
                 if len(matchedHash) > 1:
                   replacementTitle = matchedHash[0]
-                  partStr = str.split(ps[2], "/")[-1]
+                  fileStr = str.split(ps[2], "/")[-1]
                   if replacementTitle == t:
-                    replacementPath = partStr
+                    replacementPath = fileStr
                   else:
-                    replacementPath = "../" + replacementTitle + "/" + partStr
+                    replacementPath = "../" + replacementTitle + "/" + fileStr
                   ps[2] = replacementPath
                   optimizeStatement = True
               if len(units) > 1:
@@ -568,7 +572,6 @@ class LiveryManager:
       for u, lines in descLines[t].items():
         descRoot = os.path.join(os.getcwd(), livery.destination, u, t)
         descPath = os.path.join(descRoot, "description.lua")
-        print(descPath)
         if os.path.isfile(descPath):
           if keepCopy:
             shutil.move(descPath, os.path.join(descRoot, "orig_description.lua"))
