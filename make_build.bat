@@ -1,1 +1,1 @@
-CALL pyinstaller -n DCSLM --noconfirm --clean --console --onefile --additional-hooks-dir=./hooks dcslm.py
+CALL pyinstaller -n DCSLM --noconfirm --clean --console --onefile --additional-hooks-dir=./hooks --paths .\venv\Python\Lib\site-packages dcslm.py
