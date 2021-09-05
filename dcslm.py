@@ -28,7 +28,7 @@ from DCSLM import __version__
 from DCSLM.DCSUFParser import DCSUFParser
 from DCSLM.Livery import DCSUserFile, Livery
 from DCSLM.LiveryManager import LiveryManager
-from DCSLM.UnitConfig import Units
+#from DCSLM.UnitConfig import Units
 from DCSLM.UnitManager import UnitManager
 import DCSLM.Utilities as Utilities
 
@@ -57,7 +57,7 @@ class DCSLMApp:
     self.completer = None
     self.commands = None
     self.lm = None
-    #self.um = None
+    self.um = None
 
   def start(self):
     self.setup_commands()
@@ -66,7 +66,7 @@ class DCSLMApp:
     self.clear_and_print_header()
     self.setup_livery_manager()
     self.quick_check_upgrade_available()
-    #self.setup_unit_manager()
+    self.setup_unit_manager()
     self.run()
 
   def setup_commands(self):
@@ -264,7 +264,8 @@ class DCSLMApp:
             if existingLivery.dcsuf.datetime == livery.dcsuf.datetime:
               if not self.prompt_existing_livery(existingLivery):
                 raise RuntimeError("Skipping reinstalling livery.")
-          unitLiveries = Units.Units['aircraft'][livery.dcsuf.unit]['liveries']
+          #unitLiveries = Units.Units['aircraft'][livery.dcsuf.unit]['liveries']
+          unitLiveries = self.um.Units['Air'][livery.dcsuf.unit].liveries
           if len(unitLiveries) > 1 and not forceAllUnits:
             unitLiveries = self.prompt_aircraft_livery_choice(livery, unitLiveries)
           if len(unitLiveries) == 0:
@@ -350,7 +351,7 @@ class DCSLMApp:
       installTable.add_column("# Liveries", justify="center", no_wrap=True, style="magenta")
       installTable.add_column("Size (MB)", justify="right", no_wrap=True, style="bold gold1")
       for l in installData['success']:
-        installTable.add_row(Units.Units['aircraft'][l.dcsuf.unit]['friendly'], str(l.dcsuf.id), l.dcsuf.title,
+        installTable.add_row(self.um.Units['Air'][l.dcsuf.unit].friendly, str(l.dcsuf.id), l.dcsuf.title,
                              str(l.get_num_liveries()), Utilities.bytes_to_mb_string(l.get_size_installed_liveries()))
       self.console.print(installTable)
     if len(installData['failed']):
@@ -526,7 +527,8 @@ class DCSLMApp:
     longestUnit = ""
     footerData = {'size': 0, 'units': [], 'installed': 0, 'registered': 0}
     for l in self.lm.Liveries.values():
-      friendlyUnit = Units.Units['aircraft'][l.dcsuf.unit]['friendly']
+      #friendlyUnit = Units.Units['aircraft'][l.dcsuf.unit]['friendly']
+      friendlyUnit = self.um.Units['Air'][l.dcsuf.unit].friendly
       liverySizeMB = Utilities.bytes_to_mb(l.get_size_installed_liveries())
       footerData['size'] += liverySizeMB
       footerData['registered'] += 1
@@ -623,7 +625,8 @@ class DCSLMApp:
           splitUDPath = str.split(uD, '\\')
           if len(splitUDPath) >= 2:
             unitName = str.split(uD, '\\')[-2]
-            unit = Units.get_unit_from_liveries_dir(unitName)
+            #unit = Units.get_unit_from_liveries_dir(unitName)
+            unit = self.um.get_unit_from_liveries_dir(unitName)
             if unit:
               unitFolders.append(uD)
       self.console.print("Matched " + str(len(unitFolders)) + " known unit directories.")
@@ -857,7 +860,7 @@ class DCSLMApp:
     return Panel("ID: " +
                  str(livery.dcsuf.id) + " | Author: " + livery.dcsuf.author + " | Upload Date: " +
                      livery.dcsuf.date + " | Archive Size: " + livery.dcsuf.size + " \n" + livery.dcsuf.download,
-                     title=Units.Units['aircraft'][livery.dcsuf.unit]['friendly'] + " - " + livery.dcsuf.title,
+                     title=self.um.Units['Air'][livery.dcsuf.unit].friendly + " - " + livery.dcsuf.title,
                      expand=False, highlight=True)
 
   def print_dcsuf_panel(self, livery):
@@ -926,8 +929,10 @@ class DCSLMApp:
     chosenLiveries = []
     liveryChoices = ["[white]None[/white]"]
     for u in unitLiveries:
-      if u in Units.Units['aircraft'].keys():
-        liveryChoices.append("[white]" + Units.Units['aircraft'][u]['friendly'] + "[/white]")
+      '''if u in Units.Units['aircraft'].keys():
+        liveryChoices.append("[white]" + Units.Units['aircraft'][u]['friendly'] + "[/white]")'''
+      if u in self.um.Units['Air'].keys():
+        liveryChoices.append("[white]" +  self.um.Units['Air'][u]['friendly'] + "[/white]")
       else:
         liveryChoices.append(u)
     liveryChoices.append("[bold white]All[/bold white]")
@@ -936,7 +941,7 @@ class DCSLMApp:
       for i in range(0, len(liveryChoices)):
         choiceText += "[[sky_blue1]" + str(i) + "[/sky_blue1]]" + liveryChoices[i] + " "
       self.console.print("\nThere are multiple livery install locations for the [bold magenta]" +
-                         Units.Units['aircraft'][livery.dcsuf.unit]['friendly'] + "[/bold magenta]. " +
+                         self.um.Units['Air'][livery.dcsuf.unit].friendly + "[/bold magenta]. " +
                          "Please choose from one of the following choices by inputting the corresponding index number:")
       self.console.print("\n\t" + choiceText)
       try:
