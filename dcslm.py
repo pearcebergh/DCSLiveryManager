@@ -29,6 +29,7 @@ from DCSLM.DCSUFParser import DCSUFParser
 from DCSLM.Livery import DCSUserFile, Livery
 from DCSLM.LiveryManager import LiveryManager
 from DCSLM.UnitConfig import Units
+from DCSLM.UnitManager import UnitManager
 import DCSLM.Utilities as Utilities
 
 def set_console_title(title):
@@ -52,10 +53,11 @@ def set_console_size(w, h):
 class DCSLMApp:
   def __init__(self):
     self.console = None
-    self.session = PromptSession(reserve_space_for_menu=6, complete_in_thread=True, )
+    self.session = PromptSession(reserve_space_for_menu=6, complete_in_thread=True)
     self.completer = None
     self.commands = None
     self.lm = None
+    #self.um = None
 
   def start(self):
     self.setup_commands()
@@ -64,6 +66,7 @@ class DCSLMApp:
     self.clear_and_print_header()
     self.setup_livery_manager()
     self.quick_check_upgrade_available()
+    #self.setup_unit_manager()
     self.run()
 
   def setup_commands(self):
@@ -411,7 +414,7 @@ class DCSLMApp:
         try:
           self.console.print("Uninstalling \'" + liveryStr + "\'.")
           livery = self.lm.get_registered_livery(id=int(liveryStr))
-          if (livery):
+          if livery:
             self.console.print("Found registered livery.")
             numLiveries = str(livery.get_num_liveries())
             if uninstallArgs.keep:
@@ -834,20 +837,20 @@ class DCSLMApp:
       if len(v['args']):
         self.console.print("\t[bold]Arguments:[/bold]")
         hasOptional = False
-        for j, k in v['args'].items():
-          if not k['optional']:
-            self.console.print("\t\t[bold]" + j + "[/bold] (" + k['type'] + ") - " + k['desc'])
+        for j, l in v['args'].items():
+          if not l['optional']:
+            self.console.print("\t\t[bold]" + j + "[/bold] (" + l['type'] + ") - " + l['desc'])
           else:
             hasOptional = True
         if hasOptional:
           self.console.print("\t[bold]Optional Arguments:[/bold]")
-          for j, k in v['args'].items():
-            if k['optional']:
-              self.console.print("\t\t[bold]" + j + "[/bold] (" + k['type'] + ") - " + k['desc'])
+          for j, l in v['args'].items():
+            if l['optional']:
+              self.console.print("\t\t[bold]" + j + "[/bold] (" + l['type'] + ") - " + l['desc'])
       if len(v['flags']):
         self.console.print("\t[bold]Flags:[/bold]")
-        for j, k in v['flags'].items():
-          self.console.print("\t\t[bold]" + ', '.join(k['tags']) + "[/bold] - " + k['desc'])
+        for j, l in v['flags'].items():
+          self.console.print("\t\t[bold]" + ', '.join(l['tags']) + "[/bold] - " + l['desc'])
     self.console.print("")
 
   def _make_dcsuf_panel(self, livery):
@@ -869,9 +872,13 @@ class DCSLMApp:
 
   def clear_and_print_header(self):
     clear_console()
-    self.console.print(
-           Rule(f'[bold gold1]DCS Livery Manager[/bold gold1] [bold sky_blue1]v{__version__}[/bold sky_blue1]',
-           characters="~═~*", style="deep_pink2"))
+    self.console.print(" _____   _____  _____ _      __  __ ", style="bold sky_blue1", justify="center", highlight=False)
+    self.console.print("|  __ \ / ____|/ ____| |    |  \/  |", style="bold sky_blue1", justify="center", highlight=False)
+    self.console.print("| |  | | |    | (___ | |    | \  / |", style="bold sky_blue1", justify="center", highlight=False)
+    self.console.print("| |  | | |     \___ \| |    | |\/| |", style="bold sky_blue1", justify="center", highlight=False)
+    self.console.print("| |__| | |____ ____) | |____| |  | |", style="bold sky_blue1", justify="center", highlight=False)
+    self.console.print("|_____/ \_____|_____/|______|_|  |_|", style="bold sky_blue1", justify="center", highlight=False)
+    self.console.print(f"v{__version__}", style="bold gold1", justify="center", highlight=False)
     self.console.print('')
 
   def setup_console_window(self):
@@ -890,6 +897,9 @@ class DCSLMApp:
     else:
       self.console.print("Loaded Livery Manager config and data from \'DCSLM\\dcslm.json\'")
       self.lm.LiveryData = lmData
+
+  def setup_unit_manager(self):
+    self.um = UnitManager()
 
   def prompt_livery_manager_defaults(self):
     if self.lm:
@@ -913,7 +923,7 @@ class DCSLMApp:
     return True
 
   def prompt_aircraft_livery_choice(self, livery, unitLiveries):
-    choosenLiveries = []
+    chosenLiveries = []
     liveryChoices = ["[white]None[/white]"]
     for u in unitLiveries:
       if u in Units.Units['aircraft'].keys():
@@ -937,10 +947,10 @@ class DCSLMApp:
       if choice == "0":
         return []
       elif choice == str(len(liveryChoices) - 1):
-        choosenLiveries = unitLiveries
+        chosenLiveries = unitLiveries
       else:
-        choosenLiveries = [unitLiveries[int(choice) - 1]]
-    return choosenLiveries
+        chosenLiveries = [unitLiveries[int(choice) - 1]]
+    return chosenLiveries
 
   def _download_archive_rich_callback(self, livery, dlCallback, downloadedBytes):
     dlCallback['progress'].update(dlCallback['task'], advance=downloadedBytes)
