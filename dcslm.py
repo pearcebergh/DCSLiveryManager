@@ -779,13 +779,12 @@ class DCSLMApp:
     except SystemExit:
       raise RuntimeError("Unable to parse \'optimize\' command.")
 
-  # TODO: Print missing referenced files from description.lua (3314521)
   # TODO: Handle description.lua with relative paths (3317631)
   def optimize_livery(self, sArgs):
     if not len(sArgs):
       raise RuntimeWarning("No liveries provided for \'optimize\' command.")
     optimizeArgs = self._parse_optimize_args(sArgs)
-    removeFiles = True
+    removeFiles = not optimizeArgs.keepunused
     optimizationReports = []
     liveryIDs = []
     if len(optimizeArgs.livery) == 1 and str.lower(optimizeArgs.livery[0]) == "all":
@@ -800,7 +799,7 @@ class DCSLMApp:
       if livery:
         if not 'optimized' in livery.installs.keys() or not livery.installs['optimized'] or optimizeArgs.reoptimize:
           self.console.print("Optimizing livery \'" + livery.dcsuf.title + "\'")
-          filesData = self.lm.optimize_livery(livery, copyDesc=optimizeArgs.keepdesc, removeUnused=not optimizeArgs.keepunused)
+          filesData = self.lm.optimize_livery(livery, copyDesc=optimizeArgs.keepdesc, removeUnused=removeFiles)
           if filesData:
             livery.installs['optimized'] = True
             optimizationData = {'matches': len(filesData['same_hash']),
@@ -808,6 +807,10 @@ class DCSLMApp:
                                 'size_after': filesData['size']['after'],
                                 'livery': livery}
             optimizationReports.append(optimizationData)
+            if len(filesData['missing']):
+              for t in filesData['missing'].keys():
+                missingFilesStr = ', '.join(filesData['missing'][t])
+                self.console.print("[red]Missing files referenced in description.lua for " + t + ": " + missingFilesStr)
             liveryReportStr = "Matched " + str(len(filesData['same_hash'])) + " .dds files with the same content."
             if removeFiles:
               liveryReportStr += " Removed " + str(len(filesData['unused'])) + " unused files.\n"

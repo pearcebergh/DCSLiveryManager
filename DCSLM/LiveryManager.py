@@ -9,7 +9,7 @@ import patoolib
 import requests
 import DCSLM.Utilities as Utilities
 from pprint import pprint
-from .DCSUFParser import DCSUFParser, ArchiveExtensions
+from .DCSUFParser import DCSUFParser
 from .Livery import Livery
 
 
@@ -157,8 +157,8 @@ class LiveryManager:
   def download_livery_archive(self, livery, dlCallback=None):
     if livery:
       if livery.dcsuf.download:
-        archiveType = '.' + str.split(livery.dcsuf.download, '.')[-1]
-        if archiveType in ArchiveExtensions:
+        archiveType = str.split(livery.dcsuf.download, '.')[-1]
+        if archiveType in patoolib.ArchiveFormats:
           destinationPath = os.path.join(os.getcwd(), self.FolderRoot, "archives")
           archiveFilename = str.split(livery.dcsuf.download, '/')[-1]
           destinationFilename = os.path.join(destinationPath, archiveFilename)
@@ -176,7 +176,6 @@ class LiveryManager:
           except (KeyboardInterrupt, IOError, ConnectionError, FileNotFoundError) as e:
             if os.path.isfile(destinationFilename):
               Utilities.remove_file(destinationFilename)
-              #os.remove(destinationFilename)
             raise RuntimeError("Failed during download of archive " + livery.dcsuf.download + ": " + str(e))
     raise RuntimeError("Unable to get downloaded archive path for livery \'" + livery.dcsuf.title + "\'.")
 
@@ -320,7 +319,6 @@ class LiveryManager:
       archivePath = os.path.join(os.getcwd(), self.FolderRoot, "archives", livery.archive)
       if os.path.isfile(archivePath):
         Utilities.remove_file(archivePath)
-        #os.remove(archivePath)
         return True
       else:
         raise RuntimeWarning("Unable to remove archive file \'" + archivePath + "\' as it doesn't exist.")
@@ -618,6 +616,16 @@ class LiveryManager:
             filesData[fh].extend(lf)
     return filesData
 
+  def _optimize_find_missing_files(self, liveryFileHashes, liveryFilesData):
+    missingFiles = {}
+    for t in liveryFilesData.keys():
+      for f in liveryFilesData[t].keys():
+        if 'hash' not in liveryFilesData[t][f].keys():
+          if t not in missingFiles:
+            missingFiles[t] = []
+          missingFiles[t].append(f + ".dds")
+    return missingFiles
+
   def optimize_livery(self, livery, removeUnused=False, copyDesc=False, verbose=False):
     if livery:
       filesData = {'liveries': {}, 'hashes': {}, 'same_hash':[], 'size': {} }
@@ -626,6 +634,7 @@ class LiveryManager:
       filesData['hashes'] = self._optimize_calculate_fileref_hashes(livery, filesData['liveries'])
       filesData['same_hash'] = [h for h,l in filesData['hashes'].items() if len(l) > 1]
       filesData['unused'] = self._optimize_find_unused_livery_files(livery, filesData['liveries'])
+      filesData['missing'] = self._optimize_find_missing_files(filesData['hashes'], filesData['liveries'])
       livery.calculate_size_installed_liveries()
       filesData['size']['before'] = livery.get_size_installed_liveries()
       if len(filesData['same_hash']) or len(livery.installs['units']) > 1:

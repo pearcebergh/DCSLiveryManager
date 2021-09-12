@@ -33,7 +33,7 @@ class DCSUFParser():
     downloadClass = parsedHTML.find(class_="btn btn-primary download")
     if downloadClass:
       fullArchiveUrl = self.DCSDownloadUrlPrefix + downloadClass['href']
-      archiveType = '.' + str.split(fullArchiveUrl, '.')[-1]
+      archiveType = str.split(fullArchiveUrl, '.')[-1]
       if archiveType in patoolib.ArchiveFormats:
         return fullArchiveUrl
       else:
