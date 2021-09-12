@@ -418,6 +418,8 @@ class LiveryManager:
       splitStatement[0] = re.search("\".+\"", str.strip(splitStatement[0])).group()[1:-1]
       splitStatement[1] = str.strip(str.strip(splitStatement[1]))
       splitStatement[2] = re.search("\".+\"", str.strip(splitStatement[2])).group()[1:-1]
+      if splitStatement[2].startswith('..'):
+        splitStatement[2] = os.path.normpath(splitStatement[2]).replace('\\', '/')
       splitStatement[3] = False if (str.lower(str.strip(splitStatement[3])) == "false") else True
       luaData = splitStatement
     return luaData
@@ -600,6 +602,20 @@ class LiveryManager:
       if t in descLines.keys():
         fileRefs = self._get_file_refs_from_description(descLines[t][rootUnit])
         filesData[t] = fileRefs
+    # Consolidate relative file paths with other liveries
+    for t in filesData.keys():
+      movedFiles = []
+      for f in filesData[t].keys():
+        if f.startswith("../"):
+          splitFile = f.split("/")
+          splitLivery = splitFile[-2]
+          if splitLivery in filesData.keys():
+            for p in filesData[t][f]['parts']:
+              if p not in filesData[splitLivery][splitFile[-1]]['parts']:
+                filesData[splitLivery][splitFile[-1]]['parts'].append(p)
+            movedFiles.append(f)
+      for mF in movedFiles:
+        del filesData[t][mF]
     return filesData
 
   def _optimize_calculate_fileref_hashes(self, livery, fileRefs):

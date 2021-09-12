@@ -742,7 +742,7 @@ class DCSLMApp:
       optimizationTable.add_column("# Liveries", justify="center", style="magenta")
       optimizationTable.add_column("Hash Matches", justify="center", no_wrap=False, style="green")
       optimizationTable.add_column("Size Before (MB)", justify="right", no_wrap=False, style="bold gold1")
-      optimizationTable.add_column("Size After (MB)", justify="right", no_wrap=False, style="green")
+      optimizationTable.add_column("Size After (MB)", justify="right", no_wrap=False, style="bold green")
       totalSizeBefore, totalSizeAfter, totalSizeDelta = 0.0, 0.0, 0.0
       for op in optimizationReport:
         l = op['livery']
@@ -779,7 +779,6 @@ class DCSLMApp:
     except SystemExit:
       raise RuntimeError("Unable to parse \'optimize\' command.")
 
-  # TODO: Handle description.lua with relative paths (3317631)
   def optimize_livery(self, sArgs):
     if not len(sArgs):
       raise RuntimeWarning("No liveries provided for \'optimize\' command.")
