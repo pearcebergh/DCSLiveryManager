@@ -28,7 +28,6 @@ from DCSLM import __version__
 from DCSLM.DCSUFParser import DCSUFParser
 from DCSLM.Livery import DCSUserFile, Livery
 from DCSLM.LiveryManager import LiveryManager
-#from DCSLM.UnitConfig import Units
 from DCSLM.UnitManager import UnitManager
 import DCSLM.Utilities as Utilities
 
@@ -264,7 +263,6 @@ class DCSLMApp:
             if existingLivery.dcsuf.datetime == livery.dcsuf.datetime:
               if not self.prompt_existing_livery(existingLivery):
                 raise RuntimeError("Skipping reinstalling livery.")
-          #unitLiveries = Units.Units['aircraft'][livery.dcsuf.unit]['liveries']
           unitLiveries = self.um.Units['Air'][livery.dcsuf.unit].liveries
           if len(unitLiveries) > 1 and not forceAllUnits:
             unitLiveries = self.prompt_aircraft_livery_choice(livery, unitLiveries)
@@ -509,8 +507,6 @@ class DCSLMApp:
     self._print_livery_install_report(updateData, "Livery Update Report")
     self.console.print("")
 
-  # TODO: Show if livery is installed to multiple units
-  # TODO: Show if livery is optimized
   def list_liveries(self, sArgs):
     def sort_list_by_unit_then_title(e):
       return e[0] + " - " + e[1]
@@ -527,7 +523,6 @@ class DCSLMApp:
     longestUnit = ""
     footerData = {'size': 0, 'units': [], 'installed': 0, 'registered': 0}
     for l in self.lm.Liveries.values():
-      #friendlyUnit = Units.Units['aircraft'][l.dcsuf.unit]['friendly']
       friendlyUnit = self.um.Units['Air'][l.dcsuf.unit].friendly
       liverySizeMB = Utilities.bytes_to_mb(l.get_size_installed_liveries())
       footerData['size'] += liverySizeMB
@@ -535,8 +530,10 @@ class DCSLMApp:
       footerData['installed'] += l.get_num_liveries()
       if l.dcsuf.unit not in footerData['units']:
         footerData['units'].append(l.dcsuf.unit)
-      liveryRows.append((friendlyUnit, str(l.dcsuf.id), l.dcsuf.title,
-                         Utilities.mb_to_mb_string(liverySizeMB)))
+      sizeStr = Utilities.mb_to_mb_string(liverySizeMB)
+      if l.is_optimized():
+        sizeStr = "[green]" + sizeStr + "[/green]"
+      liveryRows.append((friendlyUnit, str(l.dcsuf.id), l.dcsuf.title, sizeStr))
       if len(friendlyUnit) > len(longestUnit):
         longestUnit = friendlyUnit
     unitColWidth = max(8, min(13, len(longestUnit)))
@@ -625,7 +622,6 @@ class DCSLMApp:
           splitUDPath = str.split(uD, '\\')
           if len(splitUDPath) >= 2:
             unitName = str.split(uD, '\\')[-2]
-            #unit = Units.get_unit_from_liveries_dir(unitName)
             unit = self.um.get_unit_from_liveries_dir(unitName)
             if unit:
               unitFolders.append(uD)
@@ -693,6 +689,7 @@ class DCSLMApp:
     except Exception as e:
       raise e
 
+  # TODO: Add download bar
   def upgrade_dcslm(self):
     import shutil
     import time
@@ -717,7 +714,6 @@ class DCSLMApp:
           if os.path.isfile(oldExec):
             try:
               Utilities.remove_file(oldExec)
-              # os.remove(oldExec)
             except Exception as e:
               self.console.print("[bold red]Failed to remove old executable:[/bold red] [red]" + str(e))
           shutil.move(sys.executable, oldExec)
@@ -780,7 +776,7 @@ class DCSLMApp:
     except SystemExit:
       raise RuntimeError("Unable to parse \'optimize\' command.")
 
-  # 3314521 (lua ref missing file)
+  # 3314521 (lua ref missing file), 3317631 (existing relative paths)
   def optimize_livery(self, sArgs):
     if not len(sArgs):
       raise RuntimeWarning("No liveries provided for \'optimize\' command.")

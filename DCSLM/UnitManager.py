@@ -62,9 +62,8 @@ class UnitManager:
         print("Wrote " + unitPath)
 
   def get_unit_from_liveries_dir(self, liveryDir):
-    for u in self.Units['Air'].values():
-      if liveryDir in u.liveries:
-        return u
+    for unitType in UnitDefaults.keys():
+      for u in self.Units[unitType].values():
+        if liveryDir in u.liveries:
+          return u
     return None
-
-#um = UnitManager()

@@ -66,8 +66,7 @@ class LiveryManager:
     except:
       raise RuntimeError("Unable to create DCSLM directories at \'" + dcslmPath + "\\\'")
 
-  def get_registered_livery(self, id=None, livery=None, title=None):
-    # TODO: Search by title
+  def get_registered_livery(self, id=None, livery=None):
     userID = id
     if livery:
       userID = livery.dcsuf.id

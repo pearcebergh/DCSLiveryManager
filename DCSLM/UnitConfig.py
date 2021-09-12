@@ -1,5 +1,4 @@
 
-# TODO: create Unit class
 class UnitConfig:
   def __init__(self):
     self.Units = None

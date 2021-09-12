@@ -2,7 +2,6 @@ import json
 import os
 from datetime import datetime
 from .UnitConfig import Units
-from pprint import pprint
 import DCSLM.Utilities as Utilities
 
 class DCSUserFile:
@@ -70,16 +69,6 @@ class DCSUserFile:
       return datetime.strftime('%m/%d/%Y %H:%M:%S')
     return ""
 
-  def _fill_data_test(self):
-    self.id = 69420
-    self.unit = "f-14"
-    self.author = "Sneep"
-    self.title = "69th #VIPENATION FS Livery"
-    self.date = "19.02.2021 04:20"
-    self.datetime = 0
-    self.size = "69.96 Mb"
-    self.download = "https://www.digitalcombatsimulator.com/upload/iblock/079/69th_-_Vipenation_FS_v1.zip"
-
 class Livery:
   def __init__(self):
     self.archive = None
@@ -120,13 +109,6 @@ class Livery:
     else:
       raise RuntimeError("Unable to generate OVGME folder for livery due to insufficient data.")
 
-  def _fill_data_test(self):
-    self.dcsuf = DCSUserFile()
-    self.dcsuf._fill_data_test()
-    self.ovgme = self.generate_ovgme_folder()
-    self.archive = "/DCSLM/archives/" + self.dcsuf.download.split('/')[-1]
-    self.destination = "/Liveries/"
-
   def get_num_liveries(self):
     liveryCount = 0
     for ac, data in self.installs['liveries'].items():
@@ -144,3 +126,6 @@ class Livery:
     for i, v in self.installs['liveries'].items():
       totalSize += v['size']
     return totalSize
+
+  def is_optimized(self):
+    return self.installs['optimized']
