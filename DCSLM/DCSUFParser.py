@@ -1,11 +1,11 @@
 import requests
+import patoolib
 from bs4 import BeautifulSoup
 from .Livery import DCSUserFile
 from .UnitConfig import Units
 from .Utilities import correct_dcs_user_files_url
 
-ArchiveExtensions = [".zip", ".rar", ".7z"]
-
+# TODO: Make and expose config for parsing divs for info
 class DCSUFParser():
   def __init__(self):
     self.DCSDownloadUrlPrefix = "https://www.digitalcombatsimulator.com"
@@ -27,14 +27,14 @@ class DCSUFParser():
     correctFilename = filename
     for c in badFilenameCharacters:
       correctFilename = correctFilename.replace(c, '')
-    return " ".join(correctFilename.split())  # Remove extra spaces
+    return " ".join(correctFilename.split()) # Remove extra spaces
 
   def _get_dcsfiles_archive_url_from_html(self, parsedHTML):
     downloadClass = parsedHTML.find(class_="btn btn-primary download")
     if downloadClass:
       fullArchiveUrl = self.DCSDownloadUrlPrefix + downloadClass['href']
       archiveType = '.' + str.split(fullArchiveUrl, '.')[-1]
-      if archiveType in ArchiveExtensions:
+      if archiveType in patoolib.ArchiveFormats:
         return fullArchiveUrl
       else:
         raise RuntimeError(fullArchiveUrl + " is not a valid url to an archive file.")

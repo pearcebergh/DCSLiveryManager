@@ -58,6 +58,8 @@ class DCSLMApp:
     self.lm = None
     self.um = None
 
+  # TODO: Detect if in DCS Saved Games directory
+  # TODO: Check if 7z is installed/in env path
   def start(self):
     self.setup_commands()
     self.setup_command_completer()
@@ -68,6 +70,7 @@ class DCSLMApp:
     self.setup_unit_manager()
     self.run()
 
+  # TODO: Add 'units' command
   def setup_commands(self):
     self.commands = {
       'install': {
@@ -689,7 +692,7 @@ class DCSLMApp:
     except Exception as e:
       raise e
 
-  # TODO: Add download bar
+  # TODO: Add download bar for dcslm upgrade
   def upgrade_dcslm(self):
     import shutil
     import time
@@ -776,7 +779,8 @@ class DCSLMApp:
     except SystemExit:
       raise RuntimeError("Unable to parse \'optimize\' command.")
 
-  # 3314521 (lua ref missing file), 3317631 (existing relative paths)
+  # TODO: Print missing referenced files from description.lua (3314521)
+  # TODO: Handle description.lua with relative paths (3317631)
   def optimize_livery(self, sArgs):
     if not len(sArgs):
       raise RuntimeWarning("No liveries provided for \'optimize\' command.")
