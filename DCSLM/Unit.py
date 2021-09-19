@@ -7,6 +7,7 @@ class Unit:
     self.names = []
     self.liveries = []
     self.dcs_files = None
+    self.category = None
     self.modified = False
     self.custom = False
 
@@ -15,7 +16,7 @@ class Unit:
     selfVars = vars(self)
     jsonUnit = {}
     for var in classVars.keys():
-      if "modified" in var or "custom" in var:
+      if "modified" in var or "custom" in var or "category" in var or "generic" in var:
         continue
       jsonUnit[var] = selfVars[var]
     return jsonUnit

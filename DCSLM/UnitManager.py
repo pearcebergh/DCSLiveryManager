@@ -21,6 +21,7 @@ class UnitManager:
         self.Units[unitType] = {}
       for unitName, unitData in UnitDefaults[unitType].items():
         defaultUnit = Unit().from_JSON(unitName, unitData)
+        defaultUnit.category = unitType
         self.Units[unitType][unitName] = defaultUnit
         self.UnitNames[unitName] = unitType
 
@@ -32,16 +33,20 @@ class UnitManager:
       for uF in unitFiles:
         unitFilename = os.path.split(uF)[-1]
         unitName = os.path.splitext(unitFilename)[0]
-        with open(uF, "r") as unitFile:
-          unitData = json.load(unitFile)
-          customUnit = Unit().from_JSON(unitName, unitData)
-          if customUnit.validate_unit():
-            if unitName in self.UnitNames.keys():
-              customUnit.modified = True
-            else:
-              customUnit.custom = True
-            self.UnitNames[unitName] = unitType
-            self.Units[unitType][unitName] = customUnit
+        try:
+          with open(uF, "r") as unitFile:
+            unitData = json.load(unitFile)
+            customUnit = Unit().from_JSON(unitName, unitData)
+            customUnit.category = unitType
+            if customUnit.validate_unit():
+              if unitName in self.UnitNames.keys():
+                customUnit.modified = True
+              else:
+                customUnit.custom = True
+              self.UnitNames[unitName] = unitType
+              self.Units[unitType][unitName] = customUnit
+        except Exception as e:
+          print("Failed to load unit config \'" + uF + "\'.")
 
   def create_unit_directories(self):
     unitsRoot = os.path.join(os.getcwd(), "DCSLM", "units")
@@ -60,15 +65,36 @@ class UnitManager:
         continue
       for unitName, unitData in UnitDefaults[unitType].items():
         unitPath = os.path.join(unitRoot, unitName + ".json")
-        with open(unitPath, 'w') as unitFile:
-          json.dump(unitData, unitFile, indent=4, )
+        try:
+          with open(unitPath, 'w') as unitFile:
+            json.dump(unitData, unitFile, indent=4)
+        except Exception as e:
+          raise RuntimeError("Failed to write config file to \'" + unitPath + "\'.")
         print("Wrote " + unitPath)
+
+  def write_unit_config_file(self, unitData):
+    unitPath = os.path.join(os.getcwd(), "DCSLM", "units", unitData.category.lower())
+    unitFilepath = os.path.join(unitPath, unitData.generic + ".json")
+    try:
+      with open(unitFilepath, 'w') as unitFile:
+        json.dump(unitData.to_JSON(), unitFile, indent=4)
+    except Exception as e:
+      raise RuntimeError("Failed to write config file to \'" + unitFilepath + "\'.")
+    return False
 
   def get_unit_from_liveries_dir(self, liveryDir):
     for unitType in UnitDefaults.keys():
       for u in self.Units[unitType].values():
         if liveryDir in u.liveries:
           return u
+    return None
+
+  def get_unit_from_generic_name(self, genericName):
+    for c in self.Categories:
+      if c in self.Units.keys():
+        for u,d in self.Units[c].items():
+          if genericName == d.generic:
+            return d
     return None
 
   def get_unit_from_friendly_name(self, friendlyName):
@@ -79,4 +105,4 @@ class UnitManager:
             return d
     return None
 
-UM = UnitManager()
+UM = None
