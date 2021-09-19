@@ -7,6 +7,7 @@ class UnitManager:
   def __init__(self):
     self.Units = {}
     self.Categories = ["Air", "Ground", "Sea"]
+    self.UnitNames = {}
     self.setup_unitmanager()
 
   def setup_unitmanager(self):
@@ -21,6 +22,7 @@ class UnitManager:
       for unitName, unitData in UnitDefaults[unitType].items():
         defaultUnit = Unit().from_JSON(unitName, unitData)
         self.Units[unitType][unitName] = defaultUnit
+        self.UnitNames[unitName] = unitType
 
   def load_custom(self):
     import glob
@@ -34,10 +36,11 @@ class UnitManager:
           unitData = json.load(unitFile)
           customUnit = Unit().from_JSON(unitName, unitData)
           if customUnit.validate_unit():
-            if unitName in self.Units.keys():
-              print("Replacing " + unitName + " with data from " + os.path.join(unitRoot, unitFilename))
+            if unitName in self.UnitNames.keys():
+              customUnit.modified = True
             else:
-              print("Loading custom unit " + unitName)
+              customUnit.custom = True
+            self.UnitNames[unitName] = unitType
             self.Units[unitType][unitName] = customUnit
 
   def create_unit_directories(self):

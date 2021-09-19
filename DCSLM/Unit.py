@@ -7,12 +7,16 @@ class Unit:
     self.names = []
     self.liveries = []
     self.dcs_files = None
+    self.modified = False
+    self.custom = False
 
   def to_JSON(self):
     classVars = vars(Unit())
     selfVars = vars(self)
     jsonUnit = {}
     for var in classVars.keys():
+      if "modified" in var or "custom" in var:
+        continue
       jsonUnit[var] = selfVars[var]
     return jsonUnit
 

@@ -620,7 +620,7 @@ class DCSLMApp:
       livery = self.lm.get_registered_livery(title=liveryName)
     if livery:
       dcsufPanel = self._make_dcsuf_panel(livery)
-      dcsufPanel.title = "DCS User Files Information"
+      dcsufPanel.title = "[bold gold1]DCS User Files Information"
       dcsufPanel.title_align = "left"
       dcsufAlign = Align(dcsufPanel, align="center")
       liveryRG = self._make_livery_rendergroup(livery)
@@ -871,7 +871,14 @@ class DCSLMApp:
     unitTable.add_row("Names/Tags", Text("[" + ', '.join(unitData.names) + "]"))
     unitTable.add_row("Livery Folders", Text("[" + ', '.join(unitData.liveries) + "]"))
     unitAlign = Align(unitTable, align="center")
-    unitPanel = Panel(unitAlign, title="[green]" + unitData.friendly + " Config", highlight=True, expand=False)
+    unitTitle = unitData.friendly + " Config"
+    if unitData.custom:
+      unitTitle = "[magenta]" + unitTitle + " (CUSTOM)"
+    elif unitData.modified:
+      unitTitle = "[bold gold1]" + unitTitle + " (MODIFIED)"
+    else:
+      unitTitle = "[green]" + unitTitle
+    unitPanel = Panel(unitAlign, title=unitTitle, highlight=True, expand=False)
     return unitPanel
 
   def _parse_dcs_units_args(self, sArgs):
@@ -908,7 +915,12 @@ class DCSLMApp:
         if c in UM.Units.keys():
           friendlyUnits = []
           for n,u in UM.Units[c].items():
-            friendlyUnits.append(u.friendly)
+            friendlyStr = u.friendly
+            if u.custom:
+              friendlyStr = "[magenta]" + friendlyStr + "[/magenta]"
+            elif u.modified:
+              friendlyStr = "[bold gold1]" + friendlyStr + "[/bold gold1]"
+            friendlyUnits.append(friendlyStr)
           unitsStr = ', '.join(friendlyUnits)
           self.console.print(Panel(unitsStr, title="[green]" + c + " Units", expand=False, highlight=False), justify="center")
 
