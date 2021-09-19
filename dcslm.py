@@ -29,7 +29,7 @@ from DCSLM import __version__
 from DCSLM.DCSUFParser import DCSUFParser
 from DCSLM.Livery import DCSUserFile, Livery
 from DCSLM.LiveryManager import LiveryManager
-import DCSLM.UnitManager
+from DCSLM.UnitManager import UM
 import DCSLM.Utilities as Utilities
 
 def set_console_title(title):
@@ -57,7 +57,6 @@ class DCSLMApp:
     self.completer = None
     self.commands = None
     self.lm = None
-    self.um = None
 
   # TODO: Detect if in DCS Saved Games directory
   # TODO: Check if 7z is installed/in env path
@@ -66,7 +65,6 @@ class DCSLMApp:
     self.setup_command_completer()
     self.setup_console_window()
     self.clear_and_print_header()
-    self.setup_unit_manager()
     self.setup_livery_manager()
     self.quick_check_upgrade_available()
     self.run()
@@ -294,7 +292,7 @@ class DCSLMApp:
             if existingLivery.dcsuf.datetime == livery.dcsuf.datetime:
               if not self.prompt_existing_livery(existingLivery):
                 raise RuntimeError("Skipping reinstalling livery.")
-          unitLiveries = self.um.Units['Air'][livery.dcsuf.unit].liveries
+          unitLiveries = UM.Units['Air'][livery.dcsuf.unit].liveries
           if len(unitLiveries) > 1 and not forceAllUnits:
             unitLiveries = self.prompt_aircraft_livery_choice(livery, unitLiveries)
           if len(unitLiveries) == 0:
@@ -380,7 +378,7 @@ class DCSLMApp:
       installTable.add_column("# Liveries", justify="center", no_wrap=True, style="magenta")
       installTable.add_column("Size (MB)", justify="right", no_wrap=True, style="bold gold1")
       for l in installData['success']:
-        installTable.add_row(self.um.Units['Air'][l.dcsuf.unit].friendly, str(l.dcsuf.id), l.dcsuf.title,
+        installTable.add_row(UM.Units['Air'][l.dcsuf.unit].friendly, str(l.dcsuf.id), l.dcsuf.title,
                              str(l.get_num_liveries()), Utilities.bytes_to_mb_string(l.get_size_installed_liveries()))
       self.console.print(installTable)
     if len(installData['failed']):
@@ -556,7 +554,7 @@ class DCSLMApp:
     longestUnit = ""
     footerData = {'size': 0, 'units': [], 'installed': 0, 'registered': 0}
     for l in self.lm.Liveries.values():
-      friendlyUnit = self.um.Units['Air'][l.dcsuf.unit].friendly
+      friendlyUnit = UM.Units['Air'][l.dcsuf.unit].friendly
       liverySizeMB = Utilities.bytes_to_mb(l.get_size_installed_liveries())
       footerData['size'] += liverySizeMB
       footerData['registered'] += 1
@@ -655,7 +653,7 @@ class DCSLMApp:
           splitUDPath = str.split(uD, '\\')
           if len(splitUDPath) >= 2:
             unitName = str.split(uD, '\\')[-2]
-            unit = self.um.get_unit_from_liveries_dir(unitName)
+            unit = UM.get_unit_from_liveries_dir(unitName)
             if unit:
               unitFolders.append(uD)
       self.console.print("Matched " + str(len(unitFolders)) + " known unit directories.")
@@ -906,25 +904,25 @@ class DCSLMApp:
     if len(sArgs):
       unitsArgs = self._parse_dcs_units_args(sArgs)
       unitName = ' '.join(unitsArgs.unit)
-      unitData = self.um.get_unit_from_friendly_name(unitName.lower())
+      unitData = UM.get_unit_from_friendly_name(unitName.lower())
       if unitData:
         if unitsArgs.export:
           if unitData.custom or unitData.modified:
             self.console.print("Unit config for \'" + unitData.friendly + "\' is the same on disk.")
           else:
-            self.console.print("Writing out config for \'" + unitData.friendly + "\' to DCSLM/units/" +
-                               unitData.category.lower() + "/" + unitData.generic + ".json")
-            self.um.write_unit_config_file(unitData)
+            self.console.print("Writing out config for \'" + unitData.friendly + "\' to \'DCSLM/units/" +
+                               unitData.category.lower() + "/" + unitData.generic + ".json\'")
+            UM.write_unit_config_file(unitData)
         else:
           unitPanel = self._make_unit_panel(unitData)
           self.console.print(unitPanel)
       else:
         self.console.print("Unable to find matching unit from \'" + unitName + "\'.")
     else:
-      for c in self.um.Categories:
-        if c in self.um.Units.keys():
+      for c in UM.Categories:
+        if c in UM.Units.keys():
           friendlyUnits = []
-          for n,u in self.um.Units[c].items():
+          for n,u in UM.Units[c].items():
             friendlyStr = u.friendly
             if u.custom:
               friendlyStr = "[magenta]" + friendlyStr + "[/magenta]"
@@ -980,7 +978,7 @@ class DCSLMApp:
                   livery.dcsuf.download]
     justifiedLines = self._center_justify_lines(dcsufLines)
     dcsufStr = "\n".join(justifiedLines)
-    return Panel(dcsufStr, title=self.um.Units['Air'][livery.dcsuf.unit].friendly + " - " + livery.dcsuf.title,
+    return Panel(dcsufStr, title=UM.Units['Air'][livery.dcsuf.unit].friendly + " - " + livery.dcsuf.title,
                  expand=False, highlight=True)
 
   def print_dcsuf_panel(self, livery):
@@ -1007,10 +1005,6 @@ class DCSLMApp:
   def setup_console_window(self):
     self.console = Console(width=120, tab_size=4)
     #set_terminal_size(80, 50)
-
-  def setup_unit_manager(self):
-    DCSLM.UnitManager.UM = DCSLM.UnitManager.UnitManager()
-    self.um = DCSLM.UnitManager.UM
 
   def setup_livery_manager(self):
     self.console.print("DCSLM.exe Directory: \'" + os.getcwd() + "\'")
@@ -1050,8 +1044,8 @@ class DCSLMApp:
     chosenLiveries = []
     liveryChoices = ["[white]None[/white]"]
     for u in unitLiveries:
-      if u in self.um.Units['Air'].keys():
-        liveryChoices.append("[white]" +  self.um.Units['Air'][u]['friendly'] + "[/white]")
+      if u in UM.Units['Air'].keys():
+        liveryChoices.append("[white]" +  UM.Units['Air'][u]['friendly'] + "[/white]")
       else:
         liveryChoices.append(u)
     liveryChoices.append("[bold white]All[/bold white]")
@@ -1060,7 +1054,7 @@ class DCSLMApp:
       for i in range(0, len(liveryChoices)):
         choiceText += "[[sky_blue1]" + str(i) + "[/sky_blue1]]" + liveryChoices[i] + " "
       self.console.print("\nThere are multiple livery install locations for the [bold magenta]" +
-                         self.um.Units['Air'][livery.dcsuf.unit].friendly + "[/bold magenta]. " +
+                         UM.Units['Air'][livery.dcsuf.unit].friendly + "[/bold magenta]. " +
                          "Please choose from one of the following choices by inputting the corresponding index number:")
       self.console.print("\n\t" + choiceText)
       try:

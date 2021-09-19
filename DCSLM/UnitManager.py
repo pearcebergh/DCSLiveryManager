@@ -105,4 +105,4 @@ class UnitManager:
             return d
     return None
 
-UM = None
+UM = UnitManager()
