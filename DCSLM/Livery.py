@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime
-from .UnitConfig import Units
+from DCSLM.UnitManager import UM
 import DCSLM.Utilities as Utilities
 
 class DCSUserFile:
@@ -105,7 +105,7 @@ class Livery:
 
   def generate_ovgme_folder(self):
     if self.dcsuf and self.dcsuf.unit and self.dcsuf.title:
-      return Units.Units['aircraft'][self.dcsuf.unit]['friendly'] + " - " + self.dcsuf.title
+      return UM.Units['Air'][self.dcsuf.unit].friendly + " - " + self.dcsuf.title
     else:
       raise RuntimeError("Unable to generate OVGME folder for livery due to insufficient data.")
 

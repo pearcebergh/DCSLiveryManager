@@ -22,7 +22,7 @@ class DCSUFParser():
       'filetype': "body > div.container > div.row.well > div.row.file-body > div.col-xs-10 > div.row.file-data-1 > div.col-xs-3.type > a",
       'download': "btn btn-primary download",
       'unit': ["body > div.container > div.row.well > div.row.file-head.file-type-skn > div:nth-child(2) > span",
-                   "body > div.container > div.row.well > div.row.file-head.file-type-skin > div:nth-child(2) > span"],
+               "body > div.container > div.row.well > div.row.file-head.file-type-skin > div:nth-child(2) > span"],
       'author': "body > div.container > div.row.well > div.row.file-body > div.col-xs-10 > div.row.file-data-1 > div.col-xs-3.author > a",
       'title': "body > div.container > div.row.well > div.row.file-body > div.col-xs-10 > div:nth-child(1) > div > h2",
       'date': "body > div.container > div.row.well > div.row.file-body > div.col-xs-10 > div.row.file-data-1 > div.col-xs-3.date",
