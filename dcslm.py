@@ -858,12 +858,31 @@ class DCSLMApp:
           self.console.print("\t\t[bold]" + ', '.join(l['tags']) + "[/bold] - " + l['desc'])
     self.console.print("")
 
+  def _center_justify_lines(self, strList):
+    maxLen, maxIndex = 0, -1
+    justifiedList = []
+    for i in range(0, len(strList)):
+      if len(strList[i]) > maxLen:
+        maxLen = len(strList[i])
+        maxIndex = i
+    if maxIndex != -1:
+      for i in range(0, len(strList)):
+        if i == maxIndex:
+          justifiedList.append(strList[i])
+          continue
+        justifiedList.append(strList[i].center(maxLen, ' '))
+    else:
+      return strList
+    return justifiedList
+
   def _make_dcsuf_panel(self, livery):
-    return Panel("ID: " +
-                 str(livery.dcsuf.id) + " | Author: " + livery.dcsuf.author + " | Upload Date: " +
-                     livery.dcsuf.date + " | Archive Size: " + livery.dcsuf.size + " \n" + livery.dcsuf.download,
-                     title=self.um.Units['Air'][livery.dcsuf.unit].friendly + " - " + livery.dcsuf.title,
-                     expand=False, highlight=True)
+    dcsufLines = ["ID: " + str(livery.dcsuf.id) + " | Author: " + livery.dcsuf.author + " | Upload Date: " +
+                  livery.dcsuf.date + " | Archive Size: " + livery.dcsuf.size,
+                  livery.dcsuf.download]
+    justifiedLines = self._center_justify_lines(dcsufLines)
+    dcsufStr = "\n".join(justifiedLines)
+    return Panel(dcsufStr, title=self.um.Units['Air'][livery.dcsuf.unit].friendly + " - " + livery.dcsuf.title,
+                 expand=False, highlight=True)
 
   def print_dcsuf_panel(self, livery):
     if livery:
