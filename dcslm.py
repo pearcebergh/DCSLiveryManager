@@ -75,7 +75,7 @@ class DCSLMApp:
       'install': {
         'completer': None,
         'usage': "\[id/url1] \[id/url2] \[id/url3] ...",
-        'desc': "Install DCS liveries from DCS User Files URLs or IDs.",
+        'desc': "Install DCS liveries from DCS User Files URLs or IDs",
         'flags': {
           'keep': {
             'tags': ['-k', '--keep'],
@@ -85,13 +85,13 @@ class DCSLMApp:
           },
           'reinstall': {
             'tags': ['-r', '--reinstall'],
-            'desc': "Do not prompt if the livery is already registered.",
+            'desc': "Do not prompt if the livery is already registered",
             'action': "store_true",
             'confirm': False
           },
           'allunits': {
             'tags': ['-a', '--allunits'],
-            'desc': "Do not prompt when given a choice to install to multiple units and install to all.",
+            'desc': "Do not prompt when given a choice to install to multiple units and install to all",
             'action': "store_true",
             'confirm': False
           },
@@ -107,8 +107,8 @@ class DCSLMApp:
       },
       'uninstall': {
         'completer': None,
-        'usage': "\[flags] livery",
-        'desc': "Uninstall the given managed livery from the \'title\' or \'ID\'.",
+        'usage': "\[flags] livery1 livery2 livery3 ...",
+        'desc': "Uninstall the given managed liveries from the \'ID\'",
         'flags': {
           'keep': {
             'tags': ['-k', '--keep'],
@@ -129,7 +129,7 @@ class DCSLMApp:
       'info': {
         'completer': None,
         'usage': "livery",
-        'desc': "Get additional info about an installed livery.",
+        'desc': "Get additional info about an installed livery",
         'flags': {},
         'args': {
           'livery': {
@@ -143,11 +143,11 @@ class DCSLMApp:
       'list': {
         'completer': None,
         'usage': "",
-        'desc': "List currently installed DCS liveries.",
+        'desc': "List currently installed DCS liveries",
         'flags': {
           'ids': {
             'tags': ['ids'],
-            'desc': "List the IDs of all registered liveries for copying.",
+            'desc': "List the IDs of all registered liveries for copying",
             'action': "store_true",
             'confirm': False
           },
@@ -158,7 +158,7 @@ class DCSLMApp:
       'check': {
         'completer': None,
         'usage': "",
-        'desc': "Check for updates to any installed liveries.",
+        'desc': "Check for updates to any installed liveries",
         'flags': {},
         'args': {},
         'exec': self.check_liveries
@@ -166,7 +166,7 @@ class DCSLMApp:
       'update': {
         'completer': None,
         'usage': "",
-        'desc': "Update any installed liveries that have a more recent version upload to \'DCS User Files\'.",
+        'desc': "Update any installed liveries that have a more recent version upload to \'DCS User Files\'",
         'flags': {},
         'args': {},
         'exec': self.update_liveries
@@ -174,29 +174,29 @@ class DCSLMApp:
       'optimize': {
         'completer': None,
         'usage': "\[flags] livery",
-        'desc': "Attempt to optimize an installed livery by looking for unused or shared files between liveries within packs.",
+        'desc': "Attempt to optimize an installed livery by looking for unused or shared files between liveries within packs",
         'flags': {
           'reoptimize': {
             'tags': ['-r','--reoptimize'],
-            'desc': "Optimize liveries even if they have already been optimized.",
+            'desc': "Optimize liveries even if they have already been optimized",
             'action': "store_true",
             'confirm': False
           },
           'keepdesc': {
             'tags': ['-d','--keepdesc'],
-            'desc': "Keep a copy of the original unmodified description.lua files.",
+            'desc': "Keep a copy of the original unmodified description.lua files",
             'action': "store_true",
             'confirm': False
           },
           'keepunused': {
             'tags': ['-u', '--keepunused'],
-            'desc': "Keep unused files on disk at the end of optimization.",
+            'desc': "Keep unused files on disk at the end of optimization",
             'action': "store_true",
             'confirm': False
           },
           'verbose': {
             'tags': ['-v', '--verbose'],
-            'desc': "Verbose printing of livery file reference data for debugging purposes.",
+            'desc': "Verbose printing of livery file reference data for debugging purposes",
             'action': "store_true",
             'confirm': False
           },
@@ -213,19 +213,19 @@ class DCSLMApp:
       'scan': {
         'completer': None,
         'usage': "",
-        'desc': "Scan folders for existing liveries with .dcslm registry files.",
+        'desc': "Scan folders for existing liveries with .dcslm registry files",
         'flags': {},
         'args': {},
         'exec': self.scan_for_liveries
       },
       'units': {
         'completer': None,
-        'usage': "units [unit]",
+        'usage': "[flags] [unit]",
         'desc': "Display information about units and their settings",
         'flags': {
           'export': {
             'tags': ['-e', '--export'],
-            'desc': "Export the JSON config for a unit to disk.",
+            'desc': "Write the JSON config for a unit to disk",
             'action': "store_true",
             'confirm': False
           },
@@ -250,7 +250,7 @@ class DCSLMApp:
       'help': {
         'completer': None,
         'usage': "",
-        'desc': "List the commands and their usage.",
+        'desc': "List the commands and their usage",
         'flags': {},
         'args': {},
         'exec': self.print_help
@@ -258,7 +258,7 @@ class DCSLMApp:
       'exit': {
         'completer': None,
         'usage': "",
-        'desc': "Exit the DCS Livery Manager program.",
+        'desc': "Exit the DCS Livery Manager program",
         'flags': {},
         'args': {},
         'exec': None
@@ -511,6 +511,8 @@ class DCSLMApp:
       self.console.print(str(numToUpdate) + liveryStr + " have updates! Run the \'update\' command to get " +
                          "the latest versions from \'DCS User Files\'.")
 
+  # TODO: Handle removed liveries instead of failing
+  # TODO: Use single session for DCSUF parsing
   def update_liveries(self):
     if not len(self.lm.Liveries.keys()):
       self.console.print("[red]No liveries registered to update.")
