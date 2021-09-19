@@ -68,4 +68,12 @@ class UnitManager:
           return u
     return None
 
+  def get_unit_from_friendly_name(self, friendlyName):
+    for c in self.Categories:
+      if c in self.Units.keys():
+        for u,d in self.Units[c].items():
+          if friendlyName == d.friendly.lower():
+            return d
+    return None
+
 UM = UnitManager()

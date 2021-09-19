@@ -69,7 +69,8 @@ class DCSLMApp:
     self.quick_check_upgrade_available()
     self.run()
 
-  # TODO: Add 'units' command
+  # TODO: Add 'config' command
+  # TODO: Make generic function for parsing args
   def setup_commands(self):
     self.commands = {
       'install': {
@@ -100,7 +101,8 @@ class DCSLMApp:
           'url': {
             'type': "number/string",
             'optional': False,
-            'desc': "DCS User Files ID or URL"
+            'desc': "DCS User Files ID or URL",
+            'variable': True
           },
         },
         'exec': self.install_liveries
@@ -121,7 +123,8 @@ class DCSLMApp:
           'livery': {
             'type': "string",
             'optional': False,
-            'desc': "DCS User Files livery title"
+            'desc': "DCS User Files livery title",
+            'variable': True
           },
         },
         'exec': self.uninstall_liveries
@@ -135,7 +138,8 @@ class DCSLMApp:
           'livery': {
             'type': "string",
             'optional': False,
-            'desc': "DCS User Files livery title"
+            'desc': "DCS User Files livery title",
+            'variable': False
           },
         },
         'exec': self.get_livery_info
@@ -205,7 +209,8 @@ class DCSLMApp:
           'livery': {
             'type': "string",
             'optional': False,
-            'desc': "DCS User Files livery title"
+            'desc': "DCS User Files livery title",
+            'variable': False
           },
         },
         'exec': self.optimize_livery
@@ -234,7 +239,8 @@ class DCSLMApp:
           'unit': {
             'type': "string",
             'optional': True,
-            'desc': "Display information about a specific unit"
+            'desc': "Display information about a specific unit",
+            'variable': True
           },
         },
         'exec': self.dcs_units
@@ -586,8 +592,8 @@ class DCSLMApp:
     self.console.print("")
 
   def _make_livery_rendergroup(self, livery):
-    liveryTable = Table.grid(expand=True, padding=(0,2,2,0), pad_edge=True)
-    liveryTable.add_column("Info", justify="right", no_wrap=True)
+    liveryTable = Table.grid(expand=True, padding=(0,2,2,0))
+    liveryTable.add_column("Info", justify="right", no_wrap=True, style="sky_blue1")
     liveryTable.add_column("Content", justify="left")
     archiveStyle = "[red]"
     if os.path.isfile(livery.archive):
@@ -620,7 +626,7 @@ class DCSLMApp:
       liveryRG = self._make_livery_rendergroup(livery)
       liveryAlign = Align(liveryRG, align="center")
       liveryInfoPanelGroup = RenderGroup(dcsufAlign, liveryAlign)
-      self.console.print(Panel(liveryInfoPanelGroup, title=livery.dcsuf.title + " Livery Info", highlight=True))
+      self.console.print(Panel(liveryInfoPanelGroup, title="[green]" + livery.dcsuf.title + " Livery Info", highlight=True))
     return
 
   def scan_for_liveries(self):
@@ -854,14 +860,57 @@ class DCSLMApp:
     self._print_optimization_report(optimizationReports)
     self.console.print("")
 
+  def _make_unit_panel(self, unitData):
+    unitTable = Table.grid(expand=False, padding=(0, 2, 2, 0))
+    unitTable.add_column("Info", justify="right", no_wrap=True, style="sky_blue1")
+    unitTable.add_column("Content", justify="left")
+    unitTable.add_row("Generic Name", unitData.generic)
+    unitTable.add_row("Friendly Name", unitData.friendly)
+    if unitData.dcs_files:
+      unitTable.add_row("DCS User Files Name", unitData.dcs_files)
+    unitTable.add_row("Names/Tags", Text("[" + ', '.join(unitData.names) + "]"))
+    unitTable.add_row("Livery Folders", Text("[" + ', '.join(unitData.liveries) + "]"))
+    unitAlign = Align(unitTable, align="center")
+    unitPanel = Panel(unitAlign, title="[green]" + unitData.friendly + " Config", highlight=True, expand=False)
+    return unitPanel
+
   def _parse_dcs_units_args(self, sArgs):
-    return None
+    try:
+      unitsArgsParser = argparse.ArgumentParser(usage=self.commands['units']['usage'],
+                                                description=self.commands['units']['desc'],
+                                                exit_on_error=False)
+      for oA in self.commands['units']['flags'].keys():
+        unitsArgsParser.add_argument(*self.commands['units']['flags'][oA]['tags'],
+                                     help=self.commands['units']['flags'][oA]['desc'],
+                                     action=self.commands['units']['flags'][oA]['action'], dest=oA)
+      unitsArgsParser.add_argument('unit', type=str, nargs="+",
+                                   help=self.commands['units']['args']['unit']['desc'])
+      parsedArgs = unitsArgsParser.parse_known_args(sArgs)
+      if len(parsedArgs[1]):
+        self.console.print("Failed to parse the following args for \'units\':", style="bold red")
+        self.console.print("\t" + str(parsedArgs[1]), style="bold red")
+      return parsedArgs[0]
+    except SystemExit:
+      raise RuntimeError("Unable to parse \'units\' command.")
 
   def dcs_units(self, sArgs):
-    return None
-
-  def func_test(self, sArgs):
-    return None
+    if len(sArgs):
+      unitsArgs = self._parse_dcs_units_args(sArgs)
+      unitName = ' '.join(unitsArgs.unit)
+      unitData = UM.get_unit_from_friendly_name(unitName.lower())
+      if unitData:
+        unitPanel = self._make_unit_panel(unitData)
+        self.console.print(unitPanel)
+      else:
+        self.console.print("Unable to find matching unit from \'" + unitName + "\'.")
+    else:
+      for c in UM.Categories:
+        if c in UM.Units.keys():
+          friendlyUnits = []
+          for n,u in UM.Units[c].items():
+            friendlyUnits.append(u.friendly)
+          unitsStr = ', '.join(friendlyUnits)
+          self.console.print(Panel(unitsStr, title="[green]" + c + " Units", expand=False, highlight=False), justify="center")
 
   def print_help(self):
     for k, v in self.commands.items():
