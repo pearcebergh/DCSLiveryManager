@@ -138,6 +138,12 @@ UnitDefaults = {
           "dcs_files": "M-2000C",
           "liveries": ["M-2000C"]
         },
+        "mi-24p": {
+          "names": ["mi-24p", "mi-24", "mi-24p hind", "hind"],
+          "friendly": "Mi-24P",
+          "dcs_files": "Mi-24P",
+          "liveries": ["Mi-24P"]
+        },
         "mi-8mtv2": {
           "names": ["mi-8", "mi-8mtv2"],
           "friendly": "Mi-8MTV2",
