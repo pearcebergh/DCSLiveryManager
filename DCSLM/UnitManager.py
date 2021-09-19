@@ -67,3 +67,5 @@ class UnitManager:
         if liveryDir in u.liveries:
           return u
     return None
+
+UM = UnitManager()
