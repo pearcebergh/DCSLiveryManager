@@ -273,6 +273,7 @@ class DCSLMApp:
 
   def _install_liveries(self, liveryStrings, keepFiles=False, forceDownload=False, forceInstall=False, forceAllUnits=False):
     installData = {'success': [], 'failed': []}
+    session = DCSUFParser().make_request_session()
     for liveryStr in liveryStrings:
       correctedLiveryURL, urlID = Utilities.correct_dcs_user_files_url(liveryStr)
       if not correctedLiveryURL:
@@ -284,7 +285,7 @@ class DCSLMApp:
         try:
           getUFStr = "Getting DCS User File information from " + correctedLiveryURL
           with self.console.status(getUFStr):
-            livery = self.lm.get_livery_data_from_dcsuf_url(correctedLiveryURL)
+            livery = self.lm.get_livery_data_from_dcsuf_url(correctedLiveryURL, session)
           self.console.print(getUFStr + "\n")
           self.print_dcsuf_panel(livery)
           existingLivery = self.lm.get_registered_livery(id=int(urlID))

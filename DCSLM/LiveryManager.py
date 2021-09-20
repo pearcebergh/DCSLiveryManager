@@ -347,10 +347,10 @@ class LiveryManager:
         installPaths.append(os.path.join(root, dl['name']))
     return installPaths
 
-  def get_livery_data_from_dcsuf_url(self, url):
+  def get_livery_data_from_dcsuf_url(self, url, session=None):
     if len(url):
       l = Livery()
-      l.dcsuf = DCSUFParser().get_dcsuserfile_from_url(url)
+      l.dcsuf = DCSUFParser().get_dcsuserfile_from_url(url, session)
       l.ovgme = l.generate_ovgme_folder()
       return l
     raise RuntimeError("Unable to get livery data from url " + url)
