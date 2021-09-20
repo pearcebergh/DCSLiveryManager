@@ -122,7 +122,7 @@ class DCSLMApp:
           'livery': {
             'type': "string",
             'optional': False,
-            'desc': "DCS User Files livery title",
+            'desc': "Livery ID",
             'variable': True
           },
         },
@@ -137,7 +137,7 @@ class DCSLMApp:
           'livery': {
             'type': "string",
             'optional': False,
-            'desc': "DCS User Files livery ID",
+            'desc': "Livery ID",
             'variable': False
           },
         },
@@ -710,11 +710,37 @@ class DCSLMApp:
     except Exception as e:
       raise e
 
-  # TODO: Add download bar for dcslm upgrade
+  def _download_upgrade_progress(self, exeURL, version, writePath):
+    import requests
+    downloadProgress = Progress(TextColumn("[bold blue]{task.fields[filename]}", justify="right"),
+                                BarColumn(bar_width=None),"[progress.percentage]{task.percentage:>3.1f}%",
+                                "•",DownloadColumn(), "•", TransferSpeedColumn(), "•",TimeRemainingColumn(),
+                                console=self.console)
+    dlTask = downloadProgress.add_task("download", filename="DCSLM.exe v" + version, start=False)
+    dlSize = Utilities.request_file_size(exeURL)
+    downloadProgress.update(dlTask, total=dlSize)
+    callbackData = { 'exec': self._download_archive_rich_callback, 'progress': downloadProgress, 'task': dlTask }
+    with downloadProgress:
+      try:
+        with requests.get(exeURL, stream=True) as req:
+          req.raise_for_status()
+          with open(writePath, 'wb') as f:
+            if callbackData:
+              callbackData['progress'].start_task(callbackData['task'])
+            for chunk in req.iter_content(chunk_size=8192):
+              f.write(chunk)
+              if callbackData:
+                callbackData['exec'](callbackData, len(chunk))
+        return writePath
+      except (KeyboardInterrupt, IOError, ConnectionError, FileNotFoundError) as e:
+        if os.path.isfile(writePath):
+          Utilities.remove_file(writePath)
+        raise RuntimeError("Failed to download \'DCSLM.exe\': " + str(e))
+    return None
+
   def upgrade_dcslm(self):
     import shutil
     import time
-    import requests
     import subprocess
     try:
       releaseData = self.request_upgrade_information()
@@ -739,10 +765,11 @@ class DCSLMApp:
               self.console.print("[bold red]Failed to remove old executable:[/bold red] [red]" + str(e))
           shutil.move(sys.executable, oldExec)
           dlFilename = "DCSLM.exe"
-          with self.console.status("Downloading DCSLM v" + releaseData[0]['version']):
-            latestExe = requests.get(releaseData[0]['download'], timeout=5)
-          with open(dlFilename, 'wb') as f:
-            f.write(latestExe.content)
+          dlPath = os.path.join(os.getcwd(), dlFilename)
+          latestExe = self._download_upgrade_progress(releaseData[0]['download'], releaseData[0]['version'], dlPath)
+          if not latestExe:
+            shutil.move(oldExec, sys.executable)
+            return
           os.chmod(dlFilename, 0o775)
           self.console.print("[bold green]DCSLM Upgrade complete to version " + releaseData[0]['version'])
           self.console.print("[bold red]DCSLM will be restarted in a few moments...")
@@ -1022,7 +1049,7 @@ class DCSLMApp:
         chosenLiveries = [unitLiveries[int(choice) - 1]]
     return chosenLiveries
 
-  def _download_archive_rich_callback(self, livery, dlCallback, downloadedBytes):
+  def _download_archive_rich_callback(self, dlCallback, downloadedBytes):
     dlCallback['progress'].update(dlCallback['task'], advance=downloadedBytes)
 
   def _download_archive_progress(self, livery):

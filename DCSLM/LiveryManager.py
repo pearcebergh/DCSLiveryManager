@@ -148,7 +148,6 @@ class LiveryManager:
           if os.path.isfile(installPath):
             try:
               Utilities.remove_file(installPath)
-              #os.remove(installPath)
             except:
               raise RuntimeError("Unable to remove livery registry file at \'" + installPath + "\'.")
           else:
@@ -171,7 +170,7 @@ class LiveryManager:
                 for chunk in req.iter_content(chunk_size=8192):
                   f.write(chunk)
                   if dlCallback:
-                    dlCallback['exec'](livery, dlCallback, len(chunk))
+                    dlCallback['exec'](dlCallback, len(chunk))
             return destinationFilename
           except (KeyboardInterrupt, IOError, ConnectionError, FileNotFoundError) as e:
             if os.path.isfile(destinationFilename):
