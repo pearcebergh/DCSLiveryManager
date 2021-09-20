@@ -4,6 +4,7 @@ import os
 import platform
 import sys
 from pprint import pprint
+from patoolib.util import get_nt_7z_dir
 from prompt_toolkit import PromptSession, HTML
 from prompt_toolkit.completion import NestedCompleter
 from rich import box
@@ -59,7 +60,6 @@ class DCSLMApp:
     self.lm = None
 
   # TODO: Detect if in DCS Saved Games directory
-  # TODO: Check if 7z is installed/in env path
   def start(self):
     self.setup_commands()
     self.setup_command_completer()
@@ -67,6 +67,7 @@ class DCSLMApp:
     self.clear_and_print_header()
     self.setup_livery_manager()
     self.quick_check_upgrade_available()
+    self.check_7z_installed()
     self.run()
 
   # TODO: Add 'config' command
@@ -1048,6 +1049,13 @@ class DCSLMApp:
       else:
         chosenLiveries = [unitLiveries[int(choice) - 1]]
     return chosenLiveries
+
+  def check_7z_installed(self):
+    if not get_nt_7z_dir():
+      self.console.print("")
+      self.console.print("[red]7-Zip was not found in the environment PATH. Make sure you have 7-Zip installed or " +
+                         "this program will not work correctly!")
+      self.console.print("[red]7-Zip is a free program available at[/red] https://www.7-zip.org/download.html")
 
   def _download_archive_rich_callback(self, dlCallback, downloadedBytes):
     dlCallback['progress'].update(dlCallback['task'], advance=downloadedBytes)
