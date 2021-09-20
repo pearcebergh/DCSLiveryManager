@@ -408,7 +408,6 @@ class DCSLMApp:
       for l in installData['failed']:
         self.console.print("[bold red]" + l['url'] + "[/bold red][red]: " + str(l['error']))
 
-  # TODO: Allow selection of multiple numbers when installed to units with choices
   def install_liveries(self, sArgs):
     installArgs = self._parse_command_args("install", sArgs)
     self.console.print("Attempting to install " + str(len(installArgs.url)) +
@@ -1037,20 +1036,31 @@ class DCSLMApp:
         choiceText += "[[sky_blue1]" + str(i) + "[/sky_blue1]]" + liveryChoices[i] + " "
       self.console.print("\nThere are multiple livery install locations for the [bold magenta]" +
                          UM.Units['Air'][livery.dcsuf.unit].friendly + "[/bold magenta]. " +
-                         "Please choose from one of the following choices by inputting the corresponding index number:")
+                         "Please choose from the following choices by inputting the corresponding index number(s):")
       self.console.print("\n\t" + choiceText)
       try:
-        choice = Prompt.ask("\n[bold]Which aircraft do you want the livery to be installed to?[/bold]",
-                            choices=[str(i) for i in range(0,len(liveryChoices))])
+        promptStr = "\n[bold]Which units do you want the livery to be installed to?[/bold]"
+        optionsStr = '/'.join([str(i) for i in range(0,len(liveryChoices))])
+        validChoice = False
+        while not validChoice:
+          choices = self.console.input(promptStr + " [magenta][" + optionsStr + "]: ")
+          choices = choices.split(' ')
+          chosenUnits = []
+          if "0" in choices:
+            return chosenUnits
+          elif str(len(liveryChoices) - 1) in choices:
+            chosenUnits = unitLiveries
+          else:
+            for c in choices:
+              if int(c) <= len(unitLiveries) and int(c) >= 1:
+                chosenUnits.append(unitLiveries[int(c) - 1])
+            if len(chosenUnits) == 0:
+              self.console.print("[red]Invalid unit selection.")
+              continue
+          self.console.print("Installing to units [sky_blue1]" + '[white],[/white] '.join(chosenUnits) + "[/sky_blue1]")
+          return chosenUnits
       except KeyboardInterrupt:
         return []
-      if choice == "0":
-        return []
-      elif choice == str(len(liveryChoices) - 1):
-        chosenLiveries = unitLiveries
-      else:
-        chosenLiveries = [unitLiveries[int(choice) - 1]]
-    return chosenLiveries
 
   def check_7z_installed(self):
     if not get_nt_7z_dir():
