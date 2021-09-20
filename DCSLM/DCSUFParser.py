@@ -1,21 +1,21 @@
+import json
 import requests
 import patoolib
+import os
 from pprint import pprint
 from bs4 import BeautifulSoup
 from .Livery import DCSUserFile
 from .UnitConfig import Units
 from .Utilities import correct_dcs_user_files_url
 
-# TODO: Make and expose config for parsing divs for info
-class DCSUFParser():
+class DCSUFParserConfig():
   def __init__(self):
-    self.DCSDownloadUrlPrefix = "https://www.digitalcombatsimulator.com"
     self.DCSUFDivConfig = {}
-    self.setup_dscufparser()
-    return
+    self.load_config()
 
-  def setup_dscufparser(self):
+  def load_config(self):
     self.DCSUFDivConfig = self.default_div_config()
+    self.load_config_file()
 
   def default_div_config(self):
     defaultDivConfig = {
@@ -29,6 +29,39 @@ class DCSUFParser():
       'size': "body > div.container > div.row.well > div.row.file-body > div.col-xs-10 > div.row.file-data-2 > ul > li:nth-child(3)"
     }
     return defaultDivConfig
+
+  def load_config_file(self):
+    configPath = os.path.join(os.getcwd(), "DCSLM")
+    configFilepath = os.path.join(configPath, "dcsuf_parse.json")
+    if os.path.isfile(configFilepath):
+      try:
+        with open(configFilepath, "r") as configFile:
+          configData = json.load(configFile)
+          for id, v in configData.items():
+            if id in self.DCSUFDivConfig.keys():
+              self.DCSUFDivConfig[id] = v
+          print("loaded custom dcsuf parser config")
+          return True
+      except:
+        raise RuntimeError("Unable to open existing DCSUF Parser config file at \'" + configFilepath + "\'")
+    return False
+
+  def write_config(self):
+    writePath = os.path.join(os.getcwd(), "DCSLM")
+    writeFilepath = os.path.join(writePath, "dcsuf_parse.json")
+    try:
+      with open(writeFilepath, "w") as writeFile:
+        json.dump(self.DCSUFDivConfig, writeFile, indent=2)
+        return writeFilepath
+    except:
+      raise RuntimeError("Failed to write " + writeFilepath)
+
+DCSUFPC = DCSUFParserConfig()
+
+class DCSUFParser():
+  def __init__(self):
+    self.DCSDownloadUrlPrefix = "https://www.digitalcombatsimulator.com"
+    return
 
   def _get_aircraft_config_from_name(self, aircraftText):
     global AircraftConfigs
@@ -49,7 +82,7 @@ class DCSUFParser():
     return " ".join(correctFilename.split()) # Remove extra spaces
 
   def _get_dcsfiles_archive_url_from_html(self, parsedHTML):
-    downloadClass = parsedHTML.find(class_=self.DCSUFDivConfig['download'])
+    downloadClass = parsedHTML.find(class_=DCSUFPC.DCSUFDivConfig['download'])
     if downloadClass:
       fullArchiveUrl = self.DCSDownloadUrlPrefix + downloadClass['href']
       archiveType = str.split(fullArchiveUrl, '.')[-1]
@@ -75,12 +108,12 @@ class DCSUFParser():
   def _parse_html_for_dcsuf(self, url, dcsufHTML):
     try:
       dcsuf = DCSUserFile()
-      fileType = dcsufHTML.select_one(self.DCSUFDivConfig['filetype']).text
+      fileType = dcsufHTML.select_one(DCSUFPC.DCSUFDivConfig['filetype']).text
       if fileType == "Skin":
         fileURL = self._get_dcsfiles_archive_url_from_html(dcsufHTML)
         if fileURL:
           parsedDCSUF = {}
-          for v, d in self.DCSUFDivConfig.items():
+          for v, d in DCSUFPC.DCSUFDivConfig.items():
             if v == 'filetype' or v == 'download':
               continue
             parsedVar = None

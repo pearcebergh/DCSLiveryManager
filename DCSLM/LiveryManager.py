@@ -49,6 +49,7 @@ class LiveryManager:
         for k,v in self.LiveryData.items():
           outJson[k] = v
         json.dump(outJson, configFile)
+        return outJson
     except:
       raise RuntimeError("Unable to write DCSLM config file to \'" + configPath + "\'")
 

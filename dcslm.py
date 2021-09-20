@@ -27,7 +27,7 @@ from rich.status import Status
 from rich.text import Text
 from rich.table import Table
 from DCSLM import __version__
-from DCSLM.DCSUFParser import DCSUFParser
+from DCSLM.DCSUFParser import DCSUFParser, DCSUFPC
 from DCSLM.Livery import DCSUserFile, Livery
 from DCSLM.LiveryManager import LiveryManager
 from DCSLM.UnitManager import UM
@@ -69,7 +69,6 @@ class DCSLMApp:
     self.check_7z_installed()
     self.run()
 
-  # TODO: Add 'config' command
   def setup_commands(self):
     self.commands = {
       'install': {
@@ -104,6 +103,7 @@ class DCSLMApp:
             'variable': True
           },
         },
+        'subcommands': {},
         'exec': self.install_liveries
       },
       'uninstall': {
@@ -126,6 +126,7 @@ class DCSLMApp:
             'variable': True
           },
         },
+        'subcommands': {},
         'exec': self.uninstall_liveries
       },
       'info': {
@@ -141,6 +142,7 @@ class DCSLMApp:
             'variable': False
           },
         },
+        'subcommands': {},
         'exec': self.get_livery_info
       },
       'list': {
@@ -156,6 +158,7 @@ class DCSLMApp:
           },
         },
         'args': {},
+        'subcommands': {},
         'exec': self.list_liveries
       },
       'check': {
@@ -164,6 +167,7 @@ class DCSLMApp:
         'desc': "Check for updates to any installed liveries",
         'flags': {},
         'args': {},
+        'subcommands': {},
         'exec': self.check_liveries
       },
       'update': {
@@ -172,6 +176,7 @@ class DCSLMApp:
         'desc': "Update any installed liveries that have a more recent version upload to \'DCS User Files\'",
         'flags': {},
         'args': {},
+        'subcommands': {},
         'exec': self.update_liveries
       },
       'optimize': {
@@ -212,6 +217,7 @@ class DCSLMApp:
             'variable': True
           },
         },
+        'subcommands': {},
         'exec': self.optimize_livery
       },
       'scan': {
@@ -220,6 +226,7 @@ class DCSLMApp:
         'desc': "Scan folders for existing liveries with .dcslm registry files",
         'flags': {},
         'args': {},
+        'subcommands': {},
         'exec': self.scan_for_liveries
       },
       'units': {
@@ -242,7 +249,37 @@ class DCSLMApp:
             'variable': True
           },
         },
+        'subcommands': {},
         'exec': self.dcs_units
+      },
+      'config': {
+        'completer': None,
+        'usage': "[flags] [subcommand]",
+        'desc': "Displays current DCSLM configuration settings",
+        'flags': {
+          'export': {
+            'tags': ['-e', '--export'],
+            'desc': "Write the JSON config file for some settings to allow for modification",
+            'action': "store_true",
+            'confirm': False
+          },
+          'reload': {
+            'tags': ['-r', '--reload'],
+            'desc': "Reload configuration file in to DCSLM",
+            'action': "store_true",
+            'confirm': False
+          },
+        },
+        'args': {},
+        'subcommands': {
+          'dcsuf': {
+            'desc': "DCS User Files Parsing configuration",
+          },
+          'lm': {
+            'desc': "Livery Manager configuration",
+          },
+        },
+        'exec': self.dcslm_config
       },
       'upgrade': {
         'completer': None,
@@ -250,6 +287,7 @@ class DCSLMApp:
         'desc': "Upgrade DCSLM to the latest version",
         'flags': {},
         'args': {},
+        'subcommands': {},
         'exec': self.upgrade_dcslm
       },
       'help': {
@@ -258,6 +296,7 @@ class DCSLMApp:
         'desc': "List the commands and their usage",
         'flags': {},
         'args': {},
+        'subcommands': {},
         'exec': self.print_help
       },
       'exit': {
@@ -266,6 +305,7 @@ class DCSLMApp:
         'desc': "Exit the DCS Livery Manager program",
         'flags': {},
         'args': {},
+        'subcommands': {},
         'exec': None
       }
     }
@@ -284,6 +324,10 @@ class DCSLMApp:
         if self.commands[command]['args'][iA]['variable']:
           varArg = "+"
         argsParser.add_argument(iA, type=str, help=self.commands[command]['args'][iA]['desc'], nargs=varArg)
+      if len(self.commands[command]['subcommands'].keys()):
+        subGroup = argsParser.add_mutually_exclusive_group(required=False)
+        for iS in self.commands[command]['subcommands'].keys():
+          subGroup.add_argument("--" + iS, help=self.commands[command]['subcommands'][iS]['desc'], action="store_true")
       parsedArgs = argsParser.parse_known_args(sArgs)
       if len(parsedArgs[1]):
         self.console.print("Failed to parse the following args for \'" + command + "\':", style="bold red")
@@ -393,7 +437,7 @@ class DCSLMApp:
 
   def _print_livery_install_report(self, installData, tableTitle):
     if len(installData['success']):
-      installTable = Table(title=tableTitle,expand=False, box=box.ROUNDED)
+      installTable = Table(title=tableTitle, expand=False, box=box.ROUNDED)
       installTable.add_column("Unit", justify="left", no_wrap=True, style="green")
       installTable.add_column("ID", justify="center", no_wrap=True, style="sky_blue1")
       installTable.add_column("Livery Title", justify="center", style="")
@@ -910,6 +954,59 @@ class DCSLMApp:
           unitsStr = ', '.join(friendlyUnits)
           self.console.print(Panel(unitsStr, title="[green]" + c + " Units", expand=False, highlight=False), justify="center")
 
+  def dcslm_config(self, sArgs):
+    for i in range(0, len(sArgs)):
+      if sArgs[i] in self.commands['config']['subcommands'].keys():
+        sArgs[i] = "--" + sArgs[i]
+    configArgs = self._parse_command_args("config", sArgs)
+    if not len(sArgs) or (not configArgs.lm and not configArgs.dcsuf):
+      self.console.print("No arguments provided for \'config\' command.")
+    else:
+      if configArgs.lm:
+        if configArgs.export:
+          writeData = self.lm.write_data()
+          if writeData:
+            self.console.print("Wrote [sky_blue1]Livery Manager[/sky_blue1] configuration to \'DCSLM\\dcslm.json\'")
+          else:
+            self.console.print("[red]Failed to write [sky_blue1]Livery Manager[/sky_blue1] configuration to \'DCSLM\\dcslm.json\'[/red]")
+        elif configArgs.reload:
+          lmData = self.lm.load_data()
+          if lmData:
+            self.lm.LiveryData = lmData
+            self.console.print("Loaded [sky_blue1]Livery Manager[/sky_blue1] configuration settings from \'DCSLM\\dcslm.json\'")
+          else:
+            self.console.print("[red]Failed to read in [sky_blue1]Livery Manager[/sky_blue1] configuration settings from \'DCSLM\\dcslm.json\'[/red]")
+        else:
+          lmTable = Table(title="[sky_blue1]Livery Manager[/sky_blue1] Configuration", box=box.ROUNDED,
+                          show_header=False, min_width=30)
+          lmTable.add_column("Variable", justify="right", style="bold gold1")
+          lmTable.add_column("Value", justify="left")
+          for v,s in self.lm.LiveryData['config'].items():
+            lmTable.add_row(v, str(s))
+          self.console.print(lmTable)
+          self.console.print("")
+      elif configArgs.dcsuf:
+        if configArgs.export:
+          writePath = DCSUFPC.write_config()
+          if writePath and os.path.isfile(writePath):
+            self.console.print("Wrote out current [sky_blue1]DCS User Files Parsing[/sky_blue1] configuration to \'DCSLM\\dcsuf_parse.json\'")
+          else:
+            self.console.print("[red]Failed to write [sky_blue1]DCS User Files Parsing[/sky_blue1] configuration to \'DCSLM\\dcsuf_parse.json\'[/red]")
+        elif configArgs.reload:
+          if DCSUFPC.load_config_file():
+            self.console.print("Loaded [sky_blue1]DCS User Files Parsing[/sky_blue1] configuration settings from \'DCSLM\\dcsuf_parse.json\'")
+          else:
+            self.console.print("[red]Failed to read [sky_blue1]DCS User Files Parsing[/sky_blue1] configuration settings from \'DCSLM\\dcsuf_parse.json\'[/red]")
+        else:
+          dcsufTable = Table(title="[sky_blue1]DCS User Files Parsing[/sky_blue1] Configuration", box=box.ROUNDED,
+                             show_header=False)
+          dcsufTable.add_column("Variable", justify="right", style="bold gold1")
+          dcsufTable.add_column("Value", justify="left")
+          for v,s in DCSUFPC.DCSUFDivConfig.items():
+            dcsufTable.add_row(v, str(s))
+          self.console.print(dcsufTable)
+          self.console.print("")
+
   def print_help(self):
     for k, v in self.commands.items():
       self.console.print("[deep_pink2]" + k + "[/deep_pink2] [sky_blue1]" + v['usage'] + "[/sky_blue1]")
@@ -927,6 +1024,10 @@ class DCSLMApp:
           for j, l in v['args'].items():
             if l['optional']:
               self.console.print("\t\t[bold]" + j + "[/bold] (" + l['type'] + ") - " + l['desc'])
+      if len(v['subcommands']):
+        self.console.print("\t[bold]Subcommands:[/bold]")
+        for j, l in v['subcommands'].items():
+          self.console.print("\t\t[bold]" + j + "[/bold] - " + l['desc'])
       if len(v['flags']):
         self.console.print("\t[bold]Flags:[/bold]")
         for j, l in v['flags'].items():
