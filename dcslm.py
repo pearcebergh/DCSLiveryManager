@@ -474,7 +474,6 @@ class DCSLMApp:
     self.console.print("")
 
   def _check_all_liveries_updates(self, verbose=False):
-    # TODO: Make multi-threaded
     liveryStatus = []
     checkProgress = Progress("[progress.description]{task.description}",
                              SpinnerColumn(spinner_name="dots"),
@@ -483,14 +482,18 @@ class DCSLMApp:
                              console=self.console)
     checkTask = checkProgress.add_task("Checking liveries for updates", total=len(self.lm.Liveries.keys()))
     with checkProgress:
+      session = DCSUFParser().make_request_session()
       for l in self.lm.Liveries.values():
-        reqDCSUF = DCSUFParser().get_dcsuserfile_from_url(str(l.dcsuf.id))
-        if l.dcsuf.datetime < reqDCSUF.datetime:
-          liveryStatus.append({'livery': l, 'update': True})
-          if verbose:
-            checkProgress.print("Found update for livery \'" + l.dcsuf.title + "\'!")
+        reqDCSUF = DCSUFParser().get_dcsuserfile_from_url(str(l.dcsuf.id), session)
+        if reqDCSUF:
+          if l.dcsuf.datetime < reqDCSUF.datetime:
+            liveryStatus.append({'livery': l, 'update': True})
+            if verbose:
+              checkProgress.print("Found update for livery \'" + l.dcsuf.title + "\'!")
+          else:
+            liveryStatus.append({'livery': l, 'update': False})
         else:
-          liveryStatus.append({'livery': l, 'update': False})
+          liveryStatus.append({'livery': l, 'update': False, 'failed': "Failed to parse HTML"})
         checkProgress.update(checkTask, advance=1)
     return liveryStatus
 
@@ -507,6 +510,8 @@ class DCSLMApp:
       if l['update']:
         statusTable.add_row(l['livery'].dcsuf.title, "[red]Out of date")
         numToUpdate += 1
+      elif 'failed' in l.keys():
+        statusTable.add_row(l['livery'].dcsuf.title, "[bold red]" + l['failed'])
       else:
         statusTable.add_row(l['livery'].dcsuf.title, "[green]Up to date")
     self.console.print(statusTable)
@@ -517,8 +522,6 @@ class DCSLMApp:
       self.console.print(str(numToUpdate) + liveryStr + " have updates! Run the \'update\' command to get " +
                          "the latest versions from \'DCS User Files\'.")
 
-  # TODO: Handle removed liveries instead of failing
-  # TODO: Use single session for DCSUF parsing
   def update_liveries(self):
     if not len(self.lm.Liveries.keys()):
       self.console.print("[red]No liveries registered to update.")

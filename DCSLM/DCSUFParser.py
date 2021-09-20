@@ -58,9 +58,15 @@ class DCSUFParser():
       else:
         raise RuntimeError(fullArchiveUrl + " is not a valid url to an archive file.")
 
-  def _request_html_from_url(self, url):
+  def make_request_session(self):
+    return requests.Session()
+
+  def _request_html_from_url(self, url, session=None):
     try:
-      r = requests.get(url)
+      if session:
+        r = session.get(url)
+      else:
+        r = requests.get(url)
       dcsufHTML = BeautifulSoup(r.text, 'html.parser')
       return dcsufHTML
     except:
@@ -106,10 +112,16 @@ class DCSUFParser():
     except:
       raise RuntimeError("Unable to parse html from " + url)
 
-  def get_dcsuserfile_from_url(self, url):
+  def get_dcsuserfile_from_url(self, url, session=None):
     correctedURL, id = correct_dcs_user_files_url(url)
     if len(correctedURL):
-      dcsufHTML = self._request_html_from_url(correctedURL)
-      dcsuf = self._parse_html_for_dcsuf(correctedURL, dcsufHTML)
-      return dcsuf
+      dcsuf = None
+      try:
+        dcsufHTML = self._request_html_from_url(correctedURL, session)
+        dcsuf = self._parse_html_for_dcsuf(correctedURL, dcsufHTML)
+        return dcsuf
+      except Exception as e:
+        dcsuf = None
+      finally:
+        return dcsuf
     return None
