@@ -70,7 +70,6 @@ class DCSLMApp:
     self.run()
 
   # TODO: Add 'config' command
-  # TODO: Make generic function for parsing args
   def setup_commands(self):
     self.commands = {
       'install': {
@@ -138,7 +137,7 @@ class DCSLMApp:
           'livery': {
             'type': "string",
             'optional': False,
-            'desc': "DCS User Files livery title",
+            'desc': "DCS User Files livery ID",
             'variable': False
           },
         },
@@ -209,8 +208,8 @@ class DCSLMApp:
           'livery': {
             'type': "string",
             'optional': False,
-            'desc': "DCS User Files livery title",
-            'variable': False
+            'desc': "Livery ID",
+            'variable': True
           },
         },
         'exec': self.optimize_livery
@@ -270,6 +269,28 @@ class DCSLMApp:
         'exec': None
       }
     }
+
+  def _parse_command_args(self, command, sArgs):
+    try:
+      argsParser = argparse.ArgumentParser(usage=self.commands[command]['usage'],
+                                           description=self.commands[command]['desc'],
+                                           exit_on_error=False)
+      for iF in self.commands[command]['flags'].keys():
+        argsParser.add_argument(*self.commands[command]['flags'][iF]['tags'],
+                                help=self.commands[command]['flags'][iF]['desc'],
+                                action=self.commands[command]['flags'][iF]['action'], dest=iF)
+      for iA in self.commands[command]['args'].keys():
+        varArg = None
+        if self.commands[command]['args'][iA]['variable']:
+          varArg = "+"
+        argsParser.add_argument(iA, type=str, help=self.commands[command]['args'][iA]['desc'], nargs=varArg)
+      parsedArgs = argsParser.parse_known_args(sArgs)
+      if len(parsedArgs[1]):
+        self.console.print("Failed to parse the following args for \'" + command + "\':", style="bold red")
+        self.console.print("\t" + str(parsedArgs[1]), style="bold red")
+      return parsedArgs[0]
+    except SystemExit:
+      raise RuntimeError("Unable to parse \'" + command + "\' command.")
 
   def _install_liveries(self, liveryStrings, keepFiles=False, forceDownload=False, forceInstall=False, forceAllUnits=False):
     installData = {'success': [], 'failed': []}
@@ -387,27 +408,9 @@ class DCSLMApp:
       for l in installData['failed']:
         self.console.print("[bold red]" + l['url'] + "[/bold red][red]: " + str(l['error']))
 
-  def _parse_install_args(self, sArgs):
-    try:
-      installArgsParser = argparse.ArgumentParser(usage=self.commands['install']['usage'],
-                                                  description=self.commands['install']['desc'],
-                                                  exit_on_error=False)
-      for iA in self.commands['install']['flags'].keys():
-        installArgsParser.add_argument(*self.commands['install']['flags'][iA]['tags'],
-                                        help=self.commands['install']['flags'][iA]['desc'],
-                                        action=self.commands['install']['flags'][iA]['action'], dest=iA)
-      installArgsParser.add_argument('url', type=str, help=self.commands['install']['args']['url']['desc'], nargs="+")
-      parsedArgs = installArgsParser.parse_known_args(sArgs)
-      if len(parsedArgs[1]):
-        self.console.print("Failed to parse the following args for \'install\':", style="bold red")
-        self.console.print("\t" + str(parsedArgs[1]), style="bold red")
-      return parsedArgs[0]
-    except SystemExit:
-      raise RuntimeError("Unable to parse \'uninstall\' command.")
-
   # TODO: Allow selection of multiple numbers when installed to units with choices
   def install_liveries(self, sArgs):
-    installArgs = self._parse_install_args(sArgs)
+    installArgs = self._parse_command_args("install", sArgs)
     self.console.print("Attempting to install " + str(len(installArgs.url)) +
                        (" liveries" if len(installArgs.url) > 1 else " livery") + " from DCS User Files.")
     installData = self._install_liveries(installArgs.url, keepFiles=installArgs.keep,
@@ -416,25 +419,8 @@ class DCSLMApp:
     self._print_livery_install_report(installData, "Livery Install Report")
     self.console.print("")
 
-  def _parse_uninstall_args(self, sArgs):
-    try:
-      uninstallArgsParser = argparse.ArgumentParser(usage=self.commands['uninstall']['usage'],
-                                                  description=self.commands['uninstall']['desc'],
-                                                  exit_on_error=False)
-      uninstallArgsParser.add_argument(*self.commands['uninstall']['flags']['keep']['tags'], action="store_false",
-                                     help=self.commands['uninstall']['flags']['keep']['desc'], dest='keep')
-      uninstallArgsParser.add_argument('livery', type=str, nargs="+",
-                                     help=self.commands['uninstall']['args']['livery']['desc'])
-      parsedArgs = uninstallArgsParser.parse_known_args(sArgs)
-      if len(parsedArgs[1]):
-        self.console.print("Failed to parse the following args for \'uninstall\':", style="bold red")
-        self.console.print("\t" + str(parsedArgs[1]), style="bold red")
-      return parsedArgs[0]
-    except SystemExit:
-      raise RuntimeError("Unable to parse \'uninstall\' command.")
-
   def uninstall_liveries(self, sArgs):
-    uninstallArgs = self._parse_uninstall_args(sArgs)
+    uninstallArgs = self._parse_command_args("uninstall", sArgs)
     self.console.print("Attempting to uninstall " + str(len(uninstallArgs.livery)) +
                        (" registered liveries" if len(uninstallArgs.livery) > 1 else " registered livery") + ".")
     uninstallData = {'success': [], 'failed': []}
@@ -792,29 +778,10 @@ class DCSLMApp:
                          " Mb    Total Size Delta: " + Utilities.mb_to_mb_string(totalSizeDelta) + " Mb",
                          justify="center")
 
-  def _parse_optimize_args(self, sArgs):
-    try:
-      optimizeArgsParser = argparse.ArgumentParser(usage=self.commands['optimize']['usage'],
-                                                   description=self.commands['optimize']['desc'],
-                                                   exit_on_error=False)
-      for oA in self.commands['optimize']['flags'].keys():
-        optimizeArgsParser.add_argument(*self.commands['optimize']['flags'][oA]['tags'],
-                                        help=self.commands['optimize']['flags'][oA]['desc'],
-                                        action=self.commands['optimize']['flags'][oA]['action'], dest=oA)
-      optimizeArgsParser.add_argument('livery', type=str, nargs="+",
-                                      help=self.commands['optimize']['args']['livery']['desc'])
-      parsedArgs = optimizeArgsParser.parse_known_args(sArgs)
-      if len(parsedArgs[1]):
-        self.console.print("Failed to parse the following args for \'optimize\':", style="bold red")
-        self.console.print("\t" + str(parsedArgs[1]), style="bold red")
-      return parsedArgs[0]
-    except SystemExit:
-      raise RuntimeError("Unable to parse \'optimize\' command.")
-
   def optimize_livery(self, sArgs):
     if not len(sArgs):
       raise RuntimeWarning("No liveries provided for \'optimize\' command.")
-    optimizeArgs = self._parse_optimize_args(sArgs)
+    optimizeArgs = self._parse_command_args("optimize", sArgs)
     removeFiles = not optimizeArgs.keepunused
     optimizationReports = []
     liveryIDs = []
@@ -885,28 +852,9 @@ class DCSLMApp:
     unitPanel = Panel(unitAlign, title=unitTitle, highlight=True, expand=False)
     return unitPanel
 
-  def _parse_dcs_units_args(self, sArgs):
-    try:
-      unitsArgsParser = argparse.ArgumentParser(usage=self.commands['units']['usage'],
-                                                description=self.commands['units']['desc'],
-                                                exit_on_error=False)
-      for oA in self.commands['units']['flags'].keys():
-        unitsArgsParser.add_argument(*self.commands['units']['flags'][oA]['tags'],
-                                     help=self.commands['units']['flags'][oA]['desc'],
-                                     action=self.commands['units']['flags'][oA]['action'], dest=oA)
-      unitsArgsParser.add_argument('unit', type=str, nargs="+",
-                                   help=self.commands['units']['args']['unit']['desc'])
-      parsedArgs = unitsArgsParser.parse_known_args(sArgs)
-      if len(parsedArgs[1]):
-        self.console.print("Failed to parse the following args for \'units\':", style="bold red")
-        self.console.print("\t" + str(parsedArgs[1]), style="bold red")
-      return parsedArgs[0]
-    except SystemExit:
-      raise RuntimeError("Unable to parse \'units\' command.")
-
   def dcs_units(self, sArgs):
     if len(sArgs):
-      unitsArgs = self._parse_dcs_units_args(sArgs)
+      unitsArgs = self._parse_command_args("units", sArgs)
       unitName = ' '.join(unitsArgs.unit)
       unitData = UM.get_unit_from_friendly_name(unitName.lower())
       if unitData:
