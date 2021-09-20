@@ -59,7 +59,6 @@ class DCSLMApp:
     self.commands = None
     self.lm = None
 
-  # TODO: Detect if in DCS Saved Games directory
   def start(self):
     self.setup_commands()
     self.setup_command_completer()
@@ -990,6 +989,9 @@ class DCSLMApp:
     self.console.print("DCSLM.exe Directory: \'" + os.getcwd() + "\'")
     self.lm = LiveryManager()
     lmData = self.lm.load_data()
+    if not lmData:
+      if not "Saved Games" in sys.executable and not "DCS" in sys.executable.split("\\")[-1]:
+        self.console.print("[red]DCSLM has detected it's not within a[/red] [bold gold1]DCS Saved Games[/bold gold1] [red]directory.")
     self.lm.make_dcslm_dirs()
     if not lmData:
       self.console.print("No existing \'DCSLM\\dcslm.json\' file found with config and livery data. Loading defaults.")
