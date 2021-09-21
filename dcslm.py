@@ -1062,9 +1062,13 @@ class DCSLMApp:
                   livery.dcsuf.date + " | Archive Size: " + livery.dcsuf.size,
                   livery.dcsuf.download]
     justifiedLines = self._center_justify_lines(dcsufLines)
+    authIndex = justifiedLines[0].find("Author: ") + len("Author: ")
+    endAuthIndex = justifiedLines[0].find("|", authIndex)
+    justifiedLines[0] = justifiedLines[0][:authIndex] + "[bold gold1]" + justifiedLines[0][authIndex:endAuthIndex - 1] \
+                        + "[/bold gold1]" + justifiedLines[0][endAuthIndex - 1:]
     dcsufStr = "\n".join(justifiedLines)
     unitData = UM.get_unit_from_generic_name(livery.dcsuf.unit)
-    return Panel(dcsufStr, title=unitData.friendly + " - " + livery.dcsuf.title,
+    return Panel(dcsufStr, title="[bold green]" + unitData.friendly + "[/bold green] - [sky_blue1]" + livery.dcsuf.title + "[/sky_blue1]",
                  expand=False, highlight=True)
 
   def print_dcsuf_panel(self, livery):
