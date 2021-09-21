@@ -658,8 +658,8 @@ class DCSLMApp:
       liveryName = ' '.join(sArgs)
       livery = self.lm.get_registered_livery(title=liveryName)
     if livery:
-      dcsufPanel = self._make_dcsuf_panel(livery)
-      dcsufPanel.title = "[bold gold1]DCS User Files Information"
+      dcsufPanel = self._make_dcsuf_panel(livery, childPanel=True)
+      dcsufPanel.title = "[magenta]DCS User Files Information"
       dcsufPanel.title_align = "left"
       dcsufAlign = Align(dcsufPanel, align="center")
       liveryRG = self._make_livery_rendergroup(livery)
@@ -1040,7 +1040,7 @@ class DCSLMApp:
           self.console.print("\t\t[bold]" + ', '.join(l['tags']) + "[/bold] - " + l['desc'])
     self.console.print("")
 
-  def _center_justify_lines(self, strList):
+  def _center_justify_lines(self, strList, maxWidth=-1):
     maxLen, maxIndex = 0, -1
     justifiedList = []
     for i in range(0, len(strList)):
@@ -1048,6 +1048,8 @@ class DCSLMApp:
         maxLen = len(strList[i])
         maxIndex = i
     if maxIndex != -1:
+      if maxWidth != -1:
+        maxLen = min(maxLen, maxWidth)
       for i in range(0, len(strList)):
         if i == maxIndex:
           justifiedList.append(strList[i])
@@ -1057,11 +1059,14 @@ class DCSLMApp:
       return strList
     return justifiedList
 
-  def _make_dcsuf_panel(self, livery):
+  def _make_dcsuf_panel(self, livery, childPanel=False):
     dcsufLines = ["ID: " + str(livery.dcsuf.id) + " | Author: " + livery.dcsuf.author + " | Upload Date: " +
                   livery.dcsuf.date + " | Archive Size: " + livery.dcsuf.size,
                   livery.dcsuf.download]
-    justifiedLines = self._center_justify_lines(dcsufLines)
+    maxWidth = self.console.width
+    if childPanel:
+      maxWidth -= 8
+    justifiedLines = self._center_justify_lines(dcsufLines, maxWidth)
     authIndex = justifiedLines[0].find("Author: ") + len("Author: ")
     endAuthIndex = justifiedLines[0].find("|", authIndex)
     justifiedLines[0] = justifiedLines[0][:authIndex] + "[bold gold1]" + justifiedLines[0][authIndex:endAuthIndex - 1] \
