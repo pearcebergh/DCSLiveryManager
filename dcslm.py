@@ -665,7 +665,7 @@ class DCSLMApp:
       liveryRG = self._make_livery_rendergroup(livery)
       liveryAlign = Align(liveryRG, align="center")
       liveryInfoPanelGroup = RenderGroup(dcsufAlign, liveryAlign)
-      self.console.print(Panel(liveryInfoPanelGroup, title="[green]" + livery.dcsuf.title + " Livery Info", highlight=True))
+      self.console.print(Panel(liveryInfoPanelGroup, title="[sky_blue1]" + livery.dcsuf.title + "[/sky_blue1] [green]Livery Info", highlight=True))
     return
 
   def scan_for_liveries(self):
