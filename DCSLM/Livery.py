@@ -14,6 +14,7 @@ class DCSUserFile:
     self.datetime = None
     self.size = None
     self.download = None
+    self.tags = None
 
   def to_JSON(self):
     return {
@@ -25,11 +26,12 @@ class DCSUserFile:
       'datetime': datetime.timestamp(self.datetime),
       'size': self.size,
       'download': self.download,
+      'tags': self.tags,
     }
 
   def from_JSON(self, jsonData):
     if jsonData:
-      self.id = jsonData['id']
+      '''self.id = jsonData['id']
       self.unit = jsonData['unit']
       self.author = jsonData['author']
       self.title = jsonData['title']
@@ -37,6 +39,11 @@ class DCSUserFile:
       self.datetime = datetime.fromtimestamp(jsonData['datetime'])
       self.size = jsonData['size']
       self.download = jsonData['download']
+      self.tags = jsonData['tags']'''
+      classVars = vars(DCSUserFile())
+      for var, data in classVars.items():
+        if var in jsonData.keys():
+          setattr(self, var, jsonData[var])
       return self
 
   def from_JSON_String(self, jsonStr):

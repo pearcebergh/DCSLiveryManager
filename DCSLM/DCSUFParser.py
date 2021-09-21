@@ -26,7 +26,8 @@ class DCSUFParserConfig():
       'author': "body > div.container > div.row.well > div.row.file-body > div.col-xs-10 > div.row.file-data-1 > div.col-xs-3.author > a",
       'title': "body > div.container > div.row.well > div.row.file-body > div.col-xs-10 > div:nth-child(1) > div > h2",
       'date': "body > div.container > div.row.well > div.row.file-body > div.col-xs-10 > div.row.file-data-1 > div.col-xs-3.date",
-      'size': "body > div.container > div.row.well > div.row.file-body > div.col-xs-10 > div.row.file-data-2 > ul > li:nth-child(3)"
+      'size': "body > div.container > div.row.well > div.row.file-body > div.col-xs-10 > div.row.file-data-2 > ul > li:nth-child(3)",
+      'tags': "body > div.container > div.row.well > div.row.file-body > div.col-xs-10 > div:nth-child(5)"
     }
     return defaultDivConfig
 
@@ -139,6 +140,14 @@ class DCSUFParser():
           dcsuf.datetime = dcsuf.date_to_datetime(dcsuf.date)
           dcsuf.size = parsedDCSUF['size'].contents[-1].strip()
           dcsuf.download = fileURL
+          if parsedDCSUF['tags'].text.find("Tags:") != -1:
+            tagStart = parsedDCSUF['tags'].text.find("Tags:") + 6
+            splitTags = parsedDCSUF['tags'].text[tagStart:].split(',')
+            for i in range(0, len(splitTags)):
+              splitTags[i] = splitTags[i].strip()
+            dcsuf.tags = splitTags
+          else:
+            dcsuf.tags = []
           return dcsuf
       else:
         raise RuntimeError("Provided DCS User files url is not a livery skin file.")

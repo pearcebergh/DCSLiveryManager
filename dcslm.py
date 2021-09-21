@@ -1068,7 +1068,7 @@ class DCSLMApp:
                         + "[/bold gold1]" + justifiedLines[0][endAuthIndex - 1:]
     dcsufStr = "\n".join(justifiedLines)
     unitData = UM.get_unit_from_generic_name(livery.dcsuf.unit)
-    return Panel(dcsufStr, title="[bold green]" + unitData.friendly + "[/bold green] - [sky_blue1]" + livery.dcsuf.title + "[/sky_blue1]",
+    return Panel(dcsufStr, title="[bold green]" + unitData.friendly + "[/bold green] - [sky_blue1]" + livery.dcsuf.title,
                  expand=False, highlight=True)
 
   def print_dcsuf_panel(self, livery):
