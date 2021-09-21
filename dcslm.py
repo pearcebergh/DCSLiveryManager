@@ -351,19 +351,22 @@ class DCSLMApp:
           getUFStr = "Getting DCS User File information from " + correctedLiveryURL
           with self.console.status(getUFStr):
             livery = self.lm.get_livery_data_from_dcsuf_url(correctedLiveryURL, session)
+          if not livery:
+            raise RuntimeError("Unable to get DCSUF info from livery \'" + liveryStr + "\'")
           self.console.print(getUFStr + "\n")
           self.print_dcsuf_panel(livery)
+          liveryUnitData = UM.get_unit_from_generic_name(livery.dcsuf.unit)
           existingLivery = self.lm.get_registered_livery(id=int(urlID))
           if existingLivery and not forceInstall:
             if existingLivery.dcsuf.datetime == livery.dcsuf.datetime:
               if not self.prompt_existing_livery(existingLivery):
                 raise RuntimeError("Skipping reinstalling livery.")
-          unitLiveries = UM.Units['Air'][livery.dcsuf.unit].liveries
-          if len(unitLiveries) > 1 and not forceAllUnits:
-            unitLiveries = self.prompt_aircraft_livery_choice(livery, unitLiveries)
-          if len(unitLiveries) == 0:
+          unitChoices = liveryUnitData.liveries
+          if len(unitChoices) > 1 and not forceAllUnits:
+            unitChoices = self.prompt_aircraft_livery_choice(livery, unitChoices)
+          if len(unitChoices) == 0:
             raise RuntimeError("No units selected for install.")
-          livery.installs['units'] = unitLiveries
+          livery.installs['units'] = unitChoices
           archivePath = self.lm.does_archive_exist(livery.dcsuf.download.split('/')[-1])
           if archivePath:
             if not forceDownload and self.lm.compare_archive_sizes(archivePath, livery.dcsuf.download):
@@ -384,7 +387,7 @@ class DCSLMApp:
               destinationPath = self.lm.generate_livery_destination_path(livery)
               livery.destination = destinationPath
               self.console.print("Detecting extracted liveries...")
-              installRoots = self.lm.generate_aircraft_livery_install_path(livery, unitLiveries)
+              installRoots = self.lm.generate_aircraft_livery_install_path(livery, unitChoices)
               extractedLiveryFiles = self.lm.get_extracted_livery_files(livery, extractPath)
               detectedLiveries = self.lm.detect_extracted_liveries(livery, extractPath, extractedLiveryFiles)
               if len(detectedLiveries) and len(installRoots):
@@ -444,8 +447,10 @@ class DCSLMApp:
       installTable.add_column("# Liveries", justify="center", no_wrap=True, style="magenta")
       installTable.add_column("Size (MB)", justify="right", no_wrap=True, style="bold gold1")
       for l in installData['success']:
-        installTable.add_row(UM.Units['Air'][l.dcsuf.unit].friendly, str(l.dcsuf.id), l.dcsuf.title,
-                             str(l.get_num_liveries()), Utilities.bytes_to_mb_string(l.get_size_installed_liveries()))
+        unitData = UM.get_unit_from_generic_name(l.dcsuf.unit)
+        if unitData:
+          installTable.add_row(unitData.friendly, str(l.dcsuf.id), l.dcsuf.title, str(l.get_num_liveries()),
+                               Utilities.bytes_to_mb_string(l.get_size_installed_liveries()))
       self.console.print(installTable)
     if len(installData['failed']):
       self.console.print("[bold red]Failed Livery Installs:")
@@ -587,7 +592,8 @@ class DCSLMApp:
     longestUnit = ""
     footerData = {'size': 0, 'units': [], 'installed': 0, 'registered': 0}
     for l in self.lm.Liveries.values():
-      friendlyUnit = UM.Units['Air'][l.dcsuf.unit].friendly
+      unitData = UM.get_unit_from_generic_name(l.dcsuf.unit)
+      friendlyUnit = unitData.friendly
       liverySizeMB = Utilities.bytes_to_mb(l.get_size_installed_liveries())
       footerData['size'] += liverySizeMB
       footerData['registered'] += 1
@@ -1057,7 +1063,8 @@ class DCSLMApp:
                   livery.dcsuf.download]
     justifiedLines = self._center_justify_lines(dcsufLines)
     dcsufStr = "\n".join(justifiedLines)
-    return Panel(dcsufStr, title=UM.Units['Air'][livery.dcsuf.unit].friendly + " - " + livery.dcsuf.title,
+    unitData = UM.get_unit_from_generic_name(livery.dcsuf.unit)
+    return Panel(dcsufStr, title=unitData.friendly + " - " + livery.dcsuf.title,
                  expand=False, highlight=True)
 
   def print_dcsuf_panel(self, livery):
@@ -1122,12 +1129,13 @@ class DCSLMApp:
       return Confirm.ask("\n[bold]Do you still want to install the livery?[/bold]")
     return True
 
-  def prompt_aircraft_livery_choice(self, livery, unitLiveries):
-    chosenLiveries = []
+  def prompt_aircraft_livery_choice(self, livery, unitChoices):
     liveryChoices = ["[white]None[/white]"]
-    for u in unitLiveries:
-      if u in UM.Units['Air'].keys():
-        liveryChoices.append("[white]" +  UM.Units['Air'][u]['friendly'] + "[/white]")
+    liveryUnitData = UM.get_unit_from_generic_name(livery.dcsuf.unit)
+    for u in unitChoices:
+      unitData = UM.get_unit_from_generic_name(u)
+      if unitData:
+        liveryChoices.append("[white]" +  unitData.friendly + "[/white]")
       else:
         liveryChoices.append(u)
     liveryChoices.append("[bold white]All[/bold white]")
@@ -1136,7 +1144,7 @@ class DCSLMApp:
       for i in range(0, len(liveryChoices)):
         choiceText += "[[sky_blue1]" + str(i) + "[/sky_blue1]]" + liveryChoices[i] + " "
       self.console.print("\nThere are multiple livery install locations for the [bold magenta]" +
-                         UM.Units['Air'][livery.dcsuf.unit].friendly + "[/bold magenta]. " +
+                         liveryUnitData.friendly + "[/bold magenta]. " +
                          "Please choose from the following choices by inputting the corresponding index number(s):")
       self.console.print("\n\t" + choiceText)
       try:
@@ -1150,11 +1158,11 @@ class DCSLMApp:
           if "0" in choices:
             return chosenUnits
           elif str(len(liveryChoices) - 1) in choices:
-            chosenUnits = unitLiveries
+            chosenUnits = unitChoices
           else:
             for c in choices:
-              if int(c) <= len(unitLiveries) and int(c) >= 1:
-                chosenUnits.append(unitLiveries[int(c) - 1])
+              if int(c) <= len(unitChoices) and int(c) >= 1:
+                chosenUnits.append(unitChoices[int(c) - 1])
             if len(chosenUnits) == 0:
               self.console.print("[red]Invalid unit selection.")
               continue
