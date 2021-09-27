@@ -105,4 +105,23 @@ class UnitManager:
             return d
     return None
 
+  def get_unit_from_dcsuf_text(self, dscufText):
+    for c in self.Categories:
+      if c in self.Units.keys():
+        for u,d in self.Units[c].items():
+          if dscufText == d.dcs_files:
+            return d
+    return None
+
+  def get_units_from_tags(self, tagsList):
+    matchedUnits = []
+    for c in self.Categories:
+      if c in self.Units.keys():
+        for u,d in self.Units[c].items():
+          for t in tagsList:
+            if t.lower() in d.names:
+              matchedUnits.append(d)
+              break
+    return matchedUnits
+
 UM = UnitManager()

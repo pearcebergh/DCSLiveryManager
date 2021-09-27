@@ -351,7 +351,6 @@ class LiveryManager:
     if len(url):
       l = Livery()
       l.dcsuf = DCSUFParser().get_dcsuserfile_from_url(url, session)
-      l.ovgme = l.generate_ovgme_folder()
       return l
     raise RuntimeError("Unable to get livery data from url " + url)
 

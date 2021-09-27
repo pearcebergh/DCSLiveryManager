@@ -1,25 +1,25 @@
 UnitDefaults = {
   "Air": {
         "a-10a": {
-          "names": ["a-10a"],
+          "names": ["a-10a", "a 10a", "a-10a warthog", "a-10", "a 10"],
           "friendly": "A-10A",
           "dcs_files": "A-10A",
           "liveries": ["A-10A", "A-10C", "A-10CII"]
         },
         "a-10c": {
-          "names": ["a-10c"],
+          "names": ["a-10c", "a 10c", "a-10c warthog", "a-10", "a 10"],
           "friendly": "A-10C",
           "dcs_files": "A-10C Warthog",
           "liveries": ["A-10A", "A-10C", "A-10CII"]
         },
         "a-10cii": {
-          "names": ["a-10cii", "a-10c2"],
+          "names": ["a-10cii", "a 10c2", "a 10cII", "a-10c2", "a-10c2 warthog", "a-10c II warthog", "a-10", "a 10"],
           "friendly": "A-10C II",
           "dcs_files": "A-10C II Tank Killer",
           "liveries": ["A-10A", "A-10C", "A-10CII"]
         },
         "ajs-37": {
-          "names": ["ajs-37", "viggen"],
+          "names": ["ajs-37", "viggen", "ajs 37"],
           "friendly": "AJS-37",
           "dcs_files": "AJS-37 Viggen",
           "liveries": ["AJS37"]
@@ -180,6 +180,12 @@ UnitDefaults = {
           "dcs_files": "MiG-29C",
           "liveries": ["mig-29c"]
         },
+        "mosquito fb mk vi": {
+          "names": ["mosquito", "mossie", "mosquito fb mk vi", "mosquito fb mk. vi"],
+          "friendly": "Mosquito FB Mk. VI",
+          "dcs_files": "",
+          "liveries": ["MosquitoFBMkVI"]
+        },
         "p-47d": {
           "names": ["p-47d"],
           "friendly": "P-47D",
@@ -199,7 +205,7 @@ UnitDefaults = {
           "liveries": ["SA342L", "SA342M", "SA342Minigun", "SA342Mistral"]
         },
         "spitfire lf mk ix": {
-          "names": ["hawk", "hawk t.1a"],
+          "names": ["spitfire", "spitfire lf mk ix", "spitfire lf mk. ix"],
           "friendly": "Spitfire LF Mk. IX",
           "dcs_files": "Spitfire LF Mk. IX",
           "liveries": ["SpitfireLFMkIX"]

@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from .Livery import DCSUserFile
 from .UnitConfig import Units
 from .Utilities import correct_dcs_user_files_url
+from .UnitManager import UM
 
 class DCSUFParserConfig():
   def __init__(self):
@@ -64,16 +65,12 @@ class DCSUFParser():
     self.DCSDownloadUrlPrefix = "https://www.digitalcombatsimulator.com"
     return
 
-  def _get_aircraft_config_from_name(self, aircraftText):
-    global AircraftConfigs
-    lowerAircraftText = str.lower(aircraftText)
-    for aircraft, config in Units.Units['aircraft'].items():
-      if lowerAircraftText == str.lower(config['dcs_files']):
-        return aircraft, config
-      for n in config['names']:
-        if str.lower(n) == lowerAircraftText:
-          return aircraft, config
-    return None, None
+  def _get_generic_unit_from_dcs_text(self, unitText):
+    unit = UM.get_unit_from_dcsuf_text(unitText)
+    if not unit:
+      return "Unknown"
+    else:
+      return unit.dcs_files
 
   def _remove_bad_filename_characters(self, filename):
     badFilenameCharacters = ['/', '\\', '?', '|', '*', '\"', '<', '>', ':']
@@ -126,10 +123,8 @@ class DCSUFParser():
                 if parsedVar:
                   break
             parsedDCSUF[v] = parsedVar
-          unitText = parsedDCSUF['unit'].text
-          unitGeneric, unitConfig = self._get_aircraft_config_from_name(unitText)
           dcsuf.id = dcsuf.get_id_from_url(url)
-          dcsuf.unit = unitGeneric
+          dcsuf.unit = parsedDCSUF['unit'].text
           dcsuf.author = parsedDCSUF['author'].text
           titleText = parsedDCSUF['title'].text
           dcsuf.title = self._remove_bad_filename_characters(titleText)

@@ -88,6 +88,12 @@ class DCSLMApp:
             'action': "store_true",
             'confirm': False
           },
+          'unitselection': {
+            'tags': ['-u', '--unitselection'],
+            'desc': "Force selection of unit to install to",
+            'action': "store_true",
+            'confirm': False
+          },
           'allunits': {
             'tags': ['-a', '--allunits'],
             'desc': "Do not prompt when given a choice to install to multiple units and install to all",
@@ -336,7 +342,7 @@ class DCSLMApp:
     except SystemExit:
       raise RuntimeError("Unable to parse \'" + command + "\' command.")
 
-  def _install_liveries(self, liveryStrings, keepFiles=False, forceDownload=False, forceInstall=False, forceAllUnits=False):
+  def _install_liveries(self, liveryStrings, keepFiles=False, forceDownload=False, forceInstall=False, forceAllUnits=False, manualUnitSelection=False):
     installData = {'success': [], 'failed': []}
     session = DCSUFParser().make_request_session()
     for liveryStr in liveryStrings:
@@ -354,19 +360,38 @@ class DCSLMApp:
           if not livery:
             raise RuntimeError("Unable to get DCSUF info from livery \'" + liveryStr + "\'")
           self.console.print(getUFStr + "\n")
-          self.print_dcsuf_panel(livery)
-          liveryUnitData = UM.get_unit_from_generic_name(livery.dcsuf.unit)
+          unitName = "Other"
+          showDCSUFTags = True
+          liveryUnitData = None
+          if livery.dcsuf.unit != "Other":
+            liveryUnitData = UM.get_unit_from_dcsuf_text(livery.dcsuf.unit)
+            if liveryUnitData:
+              unitName = livery.dcsuf.unit
+              livery.dcsuf.unit = liveryUnitData.generic
+              showDCSUFTags = False
+            else:
+              unitName = "Unknown"
+          self.print_dcsuf_panel(livery, unitName=unitName, showTags=showDCSUFTags)
           existingLivery = self.lm.get_registered_livery(id=int(urlID))
           if existingLivery and not forceInstall:
             if existingLivery.dcsuf.datetime == livery.dcsuf.datetime:
               if not self.prompt_existing_livery(existingLivery):
                 raise RuntimeError("Skipping reinstalling livery.")
+              else:
+                liveryUnitData = UM.get_unit_from_generic_name(existingLivery.dcsuf.unit)
+          if livery.dcsuf.unit == "Other" or livery.dcsuf.unit == "Unknown" or manualUnitSelection:
+            liveryUnitData = self._install_prompt_unit(livery, manualUnitSelection)
+          if not liveryUnitData:
+            raise RuntimeError("Unable to find unit to install livery to.")
+          else:
+            livery.dcsuf.unit = liveryUnitData.generic
           unitChoices = liveryUnitData.liveries
           if len(unitChoices) > 1 and not forceAllUnits:
             unitChoices = self.prompt_aircraft_livery_choice(livery, unitChoices)
           if len(unitChoices) == 0:
             raise RuntimeError("No units selected for install.")
           livery.installs['units'] = unitChoices
+          livery.ovgme = livery.generate_ovgme_folder()
           archivePath = self.lm.does_archive_exist(livery.dcsuf.download.split('/')[-1])
           if archivePath:
             if not forceDownload and self.lm.compare_archive_sizes(archivePath, livery.dcsuf.download):
@@ -438,6 +463,55 @@ class DCSLMApp:
           self.console.print("")
     return installData
 
+  def _install_prompt_unit(self, livery, manualUnitSelection=False):
+    selectedUnit = None
+    if len(livery.dcsuf.tags) and not manualUnitSelection:
+      matchedUnits = UM.get_units_from_tags(livery.dcsuf.tags)
+      if not len(matchedUnits):
+        tagsStr = ", ".join(livery.dcsuf.tags)
+        self.console.print("[red]Unable to find matching unit from tags: " + tagsStr)
+      else:
+        try:
+          if len(matchedUnits) > 1:
+            choicesList = [str(i) for i in range(len(matchedUnits) + 1)]
+            choicesStr = "\t[[sky_blue1]0[/sky_blue1]][white]None[/white] "
+            for i in range(0, len(matchedUnits)):
+              choicesStr += "[[sky_blue1]" + str(i) + "[/sky_blue1]]" + matchedUnits[i].friendly + " "
+            self.console.print("\nMultiple units matched. Select from one of the following to set as the unit by inputting the corresponding index number:\n")
+            self.console.print(choicesStr)
+            self.console.print("")
+            selectedChoice = Prompt.ask("What unit do you want to select?", choices=choicesList)
+            if selectedChoice != "0":
+              selectedInt = int(selectedChoice) - 1
+              if selectedInt < len(matchedUnits):
+                selectedUnit = matchedUnits[selectedInt]
+          else:
+            selectedUnit = matchedUnits[0]
+            self.console.print("Matched unit tags with unit \'" + selectedUnit.friendly + "\'.")
+        except KeyboardInterrupt:
+          return None
+    if not selectedUnit:
+      self.console.print("\n[red]No units selected or matched. Type in the name of the unit you want to install to, or [magenta]'none'[/magenta] to skip.[/red]")
+      self.console.print("[red]You can also type [bold green]'units'[/bold green] to see a list of currently registered units.[/red]\n")
+      try:
+        while True:
+          inputStr = self.console.input("[bold]Enter unit name:[/bold] ")
+          inputStr = str.strip(inputStr)
+          if inputStr == "units":
+            self.dcs_units(sArgs="")
+            continue
+          inputUnit = UM.get_unit_from_friendly_name(inputStr)
+          if not inputUnit:
+            self.console.print("[red]No matching unit found from input \'" + inputStr + "\'.")
+          else:
+            selectedUnit = inputUnit
+            break
+      except KeyboardInterrupt:
+        return None
+    if selectedUnit:
+      self.console.print("Selected unit \'" + selectedUnit.friendly + "\' to install to.")
+    return selectedUnit
+
   def _print_livery_install_report(self, installData, tableTitle):
     if len(installData['success']):
       installTable = Table(title=tableTitle, expand=False, box=box.ROUNDED)
@@ -462,7 +536,8 @@ class DCSLMApp:
     self.console.print("Attempting to install " + str(len(installArgs.url)) +
                        (" liveries" if len(installArgs.url) > 1 else " livery") + " from DCS User Files.")
     installData = self._install_liveries(installArgs.url, keepFiles=installArgs.keep,
-                                         forceInstall=installArgs.reinstall, forceAllUnits=installArgs.allunits)
+                                         forceInstall=installArgs.reinstall, forceAllUnits=installArgs.allunits,
+                                         manualUnitSelection=installArgs.unitselection)
     self.lm.write_data()
     self._print_livery_install_report(installData, "Livery Install Report")
     self.console.print("")
@@ -746,13 +821,14 @@ class DCSLMApp:
       relHTML = BeautifulSoup(relReq.text, 'html.parser')
       relDivs = relHTML.find_all('div', {'class': "release-entry"})
       for r in relDivs:
-        rData = {}
-        rData['name'] = r.find('div', {'class': "f1 flex-auto min-width-0 text-normal"}).text[:-1]
-        rData['version'] = r.find('span', {'class': "css-truncate-target"}).text
-        rData['desc'] = r.find('div', {'class': "markdown-body"}).text
-        rData['date'] = r.find('relative-time').text
-        rData['download'] = "https://github.com/" + r.find('a', {'class': "d-flex flex-items-center min-width-0"},
-                                                           href=re.compile(r'[/]([a-z]|[A-Z])\w+')).attrs['href']
+        rData = {
+          'name': r.find('div', {'class': "f1 flex-auto min-width-0 text-normal"}).text[:-1],
+          'version': r.find('span', {'class': "css-truncate-target"}).text,
+          'desc': r.find('div', {'class': "markdown-body"}).text,
+          'date': r.find('relative-time').text,
+          'download': "https://github.com/" + r.find('a', {'class': "d-flex flex-items-center min-width-0"},
+                                                     href=re.compile(r'[/]([a-z]|[A-Z])\w+')).attrs['href']
+        }
         if StrictVersion(rData['version']) > StrictVersion(__version__):
           releaseData.append(rData)
       return releaseData
@@ -1059,10 +1135,12 @@ class DCSLMApp:
       return strList
     return justifiedList
 
-  def _make_dcsuf_panel(self, livery, childPanel=False):
+  def _make_dcsuf_panel(self, livery, childPanel=False, unitName="", showTags=False):
     dcsufLines = ["ID: " + str(livery.dcsuf.id) + " | Author: " + livery.dcsuf.author + " | Upload Date: " +
                   livery.dcsuf.date + " | Archive Size: " + livery.dcsuf.size,
                   livery.dcsuf.download]
+    if showTags:
+      dcsufLines.append("Tags: " + ', '.join(livery.dcsuf.tags))
     maxWidth = self.console.width
     if childPanel:
       maxWidth -= 8
@@ -1071,14 +1149,16 @@ class DCSLMApp:
     endAuthIndex = justifiedLines[0].find("|", authIndex)
     justifiedLines[0] = justifiedLines[0][:authIndex] + "[bold gold1]" + justifiedLines[0][authIndex:endAuthIndex - 1] \
                         + "[/bold gold1]" + justifiedLines[0][endAuthIndex - 1:]
+    if showTags:
+      justifiedLines[2] = "[sky_blue1]" + justifiedLines[2][:5] + "[/sky_blue1]" + justifiedLines[2][5:]
     dcsufStr = "\n".join(justifiedLines)
-    unitData = UM.get_unit_from_generic_name(livery.dcsuf.unit)
-    return Panel(dcsufStr, title="[bold green]" + unitData.friendly + "[/bold green] - [sky_blue1]" + livery.dcsuf.title,
+
+    return Panel(dcsufStr, title="[bold green]" + unitName + "[/bold green] - [sky_blue1]" + livery.dcsuf.title,
                  expand=False, highlight=True)
 
-  def print_dcsuf_panel(self, livery):
+  def print_dcsuf_panel(self, livery, unitName="", showTags=False):
     if livery:
-      self.console.print(self._make_dcsuf_panel(livery))
+      self.console.print(self._make_dcsuf_panel(livery, unitName=unitName, showTags=showTags))
 
   def setup_command_completer(self):
     completerDict = {}
