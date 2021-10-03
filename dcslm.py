@@ -64,6 +64,7 @@ class DCSLMApp:
     self.setup_command_completer()
     self.setup_console_window()
     self.clear_and_print_header()
+    self.setup_unit_manager()
     self.setup_livery_manager()
     self.quick_check_upgrade_available()
     self.check_7z_installed()
@@ -1167,13 +1168,17 @@ class DCSLMApp:
     self.completer = NestedCompleter.from_nested_dict(completerDict)
 
   def clear_and_print_header(self):
+    from DCSLM.ascii_logos import DCSLM_ASCII
+    import datetime
+    import random
+    currentDT = datetime.datetime.now()
+    if currentDT.month == 10 and currentDT.day == 31:
+      randLogo = DCSLM_ASCII['spooky']
+    else:
+      randLogo = random.choice(list(DCSLM_ASCII['random'].values()))
     clear_console()
-    self.console.print(" _____   _____  _____ _      __  __ ", style="bold sky_blue1", justify="center", highlight=False)
-    self.console.print("|  __ \ / ____|/ ____| |    |  \/  |", style="bold sky_blue1", justify="center", highlight=False)
-    self.console.print("| |  | | |    | (___ | |    | \  / |", style="bold sky_blue1", justify="center", highlight=False)
-    self.console.print("| |  | | |     \___ \| |    | |\/| |", style="bold sky_blue1", justify="center", highlight=False)
-    self.console.print("| |__| | |____ ____) | |____| |  | |", style="bold sky_blue1", justify="center", highlight=False)
-    self.console.print("|_____/ \_____|_____/|______|_|  |_|", style="bold sky_blue1", justify="center", highlight=False)
+    for l in randLogo:
+      self.console.print(l, style="bold sky_blue1", justify="center", highlight=False)
     self.console.print(f"v{__version__}", style="bold gold1", justify="center", highlight=False)
     self.console.print('')
 
@@ -1196,6 +1201,9 @@ class DCSLMApp:
     else:
       self.console.print("Loaded Livery Manager config and data from \'DCSLM\\dcslm.json\'")
       self.lm.LiveryData = lmData
+
+  def setup_unit_manager(self):
+    UM.setup_unitmanager()
 
   def prompt_livery_manager_defaults(self):
     if self.lm:

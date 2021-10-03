@@ -8,7 +8,6 @@ class UnitManager:
     self.Units = {}
     self.Categories = ["Air", "Ground", "Sea"]
     self.UnitNames = {}
-    self.setup_unitmanager()
 
   def setup_unitmanager(self):
     self.load_defaults()
