@@ -38,7 +38,7 @@ The `info` command displays information about the given livery, such as its DCS 
 ![info](https://user-images.githubusercontent.com/37012295/135744046-83dae84e-7f21-4ab1-8438-cc158d21b2d2.jpg)
 
 ## list
-The `list` command displays all installed liveries, what units they're installed to, and their size on disk (including if they've been optimized or not).
+The `list` command displays all installed liveries, what units they're installed to, and their size on disk (including if they've been optimized).
 ![list](https://user-images.githubusercontent.com/37012295/135744065-5afd5d8b-5d22-4288-b9f0-3388e25b445f.jpg)
 
 ## check
