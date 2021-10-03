@@ -48,24 +48,24 @@ The `check` command will go through every installed livery and see if there is a
 `update` is like `check` but will download the liveries that have an update available. This is done by re-installing the livery, so you will be given any applicable choice prompts again and if you optimized the livery previously you will need to run the `optimize` command on them again.
 
 ## optimize
-The `optimzie` command is useful when installing a livery with multiple liveries contained within. It will attempt to find shared files and will edit the `description.lua` to correct the filepaths for the different parts. This can be useful for reducing the amount of disk space used when you have many liveries installed. 
+The `optimize` command is useful when installing a livery with multiple liveries contained within. It will attempt to find shared files and will edit the *description.lua* to correct the filepaths for the different parts. This can be useful for reducing the amount of disk space used when you have many liveries installed. 
 ![optimize](https://user-images.githubusercontent.com/37012295/135744294-9417d31d-94f4-4913-82a8-c03628741e94.jpg)
 
 ## scan
-The `scan` command can be used to search your Liveries folder for existing `.dcslm` files to detect installed liveries that are missing from your installed list. This can be useful if your `dcslm.json` saved settings file gets removed or corrupted.
+The `scan` command can be used to search your Liveries folder for existing *.dcslm* files to detect installed liveries that are missing from your installed list. This can be useful if your *dcslm.json* saved settings file gets removed or corrupted.
 
 ## units
 The `units` command displays all the recognized units by DCSLM, and when given a specific unit displays their configuration. By default, these are all the aircraft units selectable on the DCS User Files website. You can use the `units` command to export those default units to modify their settings. DCSLM is setup to import any units defined by .json files in the */DCSLM/units/* directories.
 ![units](https://user-images.githubusercontent.com/37012295/135744513-23440933-ef13-44f5-9dc2-fd61584dd340.jpg)
 
 ## config
-The `config` command displays, reloads, and exports, the settings for configuragble DCSLM systems, such as the DCS User Files Parser. This allows the user to make various changes to some of the DCSLM settings.
+The `config` command can display, reload, or export, the settings for configurable DCSLM systems, such as the DCS User Files Parser. This allows the user to make various changes to some of the DCSLM settings.
 
 ## upgrade
 The `upgrade` command will download and replace the current *DCSLM.exe* program if there is a newer version available on github.com.
 
 ## help
-The `help` command displays more information for every command availabe in DCSLM, such as their arguments, flags, usage, as well as descriptions for those.
+The `help` command displays more information for every command available in DCSLM, such as their arguments, flags, usage, as well as descriptions for those.
 
 ## exit
 `exit` cleanly exits the DCSLM program. 
