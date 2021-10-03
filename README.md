@@ -56,7 +56,7 @@ The `scan` command can be used to search your Liveries folder for existing *.dcs
 
 ## units
 The `units` command displays all the recognized units by DCSLM, and when given a specific unit displays their configuration. By default, these are all the aircraft units selectable on the DCS User Files website. You can use the `units` command to export those default units to modify their settings. DCSLM is setup to import any units defined by .json files in the */DCSLM/units/* directories.
-![units_re](https://user-images.githubusercontent.com/37012295/135765565-89bc82ef-73f2-42eb-b04f-35ea0e69c2f6.jpg) ![units_custom_re](https://user-images.githubusercontent.com/37012295/135765532-ea2ae9e1-a0b4-4db0-95f3-d9ea5f3eb670.jpg)
+![units_re](https://user-images.githubusercontent.com/37012295/135766228-232ce80d-4d8f-42c4-9c73-965ed7bd4b74.jpg) ![units_custom_re](https://user-images.githubusercontent.com/37012295/135766229-59ee7a0a-614c-4df4-abdc-fd3b777b8d07.jpg)
 
 ## config
 The `config` command can display, reload, or export, the settings for configurable DCSLM systems, such as the DCS User Files Parser. This allows the user to make various changes to some of the DCSLM settings.
