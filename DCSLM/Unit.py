@@ -15,10 +15,15 @@ class Unit:
     classVars = vars(Unit())
     selfVars = vars(self)
     jsonUnit = {}
+    skipVars = ["modified", "custom", "category", "generic"]
     for var in classVars.keys():
-      if "modified" in var or "custom" in var or "category" in var or "generic" in var:
-        continue
-      jsonUnit[var] = selfVars[var]
+      skip = False
+      for s in skipVars:
+        if s in var:
+          skip = True
+          break
+      if not skip:
+        jsonUnit[var] = selfVars[var]
     return jsonUnit
 
   def from_JSON(self, unitName, jsonData):

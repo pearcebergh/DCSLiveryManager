@@ -10,7 +10,6 @@ from prompt_toolkit.completion import NestedCompleter
 from rich import box
 from rich.align import Align
 from rich.console import Console, RenderGroup
-from rich.columns import Columns
 from rich.panel import Panel
 from rich.progress import (
   BarColumn,
@@ -22,13 +21,10 @@ from rich.progress import (
   SpinnerColumn
 )
 from rich.prompt import Prompt, Confirm
-from rich.rule import Rule
-from rich.status import Status
 from rich.text import Text
 from rich.table import Table
 from DCSLM import __version__
 from DCSLM.DCSUFParser import DCSUFParser, DCSUFPC
-from DCSLM.Livery import DCSUserFile, Livery
 from DCSLM.LiveryManager import LiveryManager
 from DCSLM.UnitManager import UM
 import DCSLM.Utilities as Utilities
@@ -70,6 +66,8 @@ class DCSLMApp:
     self.check_7z_installed()
     self.run()
 
+  # TODO: Cleanup unused variables in commands
+  # TODO: Make completers
   def setup_commands(self):
     self.commands = {
       'install': {
@@ -478,7 +476,8 @@ class DCSLMApp:
             choicesStr = "\t[[sky_blue1]0[/sky_blue1]][white]None[/white] "
             for i in range(0, len(matchedUnits)):
               choicesStr += "[[sky_blue1]" + str(i) + "[/sky_blue1]]" + matchedUnits[i].friendly + " "
-            self.console.print("\nMultiple units matched. Select from one of the following to set as the unit by inputting the corresponding index number:\n")
+            self.console.print("\nMultiple units matched. Select from one of the following to set as the unit by " +
+                               "inputting the corresponding index number:\n")
             self.console.print(choicesStr)
             self.console.print("")
             selectedChoice = Prompt.ask("What unit do you want to select?", choices=choicesList)
@@ -492,8 +491,10 @@ class DCSLMApp:
         except KeyboardInterrupt:
           return None
     if not selectedUnit:
-      self.console.print("\n[red]No units selected or matched. Type in the name of the unit you want to install to, or [magenta]'none'[/magenta] to skip.[/red]")
-      self.console.print("[red]You can also type [bold green]'units'[/bold green] to see a list of currently registered units.[/red]\n")
+      self.console.print("\n[red]No units selected or matched. Type in the name of the unit you want to install to, " +
+                         "or [magenta]'none'[/magenta] to skip.[/red]")
+      self.console.print("[red]You can also type [bold green]'units'[/bold green] to see a list of currently " +
+                         "registered units.[/red]\n")
       try:
         while True:
           inputStr = self.console.input("[bold]Enter unit name:[/bold] ")
@@ -809,7 +810,8 @@ class DCSLMApp:
     if relData:
       if len(relData):
         self.console.print("\nYour DCSLM [bold red]v" + str(__version__) + "[/bold red] is out of date!\n" +
-                           "Use the \'upgrade\' command to upgrade DCSLM to [bold green]v" + relData[0]['version'] + "[/bold green]")
+                           "Use the \'upgrade\' command to upgrade DCSLM to [bold green]v" + relData[0]['version'] +
+                           "[/bold green]")
 
   def request_upgrade_information(self):
     import re
@@ -931,6 +933,7 @@ class DCSLMApp:
                          " Mb    Total Size Delta: " + Utilities.mb_to_mb_string(totalSizeDelta) + " Mb",
                          justify="center")
 
+  # TODO: Make progress bars
   def optimize_livery(self, sArgs):
     if not len(sArgs):
       raise RuntimeWarning("No liveries provided for \'optimize\' command.")
@@ -1051,14 +1054,17 @@ class DCSLMApp:
           if writeData:
             self.console.print("Wrote [sky_blue1]Livery Manager[/sky_blue1] configuration to \'DCSLM\\dcslm.json\'")
           else:
-            self.console.print("[red]Failed to write [sky_blue1]Livery Manager[/sky_blue1] configuration to \'DCSLM\\dcslm.json\'[/red]")
+            self.console.print("[red]Failed to write [sky_blue1]Livery Manager[/sky_blue1] configuration to " +
+                               "\'DCSLM\\dcslm.json\'[/red]")
         elif configArgs.reload:
           lmData = self.lm.load_data()
           if lmData:
             self.lm.LiveryData = lmData
-            self.console.print("Loaded [sky_blue1]Livery Manager[/sky_blue1] configuration settings from \'DCSLM\\dcslm.json\'")
+            self.console.print("Loaded [sky_blue1]Livery Manager[/sky_blue1] configuration settings from " +
+                               "\'DCSLM\\dcslm.json\'")
           else:
-            self.console.print("[red]Failed to read in [sky_blue1]Livery Manager[/sky_blue1] configuration settings from \'DCSLM\\dcslm.json\'[/red]")
+            self.console.print("[red]Failed to read in [sky_blue1]Livery Manager[/sky_blue1] configuration settings " +
+                               "from \'DCSLM\\dcslm.json\'[/red]")
         else:
           lmTable = Table(title="[sky_blue1]Livery Manager[/sky_blue1] Configuration", box=box.ROUNDED,
                           show_header=False, min_width=30)
@@ -1072,14 +1078,18 @@ class DCSLMApp:
         if configArgs.export:
           writePath = DCSUFPC.write_config()
           if writePath and os.path.isfile(writePath):
-            self.console.print("Wrote out current [sky_blue1]DCS User Files Parsing[/sky_blue1] configuration to \'DCSLM\\dcsuf_parse.json\'")
+            self.console.print("Wrote out current [sky_blue1]DCS User Files Parsing[/sky_blue1] configuration to " +
+                               "\'DCSLM\\dcsuf_parse.json\'")
           else:
-            self.console.print("[red]Failed to write [sky_blue1]DCS User Files Parsing[/sky_blue1] configuration to \'DCSLM\\dcsuf_parse.json\'[/red]")
+            self.console.print("[red]Failed to write [sky_blue1]DCS User Files Parsing[/sky_blue1] configuration to " +
+                               "\'DCSLM\\dcsuf_parse.json\'[/red]")
         elif configArgs.reload:
           if DCSUFPC.load_config_file():
-            self.console.print("Loaded [sky_blue1]DCS User Files Parsing[/sky_blue1] configuration settings from \'DCSLM\\dcsuf_parse.json\'")
+            self.console.print("Loaded [sky_blue1]DCS User Files Parsing[/sky_blue1] configuration settings from " +
+                               "\'DCSLM\\dcsuf_parse.json\'")
           else:
-            self.console.print("[red]Failed to read [sky_blue1]DCS User Files Parsing[/sky_blue1] configuration settings from \'DCSLM\\dcsuf_parse.json\'[/red]")
+            self.console.print("[red]Failed to read [sky_blue1]DCS User Files Parsing[/sky_blue1] configuration " +
+                               "settings from \'DCSLM\\dcsuf_parse.json\'[/red]")
         else:
           dcsufTable = Table(title="[sky_blue1]DCS User Files Parsing[/sky_blue1] Configuration", box=box.ROUNDED,
                              show_header=False)
@@ -1192,7 +1202,8 @@ class DCSLMApp:
     lmData = self.lm.load_data()
     if not lmData:
       if not "Saved Games" in sys.executable and not "DCS" in sys.executable.split("\\")[-1]:
-        self.console.print("[red]DCSLM has detected it's not within a[/red] [bold gold1]DCS Saved Games[/bold gold1] [red]directory.")
+        self.console.print("[red]DCSLM has detected it's not within a[/red] [bold gold1]DCS Saved Games[/bold gold1] " +
+                           "[red]directory.")
     self.lm.make_dcslm_dirs()
     if not lmData:
       self.console.print("No existing \'DCSLM\\dcslm.json\' file found with config and livery data. Loading defaults.")
