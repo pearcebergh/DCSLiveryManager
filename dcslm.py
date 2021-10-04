@@ -3,6 +3,7 @@ import glob
 import os
 import platform
 import sys
+import re
 from pprint import pprint
 from patoolib.util import get_nt_7z_dir
 from prompt_toolkit import PromptSession, HTML
@@ -47,57 +48,52 @@ def set_console_size(w, h):
   else:
     os.system(f'printf \'\033[8;{h};{w}t\'')
 
+ # TODO: Set working directory to dcslm.exe path os.chdir(os.path.dirname(os.path.abspath(__file__)))
 class DCSLMApp:
   def __init__(self):
     self.console = None
     self.session = PromptSession(reserve_space_for_menu=6, complete_in_thread=True)
     self.completer = None
+    self.completers = None
     self.commands = None
     self.lm = None
 
   def start(self):
     self.setup_commands()
-    self.setup_command_completer()
     self.setup_console_window()
     self.clear_and_print_header()
     self.setup_unit_manager()
     self.setup_livery_manager()
+    self.setup_completers()
     self.quick_check_upgrade_available()
     self.check_7z_installed()
     self.run()
 
-  # TODO: Cleanup unused variables in commands
-  # TODO: Make completers
   def setup_commands(self):
     self.commands = {
       'install': {
-        'completer': None,
         'usage': "\[id/url1] \[id/url2] \[id/url3] ...",
         'desc': "Install DCS liveries from DCS User Files URLs or IDs",
         'flags': {
           'keep': {
             'tags': ['-k', '--keep'],
             'desc': "Keep downloaded livery archive files",
-            'action': "store_true",
-            'confirm': False
+            'action': "store_true"
           },
           'reinstall': {
             'tags': ['-r', '--reinstall'],
             'desc': "Do not prompt if the livery is already registered",
-            'action': "store_true",
-            'confirm': False
+            'action': "store_true"
           },
           'unitselection': {
             'tags': ['-u', '--unitselection'],
             'desc': "Force selection of unit to install to",
-            'action': "store_true",
-            'confirm': False
+            'action': "store_true"
           },
           'allunits': {
             'tags': ['-a', '--allunits'],
             'desc': "Do not prompt when given a choice to install to multiple units and install to all",
-            'action': "store_true",
-            'confirm': False
+            'action': "store_true"
           },
         },
         'args': {
@@ -112,15 +108,13 @@ class DCSLMApp:
         'exec': self.install_liveries
       },
       'uninstall': {
-        'completer': None,
         'usage': "\[flags] livery1 livery2 livery3 ...",
         'desc': "Uninstall the given managed liveries from the \'ID\'",
         'flags': {
           'keep': {
             'tags': ['-k', '--keep'],
             'desc': "Keep livery files on disk (untrack them)",
-            'action': "store_true",
-            'confirm': False
+            'action': "store_true"
           },
         },
         'args': {
@@ -135,7 +129,6 @@ class DCSLMApp:
         'exec': self.uninstall_liveries
       },
       'info': {
-        'completer': None,
         'usage': "livery",
         'desc': "Get additional info about an installed livery",
         'flags': {},
@@ -151,15 +144,13 @@ class DCSLMApp:
         'exec': self.get_livery_info
       },
       'list': {
-        'completer': None,
         'usage': "",
         'desc': "List currently installed DCS liveries",
         'flags': {
           'ids': {
             'tags': ['ids'],
             'desc': "List the IDs of all registered liveries for copying",
-            'action': "store_true",
-            'confirm': False
+            'action': "store_true"
           },
         },
         'args': {},
@@ -167,7 +158,6 @@ class DCSLMApp:
         'exec': self.list_liveries
       },
       'check': {
-        'completer': None,
         'usage': "",
         'desc': "Check for updates to any installed liveries",
         'flags': {},
@@ -176,7 +166,6 @@ class DCSLMApp:
         'exec': self.check_liveries
       },
       'update': {
-        'completer': None,
         'usage': "",
         'desc': "Update any installed liveries that have a more recent version upload to \'DCS User Files\'",
         'flags': {},
@@ -185,33 +174,28 @@ class DCSLMApp:
         'exec': self.update_liveries
       },
       'optimize': {
-        'completer': None,
         'usage': "\[flags] livery",
         'desc': "Attempt to optimize an installed livery by looking for unused or shared files between liveries within packs",
         'flags': {
           'reoptimize': {
             'tags': ['-r','--reoptimize'],
             'desc': "Optimize liveries even if they have already been optimized",
-            'action': "store_true",
-            'confirm': False
+            'action': "store_true"
           },
           'keepdesc': {
             'tags': ['-d','--keepdesc'],
             'desc': "Keep a copy of the original unmodified description.lua files",
-            'action': "store_true",
-            'confirm': False
+            'action': "store_true"
           },
           'keepunused': {
             'tags': ['-u', '--keepunused'],
             'desc': "Keep unused files on disk at the end of optimization",
-            'action': "store_true",
-            'confirm': False
+            'action': "store_true"
           },
           'verbose': {
             'tags': ['-v', '--verbose'],
             'desc': "Verbose printing of livery file reference data for debugging purposes",
-            'action': "store_true",
-            'confirm': False
+            'action': "store_true"
           },
         },
         'args': {
@@ -226,7 +210,6 @@ class DCSLMApp:
         'exec': self.optimize_livery
       },
       'scan': {
-        'completer': None,
         'usage': "",
         'desc': "Scan folders for existing liveries with .dcslm registry files",
         'flags': {},
@@ -235,15 +218,13 @@ class DCSLMApp:
         'exec': self.scan_for_liveries
       },
       'units': {
-        'completer': None,
         'usage': "[flags] [unit]",
         'desc': "Display information about units and their settings",
         'flags': {
           'export': {
             'tags': ['-e', '--export'],
             'desc': "Write the JSON config for a unit to disk",
-            'action': "store_true",
-            'confirm': False
+            'action': "store_true"
           },
         },
         'args': {
@@ -258,21 +239,18 @@ class DCSLMApp:
         'exec': self.dcs_units
       },
       'config': {
-        'completer': None,
         'usage': "[flags] [subcommand]",
         'desc': "Displays current DCSLM configuration settings",
         'flags': {
           'export': {
             'tags': ['-e', '--export'],
             'desc': "Write the JSON config file for some settings to allow for modification",
-            'action': "store_true",
-            'confirm': False
+            'action': "store_true"
           },
           'reload': {
             'tags': ['-r', '--reload'],
             'desc': "Reload configuration file in to DCSLM",
-            'action': "store_true",
-            'confirm': False
+            'action': "store_true"
           },
         },
         'args': {},
@@ -287,7 +265,6 @@ class DCSLMApp:
         'exec': self.dcslm_config
       },
       'upgrade': {
-        'completer': None,
         'usage': "",
         'desc': "Upgrade DCSLM to the latest version",
         'flags': {},
@@ -296,7 +273,6 @@ class DCSLMApp:
         'exec': self.upgrade_dcslm
       },
       'help': {
-        'completer': None,
         'usage': "",
         'desc': "List the commands and their usage",
         'flags': {},
@@ -305,7 +281,6 @@ class DCSLMApp:
         'exec': self.print_help
       },
       'exit': {
-        'completer': None,
         'usage': "",
         'desc': "Exit the DCS Livery Manager program",
         'flags': {},
@@ -314,6 +289,56 @@ class DCSLMApp:
         'exec': None
       }
     }
+
+  def setup_completers(self):
+    self.completers = {
+      'commands': {
+        'commands': [],
+        'dict': None,
+        'func': self.make_commands_completer
+      },
+      'units': {
+        'commands': ['units'],
+        'dict': None,
+        'func': self.make_units_completer
+      },
+      'livery_ids': {
+        'commands': ['uninstall', 'info', 'optimize'],
+        'dict': None,
+        'func': self.make_livery_ids_completer
+      }
+    }
+    self._update_completers()
+    self._make_nested_completer()
+
+  def _update_completers(self):
+    for k,v in self.completers.items():
+      v['dict'] = v['func']()
+
+  def _make_nested_completer(self):
+    fullCompleterDict = self.completers['commands']['dict']
+    for c in fullCompleterDict.keys():
+      for k,d in self.completers.items():
+        if c in d['commands']:
+          fullCompleterDict[c] = d['dict']
+    self.completer = NestedCompleter.from_nested_dict(fullCompleterDict)
+
+  def _remove_brackets_sArgs(self, sArgs):
+    correctedsArgs = []
+    inBrackets = False
+    for s in sArgs:
+      containedBrackets = False
+      if inBrackets:
+        containedBrackets = True
+      if s.startswith('['):
+        inBrackets = True
+      if s.endswith(']'):
+        if inBrackets:
+          containedBrackets = True
+        inBrackets = False
+      if not inBrackets and not containedBrackets:
+        correctedsArgs.append(s)
+    return correctedsArgs
 
   def _parse_command_args(self, command, sArgs):
     try:
@@ -341,6 +366,7 @@ class DCSLMApp:
     except SystemExit:
       raise RuntimeError("Unable to parse \'" + command + "\' command.")
 
+  # TODO: Use completer prompt on unit choice
   def _install_liveries(self, liveryStrings, keepFiles=False, forceDownload=False, forceInstall=False, forceAllUnits=False, manualUnitSelection=False):
     installData = {'success': [], 'failed': []}
     session = DCSUFParser().make_request_session()
@@ -541,10 +567,13 @@ class DCSLMApp:
                                          forceInstall=installArgs.reinstall, forceAllUnits=installArgs.allunits,
                                          manualUnitSelection=installArgs.unitselection)
     self.lm.write_data()
+    self.completers['livery_ids']['dict'] = self.make_units_completer()
+    self._make_nested_completer()
     self._print_livery_install_report(installData, "Livery Install Report")
     self.console.print("")
 
   def uninstall_liveries(self, sArgs):
+    sArgs = self._remove_brackets_sArgs(sArgs)
     uninstallArgs = self._parse_command_args("uninstall", sArgs)
     self.console.print("Attempting to uninstall " + str(len(uninstallArgs.livery)) +
                        (" registered liveries" if len(uninstallArgs.livery) > 1 else " registered livery") + ".")
@@ -579,6 +608,8 @@ class DCSLMApp:
       for l in uninstallData['success']:
         self.console.print("\t(" + str(l.dcsuf.id) + ") " + l.dcsuf.title, highlight=False)
       self.lm.write_data()
+      self.completers['livery_ids']['dict'] = self.make_units_completer()
+      self._make_nested_completer()
     if len(uninstallData['failed']):
       self.console.print("[bold red]Failed Livery Uninstalls:")
       for l in uninstallData['failed']:
@@ -650,6 +681,8 @@ class DCSLMApp:
     self.console.print("")
     updateData = self._install_liveries(updateList, forceDownload=True)
     self.lm.write_data()
+    self.completers['livery_ids']['dict'] = self.make_units_completer()
+    self._make_nested_completer()
     self._print_livery_install_report(updateData, "Livery Update Report")
     self.console.print("")
 
@@ -657,6 +690,7 @@ class DCSLMApp:
     def sort_list_by_unit_then_title(e):
       return e[0] + " - " + e[1]
 
+    sArgs = self._remove_brackets_sArgs(sArgs)
     if not len(self.lm.Liveries.keys()):
       self.console.print("[red]No liveries registered to list.")
       return
@@ -728,12 +762,17 @@ class DCSLMApp:
     return liveryRG
 
   def get_livery_info(self, sArgs):
+    sArgs = self._remove_brackets_sArgs(sArgs)
+    livery = None
     if len(sArgs) == 1:
       liveryID = sArgs[0]
       livery = self.lm.get_registered_livery(id=liveryID)
     else:
-      liveryName = ' '.join(sArgs)
-      livery = self.lm.get_registered_livery(title=liveryName)
+      for s in sArgs:
+        if s.isdecimal():
+          livery = self.lm.get_registered_livery(id=s)
+          if livery:
+            break
     if livery:
       dcsufPanel = self._make_dcsuf_panel(livery, childPanel=True)
       dcsufPanel.title = "[magenta]DCS User Files Information"
@@ -743,6 +782,8 @@ class DCSLMApp:
       liveryAlign = Align(liveryRG, align="center")
       liveryInfoPanelGroup = RenderGroup(dcsufAlign, liveryAlign)
       self.console.print(Panel(liveryInfoPanelGroup, title="[sky_blue1]" + livery.dcsuf.title + "[/sky_blue1] [green]Livery Info", highlight=True))
+    else:
+      self.console.print("[red]Unable to find installed livery from \'" + ' '.join(sArgs) + "\'.")
     return
 
   def scan_for_liveries(self):
@@ -937,6 +978,7 @@ class DCSLMApp:
   def optimize_livery(self, sArgs):
     if not len(sArgs):
       raise RuntimeWarning("No liveries provided for \'optimize\' command.")
+    sArgs = self._remove_brackets_sArgs(sArgs)
     optimizeArgs = self._parse_command_args("optimize", sArgs)
     removeFiles = not optimizeArgs.keepunused
     optimizationReports = []
@@ -1087,6 +1129,8 @@ class DCSLMApp:
           if DCSUFPC.load_config_file():
             self.console.print("Loaded [sky_blue1]DCS User Files Parsing[/sky_blue1] configuration settings from " +
                                "\'DCSLM\\dcsuf_parse.json\'")
+            self.completers['units']['dict'] = self.make_units_completer()
+            self._make_nested_completer()
           else:
             self.console.print("[red]Failed to read [sky_blue1]DCS User Files Parsing[/sky_blue1] configuration " +
                                "settings from \'DCSLM\\dcsuf_parse.json\'[/red]")
@@ -1171,11 +1215,25 @@ class DCSLMApp:
     if livery:
       self.console.print(self._make_dcsuf_panel(livery, unitName=unitName, showTags=showTags))
 
-  def setup_command_completer(self):
+  def make_commands_completer(self):
     completerDict = {}
     for k, v in self.commands.items():
-      completerDict[k] = v['completer']
-    self.completer = NestedCompleter.from_nested_dict(completerDict)
+      completerDict[k] = None
+    return completerDict
+
+  def make_units_completer(self):
+    completerDict = {}
+    for t in UM.Units.keys():
+      for u,d in UM.Units[t].items():
+        completerDict[d.friendly] = None
+    return completerDict
+
+  def make_livery_ids_completer(self):
+    completerDict = {}
+    for id,l in self.lm.Liveries.items():
+      fullID = str(id) + " [" + l.dcsuf.title + "]"
+      completerDict[fullID] = None
+    return completerDict
 
   def clear_and_print_header(self):
     from DCSLM.ascii_logos import DCSLM_ASCII
@@ -1308,7 +1366,8 @@ class DCSLMApp:
     runCommands = True
     while runCommands:
       try:
-        command = self.session.prompt(HTML("<ansibrightcyan>DCSLM></ansibrightcyan> "), completer=self.completer)
+        command = self.session.prompt(HTML("<ansibrightcyan>DCSLM></ansibrightcyan> "),
+                                      completer=self.completer)
       except KeyboardInterrupt:
         continue
       except EOFError:
