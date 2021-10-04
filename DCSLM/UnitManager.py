@@ -100,7 +100,7 @@ class UnitManager:
     for c in self.Categories:
       if c in self.Units.keys():
         for u,d in self.Units[c].items():
-          if friendlyName == d.friendly.lower():
+          if friendlyName.lower() == d.friendly.lower():
             return d
     return None
 

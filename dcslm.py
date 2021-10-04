@@ -370,7 +370,6 @@ class DCSLMApp:
     except SystemExit:
       raise RuntimeError("Unable to parse \'" + command + "\' command.")
 
-  # TODO: Use completer prompt on unit choice
   def _install_liveries(self, liveryStrings, keepFiles=False, forceDownload=False, forceInstall=False, forceAllUnits=False, manualUnitSelection=False):
     installData = {'success': [], 'failed': []}
     session = DCSUFParser().make_request_session()
@@ -474,6 +473,9 @@ class DCSLMApp:
                 raise RuntimeError("Failed to detect valid livery directories from extracted livery archive!")
             else:
               raise RuntimeError("Failed to extract livery archive \'" + livery.archive + "\'.")
+        except KeyboardInterrupt:
+          installData['failed'].append({'url': correctedLiveryURL, 'error': e})
+          self.console.print("Install execption: keyboard interrupt", style="bold red")
         except Exception as e:
           installData['failed'].append({'url': correctedLiveryURL, 'error': e})
           self.console.print(e, style="bold red")
@@ -527,7 +529,8 @@ class DCSLMApp:
                          "registered units.[/red]\n")
       try:
         while True:
-          inputStr = self.console.input("[bold]Enter unit name:[/bold] ")
+          inputStr = self.session.prompt(HTML("<b>Enter unit name:</b> "),
+                                         completer=NestedCompleter.from_nested_dict(self.completers['units']['dict']))
           inputStr = str.strip(inputStr)
           if inputStr == "units":
             self.dcs_units(sArgs="")
