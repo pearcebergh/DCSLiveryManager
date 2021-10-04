@@ -48,7 +48,6 @@ def set_console_size(w, h):
   else:
     os.system(f'printf \'\033[8;{h};{w}t\'')
 
- # TODO: Set working directory to dcslm.exe path os.chdir(os.path.dirname(os.path.abspath(__file__)))
 class DCSLMApp:
   def __init__(self):
     self.console = None
@@ -59,6 +58,7 @@ class DCSLMApp:
     self.lm = None
 
   def start(self):
+    os.chdir(os.path.dirname(os.path.abspath(sys.executable))) # Set working directory to executable directory
     self.setup_commands()
     self.setup_console_window()
     self.clear_and_print_header()
