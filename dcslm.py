@@ -6,7 +6,7 @@ import sys
 import re
 from pprint import pprint
 from patoolib.util import get_nt_7z_dir
-from prompt_toolkit import PromptSession, HTML
+from prompt_toolkit import PromptSession, HTML, prompt
 from prompt_toolkit.completion import NestedCompleter
 from rich import box
 from rich.align import Align
@@ -58,7 +58,7 @@ class DCSLMApp:
     self.lm = None
 
   def start(self):
-    os.chdir(os.path.dirname(os.path.abspath(sys.executable))) # Set working directory to executable directory
+    self.setup_working_dir()
     self.setup_commands()
     self.setup_console_window()
     self.clear_and_print_header()
@@ -68,6 +68,10 @@ class DCSLMApp:
     self.quick_check_upgrade_available()
     self.check_7z_installed()
     self.run()
+
+  def setup_working_dir(self):
+    if not "PYCHARM_HOSTED" in os.environ:
+      os.chdir(os.path.dirname(os.path.abspath(sys.executable)))  # Set working directory to executable directory
 
   def setup_commands(self):
     self.commands = {
