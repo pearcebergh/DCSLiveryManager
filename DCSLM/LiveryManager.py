@@ -18,6 +18,13 @@ class LiveryManager:
     self.LiveryData = self.make_default_data()
     self.Liveries = {}
     self.FolderRoot = "DCSLM"
+    self.console = None
+
+  def print(self, *args, **kwargs):
+    if self.console:
+      self.console.print(*args, **kwargs)
+    else:
+      print(*args, **kwargs)
 
   def make_default_data(self):
     ld = {
@@ -48,7 +55,7 @@ class LiveryManager:
         outJson = {}
         for k,v in self.LiveryData.items():
           outJson[k] = v
-        json.dump(outJson, configFile)
+        json.dump(outJson, configFile, indent=4)
         return outJson
     except:
       raise RuntimeError("Unable to write DCSLM config file to \'" + configPath + "\'")
@@ -91,7 +98,7 @@ class LiveryManager:
       if os.path.isdir(installPath) and Utilities.validate_remove_path(installPath):
         shutil.rmtree(installPath, ignore_errors=True)
       else:
-        print("Warning: Livery uninstall path \'" + installPath + "\' is not a valid directory.")
+        self.print("Warning: Livery uninstall path \'" + installPath + "\' is not a valid directory.", style="bold gold1")
 
   def remove_installed_livery_directories(self, livery):
     for i in livery.installs['liveries'].values():
@@ -134,7 +141,7 @@ class LiveryManager:
           installPath = os.path.join(installRoot, ".dcslm.json")
           try:
             with open(installPath, "w") as registryFile:
-              json.dump(livery.to_JSON(), registryFile)
+              json.dump(livery.to_JSON(), registryFile, indent=4)
           except:
             raise RuntimeError("Unable to write livery registry file to \'" + installPath + "\'.")
         else:
@@ -465,7 +472,7 @@ class LiveryManager:
             if liveryTitle not in fileHashes[fileHash]:
               fileHashes[fileHash].append(liveryTitle)
       else:
-        print("Unable to hash file " + filepath)
+        self.print("Unable to hash file " + filepath, style="bold red")
     return fileHashes
 
   def _optimize_find_unused_livery_files(self, livery, liveryFilesData):
@@ -574,7 +581,7 @@ class LiveryManager:
           if keepCopy:
             shutil.move(descPath, os.path.join(descRoot, "orig_description.lua"))
           with open(descPath, "w") as descFile:
-            print("Writing \'" + descPath + "\'")
+            self.print("Writing \'" + descPath + "\'", style="bold green")
             descFile.writelines(lines)
 
   def _optimize_remove_unused_files(self, unusedData):
@@ -620,7 +627,7 @@ class LiveryManager:
   def _optimize_calculate_fileref_hashes(self, livery, fileRefs):
     filesData = {}
     for t, l in livery.installs['liveries'].items():
-      print("Generating file hashes for \'" + t + "\'")
+      self.print("Generating file hashes for \'" + t + "\'", style="bold gold1")
       installRoot = os.path.join(os.getcwd(), livery.destination, l['paths'][0])
       if t in fileRefs.keys():
         fileHashes = self._optimize_generate_file_hashes(installRoot, t, fileRefs[t])
@@ -661,13 +668,13 @@ class LiveryManager:
         filesData['unused'] = self._optimize_find_unused_livery_files(livery, filesData['new_liveries'])
         if len(filesData['unused']):
           if verbose:
-            print("Removing the following unused files:")
+            self.print("Removing the following unused files:")
             shortUnused = []
             for u in filesData['unused']:
               shortUnused.append('\\'.join(str.split(u, "\\")[-2:]))
-            print(shortUnused)
+            self.print(shortUnused)
           else:
-            print("Removing " + str(len(filesData['unused'])) + " unused files.")
+            self.print("Removing " + str(len(filesData['unused'])) + " unused files.")
         self._optimize_remove_unused_files(filesData['unused'])
         livery.calculate_size_installed_liveries()
       filesData['size']['after'] = livery.get_size_installed_liveries()

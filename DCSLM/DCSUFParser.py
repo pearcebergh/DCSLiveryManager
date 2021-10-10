@@ -52,7 +52,7 @@ class DCSUFParserConfig():
     writeFilepath = os.path.join(writePath, "dcsuf_parse.json")
     try:
       with open(writeFilepath, "w") as writeFile:
-        json.dump(self.DCSUFDivConfig, writeFile, indent=2)
+        json.dump(self.DCSUFDivConfig, writeFile, indent=4)
         return writeFilepath
     except:
       raise RuntimeError("Failed to write " + writeFilepath)

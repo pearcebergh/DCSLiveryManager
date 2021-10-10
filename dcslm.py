@@ -1264,6 +1264,7 @@ class DCSLMApp:
   def setup_livery_manager(self):
     self.console.print("DCSLM.exe Directory: \'" + os.getcwd() + "\'")
     self.lm = LiveryManager()
+    self.lm.console = self.console
     lmData = self.lm.load_data()
     if not lmData:
       if not "Saved Games" in sys.executable and not "DCS" in sys.executable.split("\\")[-1]:
