@@ -62,8 +62,8 @@ class DCSLMApp:
     self.setup_commands()
     self.setup_console_window()
     self.clear_and_print_header()
-    self.setup_unit_manager()
     self.setup_livery_manager()
+    self.setup_unit_manager()
     self.setup_completers()
     self.quick_check_upgrade_available()
     self.check_7z_installed()
@@ -298,17 +298,17 @@ class DCSLMApp:
     self.completers = {
       'commands': {
         'commands': [],
-        'dict': None,
+        'dict': {},
         'func': self.make_commands_completer
       },
       'units': {
         'commands': ['units'],
-        'dict': None,
+        'dict': {},
         'func': self.make_units_completer
       },
       'livery_ids': {
         'commands': ['uninstall', 'info', 'optimize'],
-        'dict': None,
+        'dict': {},
         'func': self.make_livery_ids_completer
       }
     }
@@ -574,7 +574,7 @@ class DCSLMApp:
                                          forceInstall=installArgs.reinstall, forceAllUnits=installArgs.allunits,
                                          manualUnitSelection=installArgs.unitselection)
     self.lm.write_data()
-    self.completers['livery_ids']['dict'] = self.make_units_completer()
+    self.completers['livery_ids']['dict'] = self.make_livery_ids_completer()
     self._make_nested_completer()
     self._print_livery_install_report(installData, "Livery Install Report")
     self.console.print("")
@@ -615,7 +615,7 @@ class DCSLMApp:
       for l in uninstallData['success']:
         self.console.print("\t(" + str(l.dcsuf.id) + ") " + l.dcsuf.title, highlight=False)
       self.lm.write_data()
-      self.completers['livery_ids']['dict'] = self.make_units_completer()
+      self.completers['livery_ids']['dict'] = self.make_livery_ids_completer()
       self._make_nested_completer()
     if len(uninstallData['failed']):
       self.console.print("[bold red]Failed Livery Uninstalls:")
@@ -688,7 +688,7 @@ class DCSLMApp:
     self.console.print("")
     updateData = self._install_liveries(updateList, forceDownload=True)
     self.lm.write_data()
-    self.completers['livery_ids']['dict'] = self.make_units_completer()
+    self.completers['livery_ids']['dict'] = self.make_livery_ids_completer()
     self._make_nested_completer()
     self._print_livery_install_report(updateData, "Livery Update Report")
     self.console.print("")
@@ -1258,7 +1258,6 @@ class DCSLMApp:
 
   def setup_console_window(self):
     self.console = Console(width=120, tab_size=4)
-    #set_terminal_size(80, 50)
 
   def setup_livery_manager(self):
     self.console.print("DCSLM.exe Directory: \'" + os.getcwd() + "\'")
@@ -1406,7 +1405,6 @@ class DCSLMApp:
     self.console.print("Exiting DCS Livery Manager.")
 
 if __name__ == '__main__':
-  os.chdir(os.path.dirname(os.path.abspath(sys.argv[0])))
   set_console_title(f'DCS Livery Manager v{__version__}')
   dcslmapp = DCSLMApp()
   dcslmapp.start()

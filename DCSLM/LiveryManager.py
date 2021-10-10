@@ -192,8 +192,6 @@ class LiveryManager:
   def _remove_existing_extracted_files(self, livery, extractedRoot):
     if os.path.isdir(extractedRoot) and Utilities.validate_remove_path(extractedRoot):
       shutil.rmtree(extractedRoot, onerror=Utilities.remove_readonly)
-    #else:
-      #raise RuntimeError("Invalid path for removing existing extracted files: " + extractedRoot)
 
   def extract_livery_archive(self, livery):
     if livery:
