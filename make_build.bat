@@ -1,1 +1,1 @@
-CALL pyinstaller -n DCSLM --noconfirm --clean --console --onefile --additional-hooks-dir=./hooks --paths .\venv\Python\Lib\site-packages dcslm.py
+CALL pyinstaller -n DCSLM --noconfirm --clean --console --onefile --additional-hooks-dir=./hooks --paths .\venv\Python\Lib\site-packages -i ".\resources\dcslm_icon.ico" dcslm.py
