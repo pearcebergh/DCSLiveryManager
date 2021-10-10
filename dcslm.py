@@ -1383,7 +1383,7 @@ class DCSLMApp:
         splitCommand = ' '.join(splitCommand).split()
         if len(splitCommand):
           if splitCommand[0] in self.commands:
-            self.console.print("Running Command \'" + splitCommand[0] + "\'")
+            #self.console.print("Running Command \'" + splitCommand[0] + "\'")
             commandData = self.commands[splitCommand[0]]
             argList = []
             if len(splitCommand) > 1:
