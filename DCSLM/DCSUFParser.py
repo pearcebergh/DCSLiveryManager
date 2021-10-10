@@ -5,7 +5,6 @@ import os
 from pprint import pprint
 from bs4 import BeautifulSoup
 from .Livery import DCSUserFile
-from .UnitConfig import Units
 from .Utilities import correct_dcs_user_files_url
 from .UnitManager import UM
 
