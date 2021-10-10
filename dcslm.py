@@ -1265,7 +1265,7 @@ class DCSLMApp:
     self.lm.console = self.console
     lmData = self.lm.load_data()
     if not lmData:
-      if not "Saved Games" in sys.executable and not "DCS" in sys.executable.split("\\")[-1]:
+      if not "Saved Games" in os.getcwd() and not "DCS" in os.getcwd().split("\\")[-1]:
         self.console.print("[red]DCSLM has detected it's not within a[/red] [bold gold1]DCS Saved Games[/bold gold1] " +
                            "[red]directory.")
     self.lm.make_dcslm_dirs()
@@ -1284,8 +1284,8 @@ class DCSLMApp:
     if self.lm:
       self.console.print("\n\n[bold green underline]Mod Manager Mode:")
       self.console.print("If you use a mod manager, like \'OVGME\' or \'JSGME\', to manage your DCS mod installs, " +
-                         "you can enable \'Mod Manager Mode\' to have it create a root directory named with the format " +
-                         "[bold purple]{aircraft} - {livery title}[/bold purple].")
+                         "you can enable \'Mod Manager Mode\' to have it create a root directory named with the " +
+                         "livery title when installing a livery.")
       self.console.print("\n[bold gold1]For \'Mod Manager Mode\' make sure you've placed \'DCSLM.exe\' inside your " +
                          "mod manager's directory that is " +
                          "configured for the [/bold gold1]\'DCS Saved Games\'[bold gold1] directory, " +
