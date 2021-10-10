@@ -491,7 +491,6 @@ class DCSLMApp:
             if livery.archive and not keepFiles:
               self.console.print("Removing downloaded archive file \'" + os.path.split(livery.archive)[1] + "\'.")
               self.lm.remove_downloaded_archive(livery, livery.archive)
-          self.console.print("")
     return installData
 
   def _install_prompt_unit(self, livery, manualUnitSelection=False):
@@ -577,7 +576,6 @@ class DCSLMApp:
     self.completers['livery_ids']['dict'] = self.make_livery_ids_completer()
     self._make_nested_completer()
     self._print_livery_install_report(installData, "Livery Install Report")
-    self.console.print("")
 
   def uninstall_liveries(self, sArgs):
     sArgs = self._remove_brackets_sArgs(sArgs)
@@ -621,7 +619,6 @@ class DCSLMApp:
       self.console.print("[bold red]Failed Livery Uninstalls:")
       for l in uninstallData['failed']:
         self.console.print("\t" + l['livery'] + "[red]: " + str(l['error']))
-    self.console.print("")
 
   def _check_all_liveries_updates(self, verbose=False):
     liveryStatus = []
@@ -691,7 +688,6 @@ class DCSLMApp:
     self.completers['livery_ids']['dict'] = self.make_livery_ids_completer()
     self._make_nested_completer()
     self._print_livery_install_report(updateData, "Livery Update Report")
-    self.console.print("")
 
   def list_liveries(self, sArgs):
     def sort_list_by_unit_then_title(e):
@@ -746,7 +742,6 @@ class DCSLMApp:
                    Utilities.mb_to_mb_string(footerData['size']) + " MB"
     self.console.print(statusTable)
     self.console.print(footerString, justify="center")
-    self.console.print("")
 
   def _make_livery_rendergroup(self, livery):
     liveryTable = Table.grid(expand=True, padding=(0,2,2,0))
@@ -791,7 +786,6 @@ class DCSLMApp:
       self.console.print(Panel(liveryInfoPanelGroup, title="[sky_blue1]" + livery.dcsuf.title + "[/sky_blue1] [green]Livery Info", highlight=True))
     else:
       self.console.print("[red]Unable to find installed livery from \'" + ' '.join(sArgs) + "\'.")
-    return
 
   def scan_for_liveries(self):
     with self.console.status("Scanning directories for DCSLM installed liveries..."):
@@ -844,6 +838,8 @@ class DCSLMApp:
       reportStr = ""
       if len(registeredLiveries['success']):
         reportStr += "Registered " + str(len(registeredLiveries['success'])) + " missing liveries. "
+        self.completers['livery_ids']['dict'] = self.make_livery_ids_completer()
+        self._make_nested_completer()
       if len(registeredLiveries['existing']):
         reportStr += "Matched " + str(len(registeredLiveries['existing'])) + " existing registered liveries. "
       if len(registeredLiveries['failed']):
@@ -851,7 +847,6 @@ class DCSLMApp:
         reportStr += ', '.join(registeredLiveries['failed'])
       self.lm.write_data()
       self.console.print(reportStr)
-      self.console.print("")
 
   def quick_check_upgrade_available(self):
     relData = self.request_upgrade_information()
@@ -1033,7 +1028,6 @@ class DCSLMApp:
         self.lm.write_livery_registry_files(l)
       self.lm.write_data()
     self._print_optimization_report(optimizationReports)
-    self.console.print("")
 
   def _make_unit_panel(self, unitData):
     unitTable = Table.grid(expand=False, padding=(0, 2, 2, 0))
@@ -1148,7 +1142,6 @@ class DCSLMApp:
           for v,s in DCSUFPC.DCSUFDivConfig.items():
             dcsufTable.add_row(v, str(s))
           self.console.print(dcsufTable)
-          self.console.print("")
 
   def print_help(self):
     for k, v in self.commands.items():
@@ -1175,7 +1168,6 @@ class DCSLMApp:
         self.console.print("\t[bold]Flags:[/bold]")
         for j, l in v['flags'].items():
           self.console.print("\t\t[bold]" + ', '.join(l['tags']) + "[/bold] - " + l['desc'])
-    self.console.print("")
 
   def _center_justify_lines(self, strList, maxWidth=-1):
     maxLen, maxIndex = 0, -1
@@ -1265,13 +1257,12 @@ class DCSLMApp:
     self.lm.console = self.console
     lmData = self.lm.load_data()
     if not lmData:
+      self.console.print("No existing \'DCSLM\\dcslm.json\' file found with config and livery data. Loading defaults.")
       if not "Saved Games" in os.getcwd() and not "DCS" in os.getcwd().split("\\")[-1]:
         self.console.print("[red]DCSLM has detected it's not within a[/red] [bold gold1]DCS Saved Games[/bold gold1] " +
                            "[red]directory.")
-    self.lm.make_dcslm_dirs()
-    if not lmData:
-      self.console.print("No existing \'DCSLM\\dcslm.json\' file found with config and livery data. Loading defaults.")
-      self.prompt_livery_manager_defaults()
+        self.prompt_livery_manager_defaults()
+      self.lm.make_dcslm_dirs()
       self.lm.write_data()
     else:
       self.console.print("Loaded Livery Manager config and data from \'DCSLM\\dcslm.json\'")
@@ -1372,8 +1363,7 @@ class DCSLMApp:
     runCommands = True
     while runCommands:
       try:
-        command = self.session.prompt(HTML("<ansibrightcyan>DCSLM></ansibrightcyan> "),
-                                      completer=self.completer)
+        command = self.session.prompt(HTML("<ansibrightcyan>DCSLM></ansibrightcyan> "), completer=self.completer)
       except KeyboardInterrupt:
         continue
       except EOFError:
@@ -1383,7 +1373,6 @@ class DCSLMApp:
         splitCommand = ' '.join(splitCommand).split()
         if len(splitCommand):
           if splitCommand[0] in self.commands:
-            #self.console.print("Running Command \'" + splitCommand[0] + "\'")
             commandData = self.commands[splitCommand[0]]
             argList = []
             if len(splitCommand) > 1:
@@ -1396,6 +1385,7 @@ class DCSLMApp:
                   commandData['exec']()
               except Exception as e:
                 self.console.print(e, style="bold red")
+            self.console.print("")
             if splitCommand[0] == "exit":
               runCommands = False
           else:
