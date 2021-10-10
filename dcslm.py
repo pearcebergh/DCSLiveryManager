@@ -981,7 +981,6 @@ class DCSLMApp:
                          " Mb    Total Size Delta: " + Utilities.mb_to_mb_string(totalSizeDelta) + " Mb",
                          justify="center")
 
-  # TODO: Make progress bars
   def optimize_livery(self, sArgs):
     if not len(sArgs):
       raise RuntimeWarning("No liveries provided for \'optimize\' command.")
