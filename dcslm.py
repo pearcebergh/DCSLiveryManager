@@ -916,7 +916,7 @@ class DCSLMApp:
     try:
       releaseData = self.request_upgrade_information()
       if not len(releaseData):
-        self.console.print("Current DCSLM version " + __version__ + " is the available latest version.")
+        self.console.print("Current DCSLM version " + __version__ + " is the latest available version.")
       else:
         for rd in releaseData:
           self.console.print(rd['name'] + " (" + rd['version'] + ") " + rd['date'] + ":")
