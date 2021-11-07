@@ -7,7 +7,7 @@ Installing liveries for DCS isn't the most streamlined experience as the livery 
 DCSLM is setup to handle multiple archive types (see pre-requisites) and any sort of folder hierachy contained within all from the URL or DCS User Files ID! DCSLM will register the livery and allows you to check for updated versions of the same livery uploaded to DCS User Files.
 
 # Pre-Requisites
-DCSLM relies on the [patool](https://pypi.org/project/patool/), which in turn relies on the installed archive programs you have on your computer. It's **highly** recommended you install [7-Zip](https://www.7-zip.org/download.html) as it's a free, open-source program that can handle any archive you will encounter on DCS User Files. You must make sure the 7z install directory is on your path for it to work correctly.
+DCSLM relies on the [patool](https://pypi.org/project/patool/) libary, which in turn relies on the installed archive programs you have on your computer. It's **highly** recommended you install [7-Zip](https://www.7-zip.org/download.html) as it's a free, open-source program that can handle any archive you will encounter on DCS User Files. You must make sure the 7z install directory is on your path for it to work correctly. DCSLM will notify you on launch if it cannot find 7z on the path.
 
 Your anti-virus software may flag *DCSLM.exe* and attempt to remove it due to it being a unsigned and untrusted executable. Very understandable! You may need to add an exception to stop that from happening. I promise nothing funky is going on in this program, check the source code!
 
@@ -70,3 +70,10 @@ The `help` command displays more information for every command available in DCSL
 
 ## exit
 `exit` cleanly exits the DCSLM program. 
+
+# Issues
+Any issues you find, or liveries that fail to install from DCS User Files, can be reported to the issues panel on the DCS Livery Manager github site.
+
+# F.A.Q.
+## I already had liveries installed before I used DCSLM, why aren't they showing up?
+DCSLM relies on writing a *.dcslm* file alongside every livery installed through the application. This has important information such as the DCS User Files data, what liveries were installed, and where they were installed. While these files can be found with the `scan` function if your DCSLM registered livery database is missing, `scan` will ignore livery folders that do not have them. You will need to `install` those liveries through **DCSLM**, which will overwrite the existing livery files you had installed and create the *.dcslm* files.
