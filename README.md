@@ -1,6 +1,10 @@
 # DCSLiveryManager
 TUI tool to download, install, and update your DCS liveries from DCS User Files.
 
+[DCS Livery Manager on DCS User Files](https://www.digitalcombatsimulator.com/en/files/3318763/)
+
+[DCS Livery Manager on the Eagle Dynamics forums](https://forums.eagle.ru/topic/286346-dcs-livery-manager/)
+
 # About
 Installing liveries for DCS isn't the most streamlined experience as the livery files can come in various forms of archive file types, may have some form of folder hierarchy or none at all, and can contain multiple liveries! The DCS Liveries Manager (DCSLM) aims to make that same experience as simple as possible. 
 
@@ -72,7 +76,7 @@ The `help` command displays more information for every command available in DCSL
 `exit` cleanly exits the DCSLM program. 
 
 # Issues
-Any issues you find, or liveries that fail to install from DCS User Files, can be reported to the issues panel on the DCS Livery Manager github site.
+Any issues you find, or liveries that fail to install from DCS User Files, can be reported to the issues panel on the DCS Livery Manager github site. You can also post in the [DCS Livery Manager thread](https://forums.eagle.ru/topic/286346-dcs-livery-manager/) on the Eagle Dynamics forum.
 
 # F.A.Q.
 ## I already had liveries installed before I used DCSLM, why aren't they showing up?
