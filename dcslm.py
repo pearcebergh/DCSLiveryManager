@@ -3,10 +3,9 @@ import glob
 import os
 import platform
 import sys
-import re
 from pprint import pprint
 from patoolib.util import get_nt_7z_dir
-from prompt_toolkit import PromptSession, HTML, prompt
+from prompt_toolkit import PromptSession, HTML
 from prompt_toolkit.completion import NestedCompleter
 from rich import box
 from rich.align import Align
@@ -29,6 +28,12 @@ from DCSLM.DCSUFParser import DCSUFParser, DCSUFPC
 from DCSLM.LiveryManager import LiveryManager
 from DCSLM.UnitManager import UM
 import DCSLM.Utilities as Utilities
+
+# TODO: Test WinRAR
+# TODO: Prefer 7z over other applications
+# TODO: Add screenshots download
+# TODO: Detect shared data folder on install
+# TODO: Use on archive files already downloaded without DCSUF info
 
 def set_console_title(title):
   if platform.system() == 'Windows':
@@ -473,7 +478,7 @@ class DCSLMApp:
                 raise RuntimeError("Failed to detect valid livery directories from extracted livery archive!")
             else:
               raise RuntimeError("Failed to extract livery archive \'" + livery.archive + "\'.")
-        except KeyboardInterrupt:
+        except KeyboardInterrupt as e:
           installData['failed'].append({'url': correctedLiveryURL, 'error': e})
           self.console.print("Install execption: keyboard interrupt", style="bold red")
         except Exception as e:

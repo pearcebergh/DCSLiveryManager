@@ -211,7 +211,10 @@ class LiveryManager:
     return None
 
   def _extract_archive(self, livery, archivePath, extractPath):
-    patoolib.extract_archive(archivePath, 0, extractPath)
+    prefProgram = None
+    if patoolib.util.get_nt_7z_dir() != "":
+      prefProgram = "7z"
+    patoolib.extract_archive(archivePath, 2, extractPath, program=prefProgram)
 
   def _extract_extracted_archive(self, livery, extractedPath):
     extractedFiles = glob.glob(extractedPath + "/**/*", recursive=True)
