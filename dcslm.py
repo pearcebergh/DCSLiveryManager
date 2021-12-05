@@ -2,6 +2,7 @@ import argparse
 import glob
 import os
 import platform
+import shutil
 import sys
 from pprint import pprint
 from patoolib.util import get_nt_7z_dir
@@ -30,10 +31,10 @@ from DCSLM.UnitManager import UM
 import DCSLM.Utilities as Utilities
 
 # TODO: Test WinRAR
-# TODO: Add screenshots download
 # TODO: Detect shared data folder on install
 # TODO: Use on archive files already downloaded without DCSUF info
 # TODO: Add working directory exe argument
+# TODO: Replace os.getcwd() with defined DCSLM/DCS Saved Games directory
 
 def set_console_title(title):
   if platform.system() == 'Windows':
@@ -102,6 +103,11 @@ class DCSLMApp:
           'allunits': {
             'tags': ['-a', '--allunits'],
             'desc': "Do not prompt when given a choice to install to multiple units and install to all",
+            'action': "store_true"
+          },
+          'screenshots': {
+            'tags': ['-s', '--screenshots'],
+            'desc': "Download and store the available screenshots of uploaded with the livery to the DCS User Files",
             'action': "store_true"
           },
           'verbose': {
@@ -380,7 +386,8 @@ class DCSLMApp:
     except SystemExit:
       raise RuntimeError("Unable to parse \'" + command + "\' command.")
 
-  def _install_liveries(self, liveryStrings, keepFiles=False, forceDownload=False, forceInstall=False, forceAllUnits=False, manualUnitSelection=False, verbose=False):
+  def _install_liveries(self, liveryStrings, keepFiles=False, forceDownload=False, forceInstall=False,
+                        forceAllUnits=False, manualUnitSelection=False, verbose=False, screenshots=False):
     installData = {'success': [], 'failed': []}
     session = DCSUFParser().make_request_session()
     for liveryStr in liveryStrings:
@@ -438,9 +445,16 @@ class DCSLMApp:
               keepFiles = True
             else:
               archivePath = None
+          screenshotFiles = []
+          if screenshots:
+            if len(livery.dcsuf.screenshots):
+              self.console.print("")
+              with self.console.status("[bold]Downloading " + str(len(livery.dcsuf.screenshots)) + " screenshots (--screenshots)..."):
+                screenshotFiles = self.lm.download_screenshots(livery, session=session)
+              self.console.print("Downloaded " + str(len(screenshotFiles)) + " screenshots.", style="bold")
           if not archivePath:
             self.console.print("\nDownloading livery archive file " + livery.dcsuf.download)
-            archivePath = self._download_archive_progress(livery)
+            archivePath = self._download_archive_progress(livery, session=session)
           if archivePath:
             livery.archive = archivePath
             self.console.print("\n[bold]Running extraction program on downloaded archive:")
@@ -466,6 +480,25 @@ class DCSLMApp:
                     copiedLiveries = self.lm.copy_detected_liveries(livery, extractPath,
                                                                     extractedLiveryFiles, installPaths)
                   if len(copiedLiveries):
+                    if screenshots:
+                      copiedFolderPath = ""
+                      copiedScreenshots = []
+                      if len(screenshotFiles[0]):
+                        with self.console.status("Copying screenshots to livery folder..."):
+                          firstLiveryName = list(livery.installs['liveries'].keys())[0]
+                          firstLivery = livery.installs['liveries'].get(firstLiveryName)
+                          destinationRoot = os.path.join(os.getcwd(), destinationPath, firstLivery['paths'][0])
+                          destinationFolder = os.path.join(destinationRoot, "screenshots")
+                          copiedFolderPath = destinationFolder
+                          if not os.path.isdir(destinationFolder):
+                            os.mkdir(destinationFolder)
+                          for s in screenshotFiles:
+                            destinationFilename = os.path.split(s)[-1]
+                            destinationFilepath = os.path.join(destinationFolder, destinationFilename)
+                            shutil.move(s, destinationFilepath)
+                            copiedScreenshots.append(destinationFilepath)
+                      if len(copiedScreenshots):
+                        self.console.print("Downloaded " + str(len(copiedScreenshots)) + " screenshots to \'" + copiedFolderPath + "\'")
                     with self.console.status("Writing registry files..."):
                       self.lm.write_livery_registry_files(livery)
                     self.console.print("Wrote " + str(len(installRoots) * len(detectedLiveries)) +
@@ -501,6 +534,12 @@ class DCSLMApp:
             if livery.archive and not keepFiles:
               self.console.print("Removing downloaded archive file \'" + os.path.split(livery.archive)[1] + "\'.")
               self.lm.remove_downloaded_archive(livery, livery.archive)
+            if screenshots:
+              self.console.print("Removing temporarily created screenshots folder")
+              screenshotsFolder = os.path.join(os.getcwd(), self.lm.FolderRoot, "screenshots", str(livery.dcsuf.id))
+              if os.path.isdir(screenshotsFolder):
+                if Utilities.validate_remove_path(screenshotsFolder):
+                  shutil.rmtree(screenshotsFolder, onerror=Utilities.remove_readonly)
     return installData
 
   def _install_prompt_unit(self, livery, manualUnitSelection=False):
@@ -581,7 +620,8 @@ class DCSLMApp:
                        (" liveries" if len(installArgs.url) > 1 else " livery") + " from DCS User Files.")
     installData = self._install_liveries(installArgs.url, keepFiles=installArgs.keep,
                                          forceInstall=installArgs.reinstall, forceAllUnits=installArgs.allunits,
-                                         manualUnitSelection=installArgs.unitselection, verbose=installArgs.verbose)
+                                         manualUnitSelection=installArgs.unitselection, verbose=installArgs.verbose,
+                                         screenshots=installArgs.screenshots)
     self.lm.write_data()
     self.completers['livery_ids']['dict'] = self.make_livery_ids_completer()
     self._make_nested_completer()
@@ -1354,7 +1394,7 @@ class DCSLMApp:
   def _download_archive_rich_callback(self, dlCallback, downloadedBytes):
     dlCallback['progress'].update(dlCallback['task'], advance=downloadedBytes)
 
-  def _download_archive_progress(self, livery):
+  def _download_archive_progress(self, livery, session=None):
     downloadProgress = Progress(TextColumn("[bold blue]{task.fields[filename]}", justify="right"),
                                 BarColumn(bar_width=None),"[progress.percentage]{task.percentage:>3.1f}%",
                                 "•",DownloadColumn(), "•", TransferSpeedColumn(), "•",TimeRemainingColumn(),
@@ -1365,7 +1405,7 @@ class DCSLMApp:
     downloadProgress.update(dlTask, total=dlSize)
     callbackData = { 'exec': self._download_archive_rich_callback, 'progress': downloadProgress, 'task': dlTask }
     with downloadProgress:
-      archivePath =  self.lm.download_livery_archive(livery, dlCallback=callbackData)
+      archivePath =  self.lm.download_livery_archive(livery, dlCallback=callbackData, session=session)
     return archivePath
 
   def run(self):

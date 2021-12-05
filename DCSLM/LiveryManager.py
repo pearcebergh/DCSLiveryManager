@@ -161,7 +161,7 @@ class LiveryManager:
           else:
             raise RuntimeError("Unable to find livery registry file \'" + installPath + "\'.")
 
-  def download_livery_archive(self, livery, dlCallback=None):
+  def download_livery_archive(self, livery, dlCallback=None, session=None):
     if livery:
       if livery.dcsuf.download:
         archiveType = str.split(livery.dcsuf.download, '.')[-1]
@@ -170,7 +170,11 @@ class LiveryManager:
           archiveFilename = str.split(livery.dcsuf.download, '/')[-1]
           destinationFilename = os.path.join(destinationPath, archiveFilename)
           try:
-            with requests.get(livery.dcsuf.download, stream=True) as req:
+            if session:
+              reqObj = session
+            else:
+              reqObj = requests
+            with reqObj.get(livery.dcsuf.download, stream=True) as req:
               req.raise_for_status()
               with open(destinationFilename, 'wb') as f:
                 if dlCallback:
@@ -188,6 +192,46 @@ class LiveryManager:
 
   def get_registered_livery_ids(self):
     return self.LiveryData['liveries'].keys()
+
+  def download_screenshots(self, livery, session=None):
+    DCSUFURLRoot = DCSUFParser().DCSDownloadUrlPrefix
+    if livery.dcsuf.screenshots and len(livery.dcsuf.screenshots):
+      # Check if able to create screenshot directory
+      screenshotsPath = os.path.join(os.getcwd(), self.FolderRoot, "screenshots", str(livery.dcsuf.id))
+      if not os.path.isdir(screenshotsPath):
+        os.makedirs(screenshotsPath, exist_ok=True)
+      downloadedFiles = []
+      # Download every screenshot
+      for s in livery.dcsuf.screenshots:
+        downloadURL = DCSUFURLRoot + s
+        splitURL = str.split(downloadURL, "/")
+        imageFileName = splitURL[-1]
+        downloadPath = os.path.join(screenshotsPath, imageFileName)
+        downloadedFile = self._download_screenshot(downloadURL, downloadPath, session=session)
+        if downloadedFile:
+          downloadedFiles.append(downloadedFile)
+          self.print("Downloaded screenshot \'" + imageFileName + "\'", style="")
+        else:
+          self.print("Failed to download screenshot \'" + imageFileName + "\'", style="bold red")
+      return downloadedFiles
+    return []
+
+  def _download_screenshot(self, screenshotURL, screenshotPath, session=None):
+    try:
+      if session:
+        reqObj = session
+      else:
+        reqObj = requests
+      with reqObj.get(screenshotURL, stream=True) as req:
+        req.raise_for_status()
+        with open(screenshotPath, 'wb') as f:
+          for chunk in req.iter_content(chunk_size=8192):
+            f.write(chunk)
+      return screenshotPath
+    except (KeyboardInterrupt, IOError, ConnectionError, FileNotFoundError) as e:
+      if os.path.isfile(screenshotPath):
+        Utilities.remove_file(screenshotPath)
+      raise RuntimeError("Failed during download of screenshot " + screenshotURL + ": " + str(e))
 
   def _remove_existing_extracted_files(self, livery, extractedRoot):
     if os.path.isdir(extractedRoot) and Utilities.validate_remove_path(extractedRoot):

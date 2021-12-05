@@ -27,7 +27,8 @@ class DCSUFParserConfig():
       'title': "body > div.container > div.row.well > div.row.file-body > div.col-xs-10 > div:nth-child(1) > div > h2",
       'date': "body > div.container > div.row.well > div.row.file-body > div.col-xs-10 > div.row.file-data-1 > div.col-xs-3.date",
       'size': "body > div.container > div.row.well > div.row.file-body > div.col-xs-10 > div.row.file-data-2 > ul > li:nth-child(3)",
-      'tags': "body > div.container > div.row.well > div.row.file-body > div.col-xs-10 > div:nth-child(5)"
+      'tags': "body > div.container > div.row.well > div.row.file-body > div.col-xs-10 > div:nth-child(5)",
+      'screenshots': "body > div.container > div.row.well > div.row.file-body > div.col-xs-2.text-center"
     }
     return defaultDivConfig
 
@@ -141,6 +142,7 @@ class DCSUFParser():
             dcsuf.tags = splitTags
           else:
             dcsuf.tags = []
+          dcsuf.screenshots = self._get_screenshots_from_parsed_html(parsedDCSUF['screenshots'])
           return dcsuf
       else:
         raise RuntimeError("Provided DCS User files url is not a livery skin file.")
@@ -160,3 +162,16 @@ class DCSUFParser():
       finally:
         return dcsuf
     return None
+
+  #  install -k -s https://www.digitalcombatsimulator.com/en/files/3319669/
+  def _get_screenshots_from_parsed_html(self, dcsufHTML):
+    screenshotFiletypes = ["jpg", "png", "bmp"]
+    screenshotURLs = []
+    hrefURLs = dcsufHTML.find_all(href=True)
+    for u in hrefURLs:
+      if u['href'][0] != "/":
+        continue
+      splitURL = str.split(u['href'], ".")
+      if len(splitURL) and str.lower(splitURL[-1]) in screenshotFiletypes:
+        screenshotURLs.append(u['href'])
+    return screenshotURLs
