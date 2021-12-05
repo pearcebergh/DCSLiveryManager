@@ -30,10 +30,11 @@ from DCSLM.UnitManager import UM
 import DCSLM.Utilities as Utilities
 
 # TODO: Test WinRAR
-# TODO: Prefer 7z over other applications
 # TODO: Add screenshots download
 # TODO: Detect shared data folder on install
 # TODO: Use on archive files already downloaded without DCSUF info
+# TODO: Add verbosity flag to install for patoolib
+# TODO: Add working directory exe argument
 
 def set_console_title(title):
   if platform.system() == 'Windows':
@@ -864,7 +865,7 @@ class DCSLMApp:
   def request_upgrade_information(self):
     import re
     import requests
-    from distutils.version import StrictVersion
+    import pkg_resources
     from bs4 import BeautifulSoup
     try:
       releaseData = []
@@ -880,7 +881,7 @@ class DCSLMApp:
           'download': "https://github.com/" + r.find('a', {'class': "d-flex flex-items-center min-width-0"},
                                                      href=re.compile(r'[/]([a-z]|[A-Z])\w+')).attrs['href']
         }
-        if StrictVersion(rData['version']) > StrictVersion(__version__):
+        if pkg_resources.parse_version(rData['version']) > pkg_resources.parse_version(__version__):
           releaseData.append(rData)
       return releaseData
     except Exception as e:

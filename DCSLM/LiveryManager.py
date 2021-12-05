@@ -204,6 +204,9 @@ class LiveryManager:
           archiveFile = livery.archive
           archiveFolder = os.path.splitext(archiveFile)[0].split('\\')[-1]
           extractedPath = os.path.join(extractRoot, archiveFolder)
+          #winRarExtractPath = extractedPath.replace("\\", "/") # WinRAR doesn't like single backslashes
+          #if not os.path.isdir(extractedPath):
+            #os.makedirs(extractedPath, exist_ok=True)
           self._remove_existing_extracted_files(livery, extractedPath)
           self._extract_archive(livery, archivePath, extractedPath)
           self._extract_extracted_archive(livery, extractedPath)
@@ -214,7 +217,7 @@ class LiveryManager:
     prefProgram = None
     if patoolib.util.get_nt_7z_dir() != "":
       prefProgram = "7z"
-    patoolib.extract_archive(archivePath, 2, extractPath, program=prefProgram)
+    patoolib.extract_archive(archivePath, 0, extractPath, program=prefProgram)
 
   def _extract_extracted_archive(self, livery, extractedPath):
     extractedFiles = glob.glob(extractedPath + "/**/*", recursive=True)
