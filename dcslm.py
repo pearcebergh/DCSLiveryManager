@@ -33,7 +33,6 @@ import DCSLM.Utilities as Utilities
 # TODO: Add screenshots download
 # TODO: Detect shared data folder on install
 # TODO: Use on archive files already downloaded without DCSUF info
-# TODO: Add verbosity flag to install for patoolib
 # TODO: Add working directory exe argument
 
 def set_console_title(title):
@@ -103,6 +102,11 @@ class DCSLMApp:
           'allunits': {
             'tags': ['-a', '--allunits'],
             'desc': "Do not prompt when given a choice to install to multiple units and install to all",
+            'action': "store_true"
+          },
+          'verbose': {
+            'tags': ['-v', '--verbose'],
+            'desc': "Verbose printing of livery install information for reference or debugging purposes",
             'action': "store_true"
           },
         },
@@ -376,7 +380,7 @@ class DCSLMApp:
     except SystemExit:
       raise RuntimeError("Unable to parse \'" + command + "\' command.")
 
-  def _install_liveries(self, liveryStrings, keepFiles=False, forceDownload=False, forceInstall=False, forceAllUnits=False, manualUnitSelection=False):
+  def _install_liveries(self, liveryStrings, keepFiles=False, forceDownload=False, forceInstall=False, forceAllUnits=False, manualUnitSelection=False, verbose=False):
     installData = {'success': [], 'failed': []}
     session = DCSUFParser().make_request_session()
     for liveryStr in liveryStrings:
@@ -440,7 +444,7 @@ class DCSLMApp:
           if archivePath:
             livery.archive = archivePath
             self.console.print("\n[bold]Running extraction program on downloaded archive:")
-            extractPath = self.lm.extract_livery_archive(livery)
+            extractPath = self.lm.extract_livery_archive(livery, verbose=verbose)
             if extractPath:
               self.console.print("\nExtracted \'" + livery.archive + "\' to temporary directory.")
               destinationPath = self.lm.generate_livery_destination_path(livery)
@@ -577,7 +581,7 @@ class DCSLMApp:
                        (" liveries" if len(installArgs.url) > 1 else " livery") + " from DCS User Files.")
     installData = self._install_liveries(installArgs.url, keepFiles=installArgs.keep,
                                          forceInstall=installArgs.reinstall, forceAllUnits=installArgs.allunits,
-                                         manualUnitSelection=installArgs.unitselection)
+                                         manualUnitSelection=installArgs.unitselection, verbose=installArgs.verbose)
     self.lm.write_data()
     self.completers['livery_ids']['dict'] = self.make_livery_ids_completer()
     self._make_nested_completer()

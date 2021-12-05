@@ -193,7 +193,7 @@ class LiveryManager:
     if os.path.isdir(extractedRoot) and Utilities.validate_remove_path(extractedRoot):
       shutil.rmtree(extractedRoot, onerror=Utilities.remove_readonly)
 
-  def extract_livery_archive(self, livery):
+  def extract_livery_archive(self, livery, verbose=False):
     if livery:
       if len(livery.archive):
         archivePath = os.path.join(os.getcwd(), self.FolderRoot, "archives", livery.archive)
@@ -208,16 +208,17 @@ class LiveryManager:
           #if not os.path.isdir(extractedPath):
             #os.makedirs(extractedPath, exist_ok=True)
           self._remove_existing_extracted_files(livery, extractedPath)
-          self._extract_archive(livery, archivePath, extractedPath)
+          self._extract_archive(livery, archivePath, extractedPath, verbose=verbose)
           self._extract_extracted_archive(livery, extractedPath)
           return extractedPath
     return None
 
-  def _extract_archive(self, livery, archivePath, extractPath):
+  def _extract_archive(self, livery, archivePath, extractPath, verbose=False):
     prefProgram = None
     if patoolib.util.get_nt_7z_dir() != "":
       prefProgram = "7z"
-    patoolib.extract_archive(archivePath, 0, extractPath, program=prefProgram)
+    patoolVerbosity = (2 if verbose else 0)
+    patoolib.extract_archive(archivePath, patoolVerbosity, extractPath, program=prefProgram)
 
   def _extract_extracted_archive(self, livery, extractedPath):
     extractedFiles = glob.glob(extractedPath + "/**/*", recursive=True)
