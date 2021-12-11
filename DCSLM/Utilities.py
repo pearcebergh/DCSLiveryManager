@@ -19,6 +19,7 @@ def correct_dcs_user_files_url(fileURL):
   if len(fileID):
     if str.isnumeric(fileID[0]):
       return DCSFilesURLRoot + fileID[0] + "/", fileID[0]
+  return "", 0
 
 def bytes_to_mb(sizeBytes):
   return float(sizeBytes/(10**6))
