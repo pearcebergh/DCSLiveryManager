@@ -34,8 +34,6 @@ import DCSLM.Utilities as Utilities
 # TODO: Detect shared data folder on install
 # TODO: Use on archive files already downloaded without DCSUF info
 # TODO: Add reload of registry right before installs/uninstalls start to check for latest saved liveries
-# TODO: Continue after return press if not persist else close
-# TODO: Standardized DCSLM text references with sky_blue1
 
 def set_console_title(title):
   if platform.system() == 'Windows':
@@ -344,8 +342,8 @@ class DCSLMApp:
         'flags': {
           'workingdir': {
             'tags': ['-w', '--workingdir'],
-            'desc': "Set the working directory used as the root to create/read the [italic]DCSLM[/italic] directories" +
-                    " and liveries",
+            'desc': "Set the working directory used as the root to create/read the [italic sky_blue1]DCSLM[/italic sky_blue1]" +
+                    " directories and liveries",
             'action': "store"
           },
           'update': {
@@ -915,7 +913,7 @@ class DCSLMApp:
       self.console.print("[red]Unable to find installed livery from \'" + ' '.join(sArgs) + "\'.")
 
   def scan_for_liveries(self):
-    with self.console.status("Scanning directories for DCSLM installed liveries..."):
+    with self.console.status("Scanning directories for [sky_blue1]DCSLM[/sky_blue1] installed liveries..."):
       liveryFolders = []
       rootFolders = glob.glob("./*/")
       if self.lm.LiveryData['config']['ovgme']:
@@ -980,8 +978,8 @@ class DCSLMApp:
     if relData:
       if len(relData):
         self.console.print("\nYour DCSLM [bold red]v" + str(__version__) + "[/bold red] is out of date!\n" +
-                           "Use the \'upgrade\' command to upgrade DCSLM to [bold green]v" + relData[0]['version'] +
-                           "[/bold green]")
+                           "Use the \'upgrade\' command to upgrade [sky_blue1]DCSLM[/sky_blue1] to [bold green]v" +
+                           relData[0]['version'] + "[/bold green]")
 
   def request_upgrade_information(self):
     import re
@@ -1043,7 +1041,7 @@ class DCSLMApp:
     try:
       releaseData = self.request_upgrade_information()
       if not len(releaseData):
-        self.console.print("Current DCSLM version " + __version__ + " is the latest available version.")
+        self.console.print("Current [sky_blue1]DCSLM[/sky_blue1] version " + __version__ + " is the latest available version.")
       else:
         for rd in releaseData:
           self.console.print(rd['name'] + " (" + rd['version'] + ") " + rd['date'] + ":")
@@ -1052,7 +1050,7 @@ class DCSLMApp:
             if len(descLine):
               self.console.print(" - " + descLine)
         self.console.print("")
-        upgradeConf = Confirm.ask("Do you want to download and upgrade to the latest version of DCSLM?")
+        upgradeConf = Confirm.ask("Do you want to download and upgrade to the latest version of [sky_blue1]DCSLM[/sky_blue1]?")
         self.console.print("")
         if upgradeConf:
           oldExec = sys.executable + '.old'
@@ -1069,13 +1067,13 @@ class DCSLMApp:
             shutil.move(oldExec, sys.executable)
             return
           os.chmod(dlFilename, 0o775)
-          self.console.print("[bold green]DCSLM Upgrade complete to version " + releaseData[0]['version'])
-          self.console.print("[bold red]DCSLM will be restarted in a few moments...")
+          self.console.print("[bold green][sky_blue1]DCSLM[/sky_blue1] Upgrade complete to version " + releaseData[0]['version'])
+          self.console.print("[bold red][sky_blue1]DCSLM[/sky_blue1] will be restarted in a few moments...")
           time.sleep(2.5)
           subprocess.call(dlFilename)
           sys.exit(0)
     except Exception as e:
-      self.console.print("[bold red]DCSLM upgrade failed:[/bold red] [red]" + str(e))
+      self.console.print("[bold red][sky_blue1]DCSLM[/sky_blue1] upgrade failed:[/bold red] [red]" + str(e))
 
   def _print_optimization_report(self, optimizationReport):
     if len(optimizationReport):
@@ -1187,7 +1185,7 @@ class DCSLMApp:
           if unitData.custom or unitData.modified:
             self.console.print("Unit config for \'" + unitData.friendly + "\' is the same on disk.")
           else:
-            self.console.print("Writing out config for \'" + unitData.friendly + "\' to \'DCSLM/units/" +
+            self.console.print("Writing out config for \'" + unitData.friendly + "\' to \'[sky_blue1]DCSLM[/sky_blue1]/units/" +
                                unitData.category.lower() + "/" + unitData.generic + ".json\'")
             UM.write_unit_config_file(unitData)
         else:
@@ -1221,19 +1219,19 @@ class DCSLMApp:
         if configArgs.export:
           writeData = self.lm.write_data()
           if writeData:
-            self.console.print("Wrote [sky_blue1]Livery Manager[/sky_blue1] configuration to \'DCSLM\\dcslm.json\'")
+            self.console.print("Wrote [sky_blue1]DCSLM[/sky_blue1] configuration to \'[sky_blue1]DCSLM[/sky_blue1]\\dcslm.json\'")
           else:
             self.console.print("[red]Failed to write [sky_blue1]Livery Manager[/sky_blue1] configuration to " +
-                               "\'DCSLM\\dcslm.json\'[/red]")
+                               "\'[sky_blue1]DCSLM[/sky_blue1]\\dcslm.json\'[/red]")
         elif configArgs.reload:
           lmData = self.lm.load_data()
           if lmData:
             self.lm.LiveryData = lmData
             self.console.print("Loaded [sky_blue1]Livery Manager[/sky_blue1] configuration settings from " +
-                               "\'DCSLM\\dcslm.json\'")
+                               "\'[sky_blue1]DCSLM[/sky_blue1]\\dcslm.json\'")
           else:
             self.console.print("[red]Failed to read in [sky_blue1]Livery Manager[/sky_blue1] configuration settings " +
-                               "from \'DCSLM\\dcslm.json\'[/red]")
+                               "from \'[sky_blue1]DCSLM[/sky_blue1]\\dcslm.json\'[/red]")
         else:
           lmTable = Table(title="[sky_blue1]Livery Manager[/sky_blue1] Configuration", box=box.ROUNDED,
                           show_header=False, min_width=30)
@@ -1248,19 +1246,19 @@ class DCSLMApp:
           writePath = DCSUFPC.write_config()
           if writePath and os.path.isfile(writePath):
             self.console.print("Wrote out current [sky_blue1]DCS User Files Parsing[/sky_blue1] configuration to " +
-                               "\'DCSLM\\dcsuf_parse.json\'")
+                               "\'[sky_blue1]DCSLM[/sky_blue1]\\dcsuf_parse.json\'")
           else:
             self.console.print("[red]Failed to write [sky_blue1]DCS User Files Parsing[/sky_blue1] configuration to " +
-                               "\'DCSLM\\dcsuf_parse.json\'[/red]")
+                               "\'[sky_blue1]DCSLM[/sky_blue1]\\dcsuf_parse.json\'[/red]")
         elif configArgs.reload:
           if DCSUFPC.load_config_file():
             self.console.print("Loaded [sky_blue1]DCS User Files Parsing[/sky_blue1] configuration settings from " +
-                               "\'DCSLM\\dcsuf_parse.json\'")
+                               "\'[sky_blue1]DCSLM[/sky_blue1]\\dcsuf_parse.json\'")
             self.completers['units']['dict'] = self.make_units_completer()
             self._make_nested_completer()
           else:
             self.console.print("[red]Failed to read [sky_blue1]DCS User Files Parsing[/sky_blue1] configuration " +
-                               "settings from \'DCSLM\\dcsuf_parse.json\'[/red]")
+                               "settings from \'[sky_blue1]DCSLM[/sky_blue1]\\dcsuf_parse.json\'[/red]")
         else:
           dcsufTable = Table(title="[sky_blue1]DCS User Files Parsing[/sky_blue1] Configuration", box=box.ROUNDED,
                              show_header=False)
@@ -1389,15 +1387,15 @@ class DCSLMApp:
     self.lm.console = self.console
     lmData = self.lm.load_data()
     if not lmData:
-      self.console.print("No existing \'DCSLM\\dcslm.json\' file found with config and livery data. Loading defaults.")
+      self.console.print("No existing \'[sky_blue1]DCSLM[/sky_blue1]\\dcslm.json\' file found with config and livery data. Loading defaults.")
       if not "Saved Games" in os.getcwd() and not "DCS" in os.getcwd().split("\\")[-1]:
-        self.console.print("[red]DCSLM has detected it's not within a[/red] [bold gold1]DCS Saved Games[/bold gold1] " +
+        self.console.print("[red][sky_blue1]DCSLM[/sky_blue1] has detected it's not within a[/red] [bold gold1]DCS Saved Games[/bold gold1] " +
                            "[red]directory.")
         self.prompt_livery_manager_defaults()
       self.lm.make_dcslm_dirs()
       self.lm.write_data()
     else:
-      self.console.print("Loaded Livery Manager config and data from \'DCSLM\\dcslm.json\'")
+      self.console.print("Loaded Livery Manager config and data from \'[sky_blue1]DCSLM[/sky_blue1]\\dcslm.json\'")
       self.lm.LiveryData = lmData
 
   def setup_unit_manager(self):
@@ -1409,7 +1407,7 @@ class DCSLMApp:
       self.console.print("If you use a mod manager, like \'OVGME\' or \'JSGME\', to manage your DCS mod installs, " +
                          "you can enable \'Mod Manager Mode\' to have it create a root directory named with the " +
                          "livery title when installing a livery.")
-      self.console.print("\n[bold gold1]For \'Mod Manager Mode\' make sure you've placed \'DCSLM.exe\' inside your " +
+      self.console.print("\n[bold gold1]For \'Mod Manager Mode\' make sure you've placed \'[sky_blue1]DCSLM[/sky_blue1].exe\' inside your " +
                          "mod manager's directory that is " +
                          "configured for the [/bold gold1]\'DCS Saved Games\'[bold gold1] directory, " +
                          "not the DCS install directory.[/bold gold1]")
@@ -1519,9 +1517,9 @@ class DCSLMApp:
           exeArgsStr += "[italic]" + a + "[/italic] "
     self.console.print(exeArgsStr)
     if self.parsedArgs.persist:
-      self.console.print("DCSLM will remain [green italic]open[/green italic] after completion (-p, --persist)", style="blue")
+      self.console.print("[sky_blue1]DCSLM[/sky_blue1] will remain [green italic]open[/green italic] after completion (-p, --persist)", style="blue")
     else:
-      self.console.print("DCSLM will [red italic]close[/red italic] after completion", style="blue")
+      self.console.print("[sky_blue1]DCSLM[/sky_blue1] will [red italic]close[/red italic] after completion", style="blue")
     parseConfig = {
       'uninstall': {'parsedArgs': self.parsedArgs.uninstall, 'exec': self.uninstall_liveries},
       'install': {'parsedArgs': self.parsedArgs.install, 'exec': self.install_liveries},
@@ -1581,7 +1579,7 @@ class DCSLMApp:
     if prompt:
       self.console.print("\n[sky_blue1]DCSLM[/sky_blue1] will now close...")
       os.system("pause")
-    self.console.print("Writing out current config and livery data to dcslm.json")
+    self.console.print("Writing out current config and livery data to \'[sky_blue1]DCSLM[/sky_blue1]/dcslm.json\'")
     self.lm.write_data()
     self.console.print("Exiting DCS Livery Manager.")
 
