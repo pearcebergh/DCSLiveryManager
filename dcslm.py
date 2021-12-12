@@ -31,9 +31,10 @@ from DCSLM.UnitManager import UM
 import DCSLM.Utilities as Utilities
 
 # TODO: Test WinRAR
+# TODO: Test WinZip
 # TODO: Detect shared data folder on install
 # TODO: Use on archive files already downloaded without DCSUF info
-# TODO: Add reload of registry right before installs/uninstalls start to check for latest saved liveries
+# TODO: Allow use of dcsuf url/id to fill in archive dcsuf info
 
 def set_console_title(title):
   if platform.system() == 'Windows':
@@ -691,6 +692,7 @@ class DCSLMApp:
 
   def install_liveries(self, sArgs):
     installArgs = self._parse_command_args("install", sArgs)
+    self.reload_dcslm_config()
     self.console.print("Attempting to install " + str(len(installArgs.url)) +
                        (" liveries" if len(installArgs.url) > 1 else " livery") + " from DCS User Files.")
     installData = self._install_liveries(installArgs.url, keepFiles=installArgs.keep,
@@ -705,6 +707,7 @@ class DCSLMApp:
   def uninstall_liveries(self, sArgs):
     sArgs = self._remove_brackets_sArgs(sArgs)
     uninstallArgs = self._parse_command_args("uninstall", sArgs)
+    self.reload_dcslm_config()
     self.console.print("Attempting to uninstall " + str(len(uninstallArgs.livery)) +
                        (" registered liveries" if len(uninstallArgs.livery) > 1 else " registered livery") + ".")
     uninstallData = {'success': [], 'failed': []}
@@ -1487,6 +1490,11 @@ class DCSLMApp:
     with downloadProgress:
       archivePath =  self.lm.download_livery_archive(livery, dlCallback=callbackData, session=session)
     return archivePath
+
+  def reload_dcslm_config(self):
+    if self.lm:
+      self.lm.clear_data()
+      self.lm.load_data()
 
   # TODO: Test with archive paths with spaces
   def _executable_parse_list_command(self, command, varData):

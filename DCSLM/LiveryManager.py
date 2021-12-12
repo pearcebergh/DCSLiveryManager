@@ -35,6 +35,10 @@ class LiveryManager:
     }
     return ld
 
+  def clear_data(self):
+    self.LiveryData = self.make_default_data()
+    self.Liveries = {}
+
   def load_data(self):
     configPath = os.path.join(os.getcwd(), self.FolderRoot, "dcslm.json")
     if os.path.isfile(configPath):
