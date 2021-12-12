@@ -76,9 +76,11 @@ class DCSLMApp:
     self.setup_completers()
     self.quick_check_upgrade_available()
     self.check_7z_installed()
-    if not self.run_exe_args() or self.parsedArgs.persist:
+    exeArgs = self.run_exe_args()
+    if not exeArgs or self.parsedArgs.persist:
       self.run()
-    self.dcslm_exit()
+      exeArgs = False
+    self.dcslm_exit(prompt=exeArgs)
 
   def setup_working_dir(self, workingDir=None):
     if workingDir:
@@ -337,7 +339,7 @@ class DCSLMApp:
         'exec': None
       },
       'executable': {
-        'usage': "DCSLM.exe \[flags]",
+        'usage': "DCSLM.exe \[flags] \[args]",
         'desc': "Command line arguments to be passed to the executable when launching",
         'flags': {
           'workingdir': {
@@ -1575,7 +1577,10 @@ class DCSLMApp:
           else:
             self.console.print("Command \'" + splitCommand[0] + "\' not found.")
 
-  def dcslm_exit(self):
+  def dcslm_exit(self, prompt=False):
+    if prompt:
+      self.console.print("\n[sky_blue1]DCSLM[/sky_blue1] will now close...")
+      os.system("pause")
     self.console.print("Writing out current config and livery data to dcslm.json")
     self.lm.write_data()
     self.console.print("Exiting DCS Livery Manager.")
