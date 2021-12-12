@@ -33,8 +33,9 @@ import DCSLM.Utilities as Utilities
 # TODO: Test WinRAR
 # TODO: Detect shared data folder on install
 # TODO: Use on archive files already downloaded without DCSUF info
-# TODO: Add working directory exe argument
-# TODO: Replace os.getcwd() with defined DCSLM/DCS Saved Games directory
+# TODO: Add reload of registry right before installs/uninstalls start to check for latest saved liveries
+# TODO: Continue after return press if not persist else close
+# TODO: Standardized DCSLM text references with sky_blue1
 
 def set_console_title(title):
   if platform.system() == 'Windows':
@@ -402,7 +403,7 @@ class DCSLMApp:
           getUFStr = "Getting DCS User File information from " + correctedLiveryURL
           with self.console.status(getUFStr):
             livery = self.lm.get_livery_data_from_dcsuf_url(correctedLiveryURL, session)
-          if not livery:
+          if not livery or (livery and not livery.dcsuf):
             raise RuntimeError("Unable to get DCSUF info from livery \'" + liveryStr + "\'")
           self.console.print(getUFStr + "\n")
           unitName = "Other"

@@ -28,7 +28,8 @@ class DCSUFParserConfig():
       'date': "body > div.container > div.row.well > div.row.file-body > div.col-xs-10 > div.row.file-data-1 > div.col-xs-3.date",
       'size': "body > div.container > div.row.well > div.row.file-body > div.col-xs-10 > div.row.file-data-2 > ul > li:nth-child(3)",
       'tags': "body > div.container > div.row.well > div.row.file-body > div.col-xs-10 > div:nth-child(5)",
-      'screenshots': "body > div.container > div.row.well > div.row.file-body > div.col-xs-2.text-center"
+      'screenshots': "body > div.container > div.row.well > div.row.file-body > div.col-xs-2.text-center",
+      'error-bad-id': "body > div.container > div.row.well > div.col-xs-12.alert.alert-danger.padding",
     }
     return defaultDivConfig
 
@@ -102,25 +103,40 @@ class DCSUFParser():
     except:
       raise RuntimeError("Unable to request html from url " + url)
 
+  def _parse_div_select(self, configData, dcsufHTML):
+    parsedVar = None
+    if isinstance(configData, str):
+      parsedVar = dcsufHTML.select_one(configData)
+    elif isinstance(configData, list):
+      for e in configData:
+        parsedVar = dcsufHTML.select_one(e)
+        if parsedVar:
+          break
+    return parsedVar
+
+  def _check_html_bad_id(self, dcsufHTML):
+    badHTML = False
+    configData = DCSUFPC.DCSUFDivConfig['error-bad-id']
+    parsedError = self._parse_div_select(configData, dcsufHTML)
+    if parsedError:
+      badHTML = True
+    return badHTML
+
   def _parse_html_for_dcsuf(self, url, dcsufHTML):
     try:
+      if self._check_html_bad_id(dcsufHTML):
+        raise RuntimeError("Invalid ID or URL from " + url + " (Element is not found)")
       dcsuf = DCSUserFile()
       fileType = dcsufHTML.select_one(DCSUFPC.DCSUFDivConfig['filetype']).text
       if fileType == "Skin":
         fileURL = self._get_dcsfiles_archive_url_from_html(dcsufHTML)
         if fileURL:
           parsedDCSUF = {}
+          skipEntries = ["filetype", "download", "error-bad-id"]
           for v, d in DCSUFPC.DCSUFDivConfig.items():
-            if v == 'filetype' or v == 'download':
+            if v in skipEntries:
               continue
-            parsedVar = None
-            if isinstance(d, str):
-              parsedVar = dcsufHTML.select_one(d)
-            elif isinstance(d, list):
-              for e in d:
-                parsedVar = dcsufHTML.select_one(e)
-                if parsedVar:
-                  break
+            parsedVar = self._parse_div_select(d, dcsufHTML)
             parsedDCSUF[v] = parsedVar
           dcsuf.id = dcsuf.get_id_from_url(url)
           dcsuf.unit = parsedDCSUF['unit'].text
@@ -163,7 +179,6 @@ class DCSUFParser():
         return dcsuf
     return None
 
-  #  install -k -s https://www.digitalcombatsimulator.com/en/files/3319669/
   def _get_screenshots_from_parsed_html(self, dcsufHTML):
     screenshotFiletypes = ["jpg", "png", "bmp"]
     screenshotURLs = []
