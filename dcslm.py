@@ -63,20 +63,34 @@ class DCSLMApp:
     self.completers = None
     self.commands = None
     self.lm = None
+    self.parsedArgs = None
 
   def start(self):
-    self.setup_working_dir()
     self.setup_commands()
     self.setup_console_window()
     self.clear_and_print_header()
+    self.parse_exe_args()
+    self.setup_working_dir(self.parsedArgs.workingdir)
     self.setup_livery_manager()
     self.setup_unit_manager()
     self.setup_completers()
     self.quick_check_upgrade_available()
     self.check_7z_installed()
-    self.run()
+    if not self.run_exe_args() or self.parsedArgs.persist:
+      self.run()
+    self.dcslm_exit()
 
-  def setup_working_dir(self):
+  def setup_working_dir(self, workingDir=None):
+    if workingDir:
+      workingDir = str.replace(workingDir, "\"", '')
+      workingDir = str.strip(workingDir)
+      workingDirName = os.path.dirname(os.path.join(workingDir))
+      self.console.print(workingDirName)
+      self.console.print(os.path.isdir(workingDirName))
+      if os.path.isdir(workingDirName):
+        os.chdir(os.path.dirname(workingDir))
+        self.console.print("Changing working directory to \'" + workingDir + "\'")
+        return
     if not "PYCHARM_HOSTED" in os.environ:
       os.chdir(os.path.dirname(os.path.abspath(sys.executable)))  # Set working directory to executable directory
 
@@ -126,6 +140,7 @@ class DCSLMApp:
           },
         },
         'subcommands': {},
+        'hidden': False,
         'exec': self.install_liveries
       },
       'uninstall': {
@@ -147,6 +162,7 @@ class DCSLMApp:
           },
         },
         'subcommands': {},
+        'hidden': False,
         'exec': self.uninstall_liveries
       },
       'info': {
@@ -162,6 +178,7 @@ class DCSLMApp:
           },
         },
         'subcommands': {},
+        'hidden': False,
         'exec': self.get_livery_info
       },
       'list': {
@@ -176,6 +193,7 @@ class DCSLMApp:
         },
         'args': {},
         'subcommands': {},
+        'hidden': False,
         'exec': self.list_liveries
       },
       'check': {
@@ -184,6 +202,7 @@ class DCSLMApp:
         'flags': {},
         'args': {},
         'subcommands': {},
+        'hidden': False,
         'exec': self.check_liveries
       },
       'update': {
@@ -192,6 +211,7 @@ class DCSLMApp:
         'flags': {},
         'args': {},
         'subcommands': {},
+        'hidden': False,
         'exec': self.update_liveries
       },
       'optimize': {
@@ -228,6 +248,7 @@ class DCSLMApp:
           },
         },
         'subcommands': {},
+        'hidden': False,
         'exec': self.optimize_livery
       },
       'scan': {
@@ -236,6 +257,7 @@ class DCSLMApp:
         'flags': {},
         'args': {},
         'subcommands': {},
+        'hidden': False,
         'exec': self.scan_for_liveries
       },
       'units': {
@@ -257,6 +279,7 @@ class DCSLMApp:
           },
         },
         'subcommands': {},
+        'hidden': False,
         'exec': self.dcs_units
       },
       'config': {
@@ -283,6 +306,7 @@ class DCSLMApp:
             'desc': "Livery Manager configuration",
           },
         },
+        'hidden': False,
         'exec': self.dcslm_config
       },
       'upgrade': {
@@ -291,6 +315,7 @@ class DCSLMApp:
         'flags': {},
         'args': {},
         'subcommands': {},
+        'hidden': False,
         'exec': self.upgrade_dcslm
       },
       'help': {
@@ -299,6 +324,7 @@ class DCSLMApp:
         'flags': {},
         'args': {},
         'subcommands': {},
+        'hidden': False,
         'exec': self.print_help
       },
       'exit': {
@@ -307,7 +333,52 @@ class DCSLMApp:
         'flags': {},
         'args': {},
         'subcommands': {},
+        'hidden': False,
         'exec': None
+      },
+      'executable': {
+        'usage': "DCSLM.exe \[flags]",
+        'desc': "Command line arguments to be passed to the executable when launching",
+        'flags': {
+          'workingdir': {
+            'tags': ['-w', '--workingdir'],
+            'desc': "Set the working directory used as the root to create/read the [italic]DCSLM[/italic] directories" +
+                    " and liveries",
+            'action': "store"
+          },
+          'update': {
+            'tags': ['-d', '--update'],
+            'desc': "Install any available updates to registered liveries",
+            'action': "store_true"
+          },
+          'upgrade': {
+            'tags': ['-g', '--upgrade'],
+            'desc': "Upgrade DCS Livery Manager executable",
+            'action': "store_true"
+          },
+          'persist': {
+            'tags': ['-p', '--persist'],
+            'desc': "Keep the instance of DCS Livery Manager open after running executable arguments",
+            'action': "store_true"
+          },
+        },
+        'args': {
+          '--install': {
+            'type': "string",
+            'optional': True,
+            'desc': "Livery ID, URL, or Path to the archive of the liveries you want to install",
+            'variable': True
+          },
+          '--uninstall': {
+            'type': "string",
+            'optional': True,
+            'desc': "Livery ID of the liveries you want to uninstall",
+            'variable': True
+          },
+        },
+        'subcommands': {},
+        'hidden': True,
+        'exec': None,
       }
     }
 
@@ -373,7 +444,10 @@ class DCSLMApp:
       for iA in self.commands[command]['args'].keys():
         varArg = None
         if self.commands[command]['args'][iA]['variable']:
-          varArg = "+"
+          if command == "executable":
+            varArg = "*"
+          else:
+            varArg = "+"
         argsParser.add_argument(iA, type=str, help=self.commands[command]['args'][iA]['desc'], nargs=varArg)
       if len(self.commands[command]['subcommands'].keys()):
         subGroup = argsParser.add_mutually_exclusive_group(required=False)
@@ -1199,10 +1273,13 @@ class DCSLMApp:
       self.console.print("[deep_pink2]" + k + "[/deep_pink2] [sky_blue1]" + v['usage'] + "[/sky_blue1]")
       self.console.print("\t" + v['desc'])
       if len(v['args']):
-        self.console.print("\t[bold]Arguments:[/bold]")
+        printedArgHeader = False
         hasOptional = False
         for j, l in v['args'].items():
           if not l['optional']:
+            if not printedArgHeader:
+              self.console.print("\t[bold]Arguments:[/bold]")
+              printedArgHeader = True
             self.console.print("\t\t[bold]" + j + "[/bold] (" + l['type'] + ") - " + l['desc'])
           else:
             hasOptional = True
@@ -1267,6 +1344,8 @@ class DCSLMApp:
   def make_commands_completer(self):
     completerDict = {}
     for k, v in self.commands.items():
+      if v['hidden']:
+        continue
       completerDict[k] = None
     return completerDict
 
@@ -1409,6 +1488,60 @@ class DCSLMApp:
       archivePath =  self.lm.download_livery_archive(livery, dlCallback=callbackData, session=session)
     return archivePath
 
+  # TODO: Test with archive paths with spaces
+  def _executable_parse_list_command(self, command, varData):
+    parsedCommands = []
+    for s in varData:
+      splitS = str.split(s, " ")
+      for x in range(0, len(splitS)):
+        spS = splitS[x]
+        if len(spS) == 0 or spS == command:
+          continue
+        parsedCommands.append(spS)
+    return parsedCommands
+
+  def parse_exe_args(self):
+    self.parsedArgs = self._parse_command_args("executable", sys.argv[1:])
+
+  def run_exe_args(self):
+    if len(sys.argv) == 1:
+      return False
+    self.console.print("")
+    self.console.print("Running [sky_blue1]DCSLM[/sky_blue1] executable arguments:", style="bold gold1")
+    exeArgsStr = "\t[sky_blue1]DCSLM.exe[/sky_blue1] "
+    for a in sys.argv[1:]:
+      if len(a):
+        if a[0] == "-":
+          exeArgsStr += a + " "
+        else:
+          exeArgsStr += "[italic]" + a + "[/italic] "
+    self.console.print(exeArgsStr)
+    if self.parsedArgs.persist:
+      self.console.print("DCSLM will remain [green italic]open[/green italic] after completion (-p, --persist)", style="blue")
+    else:
+      self.console.print("DCSLM will [red italic]close[/red italic] after completion", style="blue")
+    parseConfig = {
+      'uninstall': {'parsedArgs': self.parsedArgs.uninstall, 'exec': self.uninstall_liveries},
+      'install': {'parsedArgs': self.parsedArgs.install, 'exec': self.install_liveries},
+      'update': {'parsedArgs': self.parsedArgs.update, 'exec': self.update_liveries},
+      'upgrade': {'parsedArgs': self.parsedArgs.upgrade, 'exec': self.upgrade_dcslm}
+    }
+    ranExeArg = False
+    for f,c in parseConfig.items():
+      try:
+        if c['parsedArgs']:
+          self.console.print("")
+          if isinstance(c['parsedArgs'], list):
+            parsedCommandArgs = self._executable_parse_list_command(f, c['parsedArgs'])
+            if len(parsedCommandArgs):
+              c['exec'](parsedCommandArgs)
+          else:
+            c['exec']()
+          ranExeArg = True
+      except Exception as e:
+        self.console.print(e, style="bold red")
+    return ranExeArg
+
   def run(self):
     self.console.print("")
     runCommands = True
@@ -1441,6 +1574,8 @@ class DCSLMApp:
               runCommands = False
           else:
             self.console.print("Command \'" + splitCommand[0] + "\' not found.")
+
+  def dcslm_exit(self):
     self.console.print("Writing out current config and livery data to dcslm.json")
     self.lm.write_data()
     self.console.print("Exiting DCS Livery Manager.")
