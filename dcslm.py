@@ -34,7 +34,6 @@ import DCSLM.Utilities as Utilities
 # TODO: Use on archive files already downloaded without DCSUF info
 # TODO: Allow use of dcsuf url/id to fill in archive dcsuf info
 # TODO: Change install process to begin with simultaneous downloads
-# TODO: Prepend DCSUF ID to archive download name
 
 def set_console_title(title):
   if platform.system() == 'Windows':
@@ -513,7 +512,11 @@ class DCSLMApp:
             raise RuntimeError("No units selected for install.")
           livery.installs['units'] = unitChoices
           livery.ovgme = livery.generate_ovgme_folder()
-          archivePath = self.lm.does_archive_exist(livery.dcsuf.download.split('/')[-1])
+          archiveName = livery.dcsuf.download.split('/')[-1]
+          archivePath = self.lm.does_archive_exist(archiveName)
+          liveryArchiveName = str(livery.dcsuf.id) + "_" + archiveName
+          if not archivePath:
+            archivePath = self.lm.does_archive_exist(liveryArchiveName)
           if archivePath:
             if not forceDownload and self.lm.compare_archive_sizes(archivePath, livery.dcsuf.download):
               self.console.print("\nArchive file \'" + livery.dcsuf.download.split('/')[-1] + "\' for \'" +
@@ -684,6 +687,7 @@ class DCSLMApp:
         if unitData:
           installTable.add_row(unitData.friendly, str(l.dcsuf.id), l.dcsuf.title, str(l.get_num_liveries()),
                                Utilities.bytes_to_mb_string(l.get_size_installed_liveries()))
+      self.console.print("")
       self.console.print(installTable)
     if len(installData['failed']):
       self.console.print("[bold red]Failed Livery Installs:")

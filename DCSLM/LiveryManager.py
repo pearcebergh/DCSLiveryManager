@@ -168,13 +168,15 @@ class LiveryManager:
           else:
             raise RuntimeError("Unable to find livery registry file \'" + installPath + "\'.")
 
-  def download_livery_archive(self, livery, dlCallback=None, session=None):
+  def download_livery_archive(self, livery, dlCallback=None, session=None, prependDCSUFID=True):
     if livery:
       if livery.dcsuf.download:
         archiveType = str.split(livery.dcsuf.download, '.')[-1]
         if archiveType in patoolib.ArchiveFormats:
           destinationPath = os.path.join(os.getcwd(), self.FolderRoot, "archives")
           archiveFilename = str.split(livery.dcsuf.download, '/')[-1]
+          if prependDCSUFID:
+            archiveFilename = str(livery.dcsuf.id) + "_" + archiveFilename
           destinationFilename = os.path.join(destinationPath, archiveFilename)
           try:
             if session:
