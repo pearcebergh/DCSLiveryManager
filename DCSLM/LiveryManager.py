@@ -115,8 +115,11 @@ class LiveryManager:
   def unregister_livery(self, livery):
     if livery:
       if self.is_livery_registered(livery.dcsuf.id):
-        del self.Liveries[str(livery.dcsuf.id)]
-        del self.LiveryData["liveries"][str(livery.dcsuf.id)]
+        idStr = str(livery.dcsuf.id)
+        if idStr in self.Liveries.keys():
+          del self.Liveries[idStr]
+        if idStr in self.LiveryData["liveries"].keys():
+          del self.LiveryData["liveries"][idStr]
         return True
     return False
 

@@ -30,7 +30,6 @@ from DCSLM.LiveryManager import LiveryManager
 from DCSLM.UnitManager import UM
 import DCSLM.Utilities as Utilities
 
-# TODO: Test WinZip
 # TODO: Detect shared data folder on install
 # TODO: Use on archive files already downloaded without DCSUF info
 # TODO: Allow use of dcsuf url/id to fill in archive dcsuf info
