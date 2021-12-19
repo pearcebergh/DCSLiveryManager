@@ -80,7 +80,7 @@ UnitDefaults = {
         },
         "fa-18c": {
           "names": ["fa-18", "fa-18c", "fa-18c_hornet"],
-          "friendly": "FA-18C",
+          "friendly": "F/A-18C",
           "dcs_files": "F/A-18C Hornet",
           "liveries": ["FA-18C_hornet"]
         },
