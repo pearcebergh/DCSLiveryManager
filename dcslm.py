@@ -30,11 +30,12 @@ from DCSLM.LiveryManager import LiveryManager
 from DCSLM.UnitManager import UM
 import DCSLM.Utilities as Utilities
 
-# TODO: Test WinRAR
 # TODO: Test WinZip
 # TODO: Detect shared data folder on install
 # TODO: Use on archive files already downloaded without DCSUF info
 # TODO: Allow use of dcsuf url/id to fill in archive dcsuf info
+# TODO: Change install process to begin with simultaneous downloads
+# TODO: Prepend DCSUF ID to archive download name
 
 def set_console_title(title):
   if platform.system() == 'Windows':
@@ -594,7 +595,7 @@ class DCSLMApp:
               raise RuntimeError("Failed to extract livery archive \'" + livery.archive + "\'.")
         except KeyboardInterrupt as e:
           installData['failed'].append({'url': correctedLiveryURL, 'error': e})
-          self.console.print("Install execption: keyboard interrupt", style="bold red")
+          self.console.print("Install exception: keyboard interrupt", style="bold red")
         except Exception as e:
           installData['failed'].append({'url': correctedLiveryURL, 'error': e})
           self.console.print(e, style="bold red")
@@ -694,7 +695,7 @@ class DCSLMApp:
     installArgs = self._parse_command_args("install", sArgs)
     self.reload_dcslm_config()
     self.console.print("Attempting to install " + str(len(installArgs.url)) +
-                       (" liveries" if len(installArgs.url) > 1 else " livery") + " from DCS User Files.")
+                       (" liveries" if len(installArgs.url) > 1 else " livery") + ".")
     installData = self._install_liveries(installArgs.url, keepFiles=installArgs.keep,
                                          forceInstall=installArgs.reinstall, forceAllUnits=installArgs.allunits,
                                          manualUnitSelection=installArgs.unitselection, verbose=installArgs.verbose,
@@ -1188,7 +1189,7 @@ class DCSLMApp:
           if unitData.custom or unitData.modified:
             self.console.print("Unit config for \'" + unitData.friendly + "\' is the same on disk.")
           else:
-            self.console.print("Writing out config for \'" + unitData.friendly + "\' to \'[sky_blue1]DCSLM[/sky_blue1]/units/" +
+            self.console.print("Writing out config for \'" + unitData.friendly + "\' to \'[sky_blue1]DCSLM[/sky_blue1]\\units\\" +
                                unitData.category.lower() + "/" + unitData.generic + ".json\'")
             UM.write_unit_config_file(unitData)
         else:

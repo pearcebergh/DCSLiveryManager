@@ -247,23 +247,20 @@ class LiveryManager:
         archivePath = os.path.join(os.getcwd(), self.FolderRoot, "archives", livery.archive)
         if os.path.isfile(archivePath):
           extractRoot = os.path.join(os.getcwd(), self.FolderRoot, "extract", str(livery.dcsuf.id))
-          if not os.path.isdir(extractRoot):
-            os.makedirs(extractRoot, exist_ok=True)
-          archiveFile = livery.archive
-          archiveFolder = os.path.splitext(archiveFile)[0].split('\\')[-1]
+          archiveFolder = os.path.splitext(livery.archive)[0].split('\\')[-1]
           extractedPath = os.path.join(extractRoot, archiveFolder)
-          #winRarExtractPath = extractedPath.replace("\\", "/") # WinRAR doesn't like single backslashes
-          #if not os.path.isdir(extractedPath):
-            #os.makedirs(extractedPath, exist_ok=True)
+          extractedPath = (extractedPath + "\\").replace("\\", "/") # WinRAR doesn't like single backslashes
+          if not os.path.isdir(extractedPath):
+            os.makedirs(extractedPath, exist_ok=True)
           self._remove_existing_extracted_files(livery, extractedPath)
-          self._extract_archive(livery, archivePath, extractedPath, verbose=verbose)
+          self._extract_archive(livery, archivePath, extractedPath, verbose=verbose, prefer7z=True)
           self._extract_extracted_archive(livery, extractedPath)
           return extractedPath
     return None
 
-  def _extract_archive(self, livery, archivePath, extractPath, verbose=False):
+  def _extract_archive(self, livery, archivePath, extractPath, verbose=False, prefer7z=True):
     prefProgram = None
-    if patoolib.util.get_nt_7z_dir() != "":
+    if patoolib.util.get_nt_7z_dir() != "" and prefer7z:
       prefProgram = "7z"
     patoolVerbosity = (2 if verbose else 0)
     patoolib.extract_archive(archivePath, patoolVerbosity, extractPath, program=prefProgram)
@@ -284,7 +281,7 @@ class LiveryManager:
     liveryDirectories = []
     for root, files in extractedLiveryFiles.items():
       liveryName = root
-      if root != "\\":
+      if root != "\\" and len(root):
         liveryName = str.split(root,"\\")[-1]
       if len(liveryName):
         if self.is_valid_livery_directory(files):
@@ -314,6 +311,8 @@ class LiveryManager:
       directoryFiles = {}
       for f in extractedFiles:
         splitF = os.path.split(f)
+        if len(splitF[0]) == 0:
+          continue
         if splitF[0] not in directoryFiles:
           directoryFiles[splitF[0]] = []
         directoryFiles[splitF[0]].append(f)
@@ -323,7 +322,10 @@ class LiveryManager:
   def _get_size_of_extracted_livery_files(self, livery, extractPath, fileList):
     totalSize = 0
     for f in fileList:
-      extractedFilepath = os.path.join(extractPath, f[1:])
+      filePath = f
+      if f[0] == "\\" or f[0] == "/":
+        filePath = f[1:]
+      extractedFilepath = os.path.join(extractPath, filePath)
       totalSize += os.path.getsize(extractedFilepath)
     return totalSize
 
@@ -344,7 +346,10 @@ class LiveryManager:
           break
       if badFileName:
         continue
-      extractedFilepath = os.path.join(extractPath, f[1:])
+      filePath = f
+      if f[0] == "\\" or f[0] == "/":
+        filePath = f[1:]
+      extractedFilepath = os.path.join(extractPath, filePath)
       destinationFilepath = os.path.join(installDirectory, fileName)
       shutil.copy2(extractedFilepath, destinationFilepath,)
     return True
