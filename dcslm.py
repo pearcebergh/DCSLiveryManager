@@ -35,6 +35,8 @@ import DCSLM.Utilities as Utilities
 # TODO: Allow use of dcsuf url/id to fill in archive dcsuf info
 # TODO: Change install process to begin with simultaneous downloads
 
+# TODO: fix extract archive folder double id
+
 def set_console_title(title):
   if platform.system() == 'Windows':
     os.system(f'title {title}')
@@ -708,6 +710,7 @@ class DCSLMApp:
     self._make_nested_completer()
     self._print_livery_install_report(installData, "Livery Install Report")
 
+  # 3314505
   def uninstall_liveries(self, sArgs):
     sArgs = self._remove_brackets_sArgs(sArgs)
     uninstallArgs = self._parse_command_args("uninstall", sArgs)
@@ -723,7 +726,7 @@ class DCSLMApp:
           if livery:
             self.console.print("Found registered livery.")
             numLiveries = str(livery.get_num_liveries())
-            if uninstallArgs.keep:
+            if uninstallArgs.keep: # TODO: confirm keep works
               with self.console.status("Removing " + numLiveries + " livery registry files... (--keep)"):
                 self.lm.uninstall_livery(livery)
               self.console.print("Removed " + numLiveries + " livery registry files. (--keep)")
@@ -1498,7 +1501,7 @@ class DCSLMApp:
   def reload_dcslm_config(self):
     if self.lm:
       self.lm.clear_data()
-      self.lm.load_data()
+      self.lm.LiveryData = self.lm.load_data()
 
   # TODO: Test with archive paths with spaces
   def _executable_parse_list_command(self, command, varData):

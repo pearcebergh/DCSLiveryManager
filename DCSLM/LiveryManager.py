@@ -46,7 +46,8 @@ class LiveryManager:
         with open(configPath, "r") as configFile:
           configData = json.load(configFile)
           for id,l in configData['liveries'].items():
-            self.Liveries[id] = Livery().from_JSON(l)
+            livery = Livery().from_JSON(l)
+            self.Liveries[id] = livery
           return configData
       except:
         raise RuntimeError("Unable to open existing DCSLM config file at \'" + configPath + "\'")
@@ -94,8 +95,9 @@ class LiveryManager:
 
   def register_livery(self, livery):
     if livery:
-      self.LiveryData["liveries"][str(livery.dcsuf.id)] = livery.to_JSON()
-      self.Liveries[str(livery.dcsuf.id)] = livery
+      idStr = str(livery.dcsuf.id)
+      self.LiveryData["liveries"][idStr] = livery.to_JSON()
+      self.Liveries[idStr] = livery
 
   def _remove_installed_livery_directory(self, livery, installPath):
     if "Liveries" in installPath:
@@ -286,7 +288,7 @@ class LiveryManager:
     liveryDirectories = []
     for root, files in extractedLiveryFiles.items():
       liveryName = root
-      if root != "\\" and len(root):
+      if root != "\\":
         liveryName = str.split(root,"\\")[-1]
       if len(liveryName):
         if self.is_valid_livery_directory(files):
@@ -316,8 +318,6 @@ class LiveryManager:
       directoryFiles = {}
       for f in extractedFiles:
         splitF = os.path.split(f)
-        if len(splitF[0]) == 0:
-          continue
         if splitF[0] not in directoryFiles:
           directoryFiles[splitF[0]] = []
         directoryFiles[splitF[0]].append(f)
