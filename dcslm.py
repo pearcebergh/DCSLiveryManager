@@ -151,7 +151,7 @@ class DCSLMApp:
         'flags': {
           'keep': {
             'tags': ['-k', '--keep'],
-            'desc': "Keep livery files on disk (untrack them)",
+            'desc': "Keep livery files on disk but remove registry files (.dcslm.json)",
             'action': "store_true"
           },
         },
@@ -710,7 +710,6 @@ class DCSLMApp:
     self._make_nested_completer()
     self._print_livery_install_report(installData, "Livery Install Report")
 
-  # 3314505
   def uninstall_liveries(self, sArgs):
     sArgs = self._remove_brackets_sArgs(sArgs)
     uninstallArgs = self._parse_command_args("uninstall", sArgs)
@@ -726,13 +725,14 @@ class DCSLMApp:
           if livery:
             self.console.print("Found registered livery.")
             numLiveries = str(livery.get_num_liveries())
-            if uninstallArgs.keep: # TODO: confirm keep works
-              with self.console.status("Removing " + numLiveries + " livery registry files... (--keep)"):
-                self.lm.uninstall_livery(livery)
+            uninstallStatus = "Removing " + numLiveries + " installed livery directories..."
+            if uninstallArgs.keep:
+              uninstallStatus = "Removing " + numLiveries + " livery registry files... (--keep)"
+            with self.console.status(uninstallStatus):
+              self.lm.uninstall_livery(livery, keepFiles=uninstallArgs.keep)
+            if uninstallArgs.keep:
               self.console.print("Removed " + numLiveries + " livery registry files. (--keep)")
             else:
-              with self.console.status("Removing " + numLiveries + " installed livery directories..."):
-                self.lm.uninstall_livery(livery)
               self.console.print("Removed " + numLiveries + " installed livery directories.")
             uninstallData['success'].append(livery)
             self.console.print("Successfully uninstalled livery \'" + livery.dcsuf.title + "\'.")

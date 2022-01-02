@@ -125,8 +125,11 @@ class LiveryManager:
         return True
     return False
 
-  def uninstall_livery(self, livery):
-    self.remove_installed_livery_directories(livery)
+  def uninstall_livery(self, livery, keepFiles=False):
+    if not keepFiles:
+      self.remove_installed_livery_directories(livery)
+    else:
+      self.remove_livery_registry_files(livery)
     self.unregister_livery(livery)
 
   def load_livery_from_livery_registry_file(self, registryPath):
@@ -161,14 +164,14 @@ class LiveryManager:
       for p in v['paths']:
         installRoot = os.path.join(os.getcwd(), livery.destination, p)
         if os.path.isdir(installRoot):
-          installPath = os.path.join(installRoot, ".dcslm.json")
-          if os.path.isfile(installPath):
+          registryPath = os.path.join(installRoot, ".dcslm.json")
+          if os.path.isfile(registryPath) and Utilities.validate_remove_path(registryPath):
             try:
-              Utilities.remove_file(installPath)
+              Utilities.remove_file(registryPath)
             except:
-              raise RuntimeError("Unable to remove livery registry file at \'" + installPath + "\'.")
+              raise RuntimeError("Unable to remove livery registry file at \'" + registryPath + "\'.")
           else:
-            raise RuntimeError("Unable to find livery registry file \'" + installPath + "\'.")
+            raise RuntimeError("Unable to find livery registry file \'" + registryPath + "\'.")
 
   def download_livery_archive(self, livery, dlCallback=None, session=None, prependDCSUFID=True):
     if livery:
