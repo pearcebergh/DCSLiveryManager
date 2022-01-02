@@ -990,28 +990,35 @@ class DCSLMApp:
                            relData[0]['version'] + "[/bold green]")
 
   def request_upgrade_information(self):
-    import re
     import requests
     import pkg_resources
+    from datetime import datetime
     from bs4 import BeautifulSoup
     try:
       releaseData = []
       relReq = requests.get("https://github.com/pearcebergh/DCSLiveryManager/releases", timeout=5)
       relHTML = BeautifulSoup(relReq.text, 'html.parser')
-      relDivs = relHTML.find_all('div', {'class': "release-entry"})
+      relDivs = relHTML.find_all('div', {'class': "d-flex flex-column flex-md-row my-5 flex-justify-center"})
       for r in relDivs:
         rData = {
-          'name': r.find('div', {'class': "f1 flex-auto min-width-0 text-normal"}).text[:-1],
-          'version': r.find('span', {'class': "css-truncate-target"}).text,
-          'desc': r.find('div', {'class': "markdown-body"}).text,
-          'date': r.find('relative-time').text,
-          'download': "https://github.com/" + r.find('a', {'class': "d-flex flex-items-center min-width-0"},
-                                                     href=re.compile(r'[/]([a-z]|[A-Z])\w+')).attrs['href']
+          'name': r.find('a', {'class': "Link--primary"}).text,
+          'version': r.find('span', {'class': "ml-1 wb-break-all"}).text.strip(),
+          'desc': r.find('div', {'class': "markdown-body my-3"}).text,
+          'date': r.find('local-time', {'class': "no-wrap"}).get('datetime'),
+          'download': ""
         }
+        dtRelease = datetime.strptime(rData['date'], "%Y-%m-%dT%H:%M:%SZ")
+        dtStr = dtRelease.strftime("%b %d, %Y")
+        rData['date'] = dtStr
+        for a in r.find_all('a'):
+          if a.text.strip() == "DCSLM.exe":
+            rData['download'] = "https://github.com" + a.get('href')
+            break
         if pkg_resources.parse_version(rData['version']) > pkg_resources.parse_version(__version__):
           releaseData.append(rData)
       return releaseData
     except Exception as e:
+      self.console.print("Failed to parse GitHub release page for upgrade information.", style="bold red")
       raise e
 
   def _download_upgrade_progress(self, exeURL, version, writePath):
