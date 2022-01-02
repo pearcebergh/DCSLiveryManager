@@ -35,8 +35,6 @@ import DCSLM.Utilities as Utilities
 # TODO: Allow use of dcsuf url/id to fill in archive dcsuf info
 # TODO: Change install process to begin with simultaneous downloads
 
-# TODO: fix extract archive folder double id
-
 def set_console_title(title):
   if platform.system() == 'Windows':
     os.system(f'title {title}')
