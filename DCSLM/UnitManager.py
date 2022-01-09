@@ -48,7 +48,10 @@ class UnitManager:
           print("Failed to load unit config \'" + uF + "\'.")
 
   def create_unit_directories(self):
-    unitsRoot = os.path.join(os.getcwd(), "DCSLM", "units")
+    dcslmRoot = os.path.join(os.getcwd(), "DCSLM")
+    unitsRoot = os.path.join(dcslmRoot, "units")
+    if not os.path.exists(dcslmRoot):
+      os.mkdir(dcslmRoot)
     if not os.path.exists(unitsRoot):
       os.mkdir(unitsRoot)
     for c in self.Categories:
