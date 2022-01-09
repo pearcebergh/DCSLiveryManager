@@ -34,6 +34,7 @@ import DCSLM.Utilities as Utilities
 # TODO: Use on archive files already downloaded without DCSUF info
 # TODO: Allow use of dcsuf url/id to fill in archive dcsuf info
 # TODO: Change install process to begin with simultaneous downloads
+# TODO: Add fallback upgrade path to find latest DCSLM.exe when unable to parse releases page
 
 def set_console_title(title):
   if platform.system() == 'Windows':
@@ -85,8 +86,6 @@ class DCSLMApp:
       workingDir = str.replace(workingDir, "\"", '')
       workingDir = str.strip(workingDir)
       workingDirName = os.path.dirname(os.path.join(workingDir))
-      self.console.print(workingDirName)
-      self.console.print(os.path.isdir(workingDirName))
       if os.path.isdir(workingDirName):
         os.chdir(os.path.dirname(workingDir))
         self.console.print("Changing working directory to \'" + workingDir + "\'")
@@ -1004,12 +1003,18 @@ class DCSLMApp:
           'name': r.find('a', {'class': "Link--primary"}).text,
           'version': r.find('span', {'class': "ml-1 wb-break-all"}).text.strip(),
           'desc': r.find('div', {'class': "markdown-body my-3"}).text,
-          'date': r.find('local-time', {'class': "no-wrap"}).get('datetime'),
+          'date': "",
           'download': ""
         }
-        dtRelease = datetime.strptime(rData['date'], "%Y-%m-%dT%H:%M:%SZ")
-        dtStr = dtRelease.strftime("%b %d, %Y")
-        rData['date'] = dtStr
+        dateCls = r.find('relative-time', {'class': "no-wrap"})
+        if not dateCls:
+          dateCls = r.find('local-time', {'class': "no-wrap"})
+        if dateCls:
+          dateDT = dateCls.get('datetime')
+          if dateDT:
+            dtRelease = datetime.strptime(dateDT, "%Y-%m-%dT%H:%M:%SZ")
+            dtStr = dtRelease.strftime("%b %d, %Y")
+            rData['date'] = dtStr
         for a in r.find_all('a'):
           if a.text.strip() == "DCSLM.exe":
             rData['download'] = "https://github.com" + a.get('href')
@@ -1019,7 +1024,7 @@ class DCSLMApp:
       return releaseData
     except Exception as e:
       self.console.print("Failed to parse GitHub release page for upgrade information.", style="bold red")
-      raise e
+      return None
 
   def _download_upgrade_progress(self, exeURL, version, writePath):
     import requests
@@ -1526,20 +1531,24 @@ class DCSLMApp:
   def run_exe_args(self):
     if len(sys.argv) == 1:
       return False
-    self.console.print("")
-    self.console.print("Running [sky_blue1]DCSLM[/sky_blue1] executable arguments:", style="bold gold1")
     exeArgsStr = "\t[sky_blue1]DCSLM.exe[/sky_blue1] "
+    runnableCommand = False
     for a in sys.argv[1:]:
       if len(a):
         if a[0] == "-":
           exeArgsStr += a + " "
+          if a != "-w" and a != "--workingdirectory":
+            runnableCommand = True
         else:
           exeArgsStr += "[italic]" + a + "[/italic] "
-    self.console.print(exeArgsStr)
-    if self.parsedArgs.persist:
-      self.console.print("[sky_blue1]DCSLM[/sky_blue1] will remain [green italic]open[/green italic] after completion (-p, --persist)", style="blue")
-    else:
-      self.console.print("[sky_blue1]DCSLM[/sky_blue1] will [red italic]close[/red italic] after completion", style="blue")
+    if runnableCommand:
+      self.console.print("")
+      self.console.print("Running [sky_blue1]DCSLM[/sky_blue1] executable arguments:", style="bold gold1")
+      self.console.print(exeArgsStr)
+      if self.parsedArgs.persist:
+        self.console.print("[sky_blue1]DCSLM[/sky_blue1] will remain [green italic]open[/green italic] after completion (-p, --persist)", style="blue")
+      else:
+        self.console.print("[sky_blue1]DCSLM[/sky_blue1] will [red italic]close[/red italic] after completion", style="blue")
     parseConfig = {
       'uninstall': {'parsedArgs': self.parsedArgs.uninstall, 'exec': self.uninstall_liveries},
       'install': {'parsedArgs': self.parsedArgs.install, 'exec': self.install_liveries},
