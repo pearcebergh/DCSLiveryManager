@@ -1,7 +1,6 @@
 import json
 import os
 from datetime import datetime
-import DCSLM.UnitManager as UnitManager
 import DCSLM.Utilities as Utilities
 
 class DCSUserFile:
