@@ -84,10 +84,10 @@ class DCSLMApp:
   def setup_working_dir(self, workingDir=None):
     if workingDir:
       workingDir = str.replace(workingDir, "\"", '')
-      workingDir = str.strip(workingDir)
+      workingDir = str.strip(workingDir) + "\\"
       workingDirName = os.path.dirname(os.path.join(workingDir))
       if os.path.isdir(workingDirName):
-        os.chdir(os.path.dirname(workingDir))
+        os.chdir(workingDirName)
         self.console.print("Changing working directory to \'" + workingDir + "\'")
         return
     if not "PYCHARM_HOSTED" in os.environ:
