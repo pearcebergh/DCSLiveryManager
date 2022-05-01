@@ -292,7 +292,10 @@ class LiveryManager:
     for root, files in extractedLiveryFiles.items():
       liveryName = root
       if root != "\\":
-        liveryName = str.split(root,"\\")[-1]
+        if not len(root): # Set livery name to DCSUF title if there is no folder root
+          liveryName = livery.dcsuf.title
+        else: # Get livery name of last part of the path
+          liveryName = str.split(root,"\\")[-1]
       if len(liveryName):
         if self.is_valid_livery_directory(files):
           liverySize = self._get_size_of_extracted_livery_files(livery, extractPath, files)
@@ -371,7 +374,10 @@ class LiveryManager:
         if self.is_valid_livery_directory(files):
           rootUnit = livery.dcsuf.title
           if root != "\\":
-            rootUnit = str.split(root, "\\")[-1]
+            if not len(root):
+              rootUnit = livery.dcsuf.title
+            else:
+              rootUnit = str.split(root, "\\")[-1]
           if installLivery == rootUnit:
             if self._copy_livery_files(livery, extractPath, files, installPath):
               copiedLiveries.append(install)

@@ -35,6 +35,9 @@ import DCSLM.Utilities as Utilities
 # TODO: Allow use of dcsuf url/id to fill in archive dcsuf info
 # TODO: Change install process to begin with simultaneous downloads
 # TODO: Add fallback upgrade path to find latest DCSLM.exe when unable to parse releases page
+# TODO: Add reminder since last livery update check to launch motd
+# TODO: Modify download message when -k flag is used
+# TODO: Add progress numbering to install/uninstall/optimize
 
 def set_console_title(title):
   if platform.system() == 'Windows':
