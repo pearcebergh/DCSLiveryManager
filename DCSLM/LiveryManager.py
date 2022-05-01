@@ -693,8 +693,9 @@ class LiveryManager:
           splitLivery = splitFile[-2]
           if splitLivery in filesData.keys():
             for p in filesData[t][f]['parts']:
-              if p not in filesData[splitLivery][splitFile[-1]]['parts']:
-                filesData[splitLivery][splitFile[-1]]['parts'].append(p)
+              if splitFile[-1] in filesData[splitLivery].keys():
+                if p not in filesData[splitLivery][splitFile[-1]]['parts']:
+                  filesData[splitLivery][splitFile[-1]]['parts'].append(p)
             movedFiles.append(f)
       for mF in movedFiles:
         del filesData[t][mF]

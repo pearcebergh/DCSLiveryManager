@@ -1159,6 +1159,7 @@ class DCSLMApp:
                          " Mb    Total Size Delta: " + Utilities.mb_to_mb_string(totalSizeDelta) + " Mb",
                          justify="center")
 
+  # TODO: Fix deletion of files on already optimized livery (3314968)
   def optimize_livery(self, sArgs):
     if not len(sArgs):
       raise RuntimeWarning("No liveries provided for \'optimize\' command.")
