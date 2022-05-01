@@ -204,6 +204,9 @@ class LiveryManager:
             raise RuntimeError("Failed during download of archive " + livery.dcsuf.download + ": " + str(e))
     raise RuntimeError("Unable to get downloaded archive path for livery \'" + livery.dcsuf.title + "\'.")
 
+  def get_num_registered_liveries(self):
+    return len(self.LiveryData['liveries'])
+
   def get_registered_livery_ids(self):
     return self.LiveryData['liveries'].keys()
 

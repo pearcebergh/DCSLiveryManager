@@ -102,6 +102,11 @@ class DCSLMApp:
         'usage': "\[id/url1] \[id/url2] \[id/url3] ...",
         'desc': "Install DCS liveries from DCS User Files URLs or IDs",
         'flags': {
+          'allunits': {
+            'tags': ['-a', '--allunits'],
+            'desc': "Do not prompt when given a choice to install to multiple units and install to all",
+            'action': "store_true"
+          },
           'keep': {
             'tags': ['-k', '--keep'],
             'desc': "Keep downloaded livery archive files",
@@ -112,19 +117,14 @@ class DCSLMApp:
             'desc': "Do not prompt if the livery is already registered",
             'action': "store_true"
           },
-          'unitselection': {
-            'tags': ['-u', '--unitselection'],
-            'desc': "Force selection of unit to install to",
-            'action': "store_true"
-          },
-          'allunits': {
-            'tags': ['-a', '--allunits'],
-            'desc': "Do not prompt when given a choice to install to multiple units and install to all",
-            'action': "store_true"
-          },
           'screenshots': {
             'tags': ['-s', '--screenshots'],
             'desc': "Download and store the available screenshots of uploaded with the livery to the DCS User Files",
+            'action': "store_true"
+          },
+          'unitselection': {
+            'tags': ['-u', '--unitselection'],
+            'desc': "Force selection of unit to install to",
             'action': "store_true"
           },
           'verbose': {
@@ -138,7 +138,8 @@ class DCSLMApp:
             'type': "number/string",
             'optional': False,
             'desc': "DCS User Files ID or URL",
-            'variable': True
+            'variable': True,
+            'skip': False
           },
         },
         'subcommands': {},
@@ -160,7 +161,15 @@ class DCSLMApp:
             'type': "string",
             'optional': False,
             'desc': "Livery ID",
-            'variable': True
+            'variable': True,
+            'skip': False
+          },
+          'all': {
+            'type': "string",
+            'optional': True,
+            'desc': "Uninstall all currently registered liveries",
+            'variable': False,
+            'skip': True
           },
         },
         'subcommands': {},
@@ -176,7 +185,8 @@ class DCSLMApp:
             'type': "string",
             'optional': False,
             'desc': "Livery ID",
-            'variable': False
+            'variable': False,
+            'skip': False
           },
         },
         'subcommands': {},
@@ -220,11 +230,6 @@ class DCSLMApp:
         'usage': "\[flags] livery",
         'desc': "Attempt to optimize an installed livery by looking for unused or shared files between liveries within packs",
         'flags': {
-          'reoptimize': {
-            'tags': ['-r','--reoptimize'],
-            'desc': "Optimize liveries even if they have already been optimized",
-            'action': "store_true"
-          },
           'keepdesc': {
             'tags': ['-d','--keepdesc'],
             'desc': "Keep a copy of the original unmodified description.lua files",
@@ -233,6 +238,11 @@ class DCSLMApp:
           'keepunused': {
             'tags': ['-u', '--keepunused'],
             'desc': "Keep unused files on disk at the end of optimization",
+            'action': "store_true"
+          },
+          'reoptimize': {
+            'tags': ['-r', '--reoptimize'],
+            'desc': "Optimize liveries even if they have already been optimized",
             'action': "store_true"
           },
           'verbose': {
@@ -246,7 +256,15 @@ class DCSLMApp:
             'type': "string",
             'optional': False,
             'desc': "Livery ID",
-            'variable': True
+            'variable': True,
+            'skip': False
+          },
+          'all': {
+            'type': "string",
+            'optional': True,
+            'desc': "Attempt to optimize each currently registered livery",
+            'variable': False,
+            'skip': True
           },
         },
         'subcommands': {},
@@ -277,7 +295,8 @@ class DCSLMApp:
             'type': "string",
             'optional': True,
             'desc': "Display information about a specific unit",
-            'variable': True
+            'variable': True,
+            'skip': False
           },
         },
         'subcommands': {},
@@ -348,6 +367,11 @@ class DCSLMApp:
                     " directories and liveries",
             'action': "store"
           },
+          'persist': {
+            'tags': ['-p', '--persist'],
+            'desc': "Keep the instance of DCS Livery Manager open after running executable arguments",
+            'action': "store_true"
+          },
           'update': {
             'tags': ['-d', '--update'],
             'desc': "Install any available updates to registered liveries",
@@ -358,24 +382,21 @@ class DCSLMApp:
             'desc': "Upgrade DCS Livery Manager executable",
             'action': "store_true"
           },
-          'persist': {
-            'tags': ['-p', '--persist'],
-            'desc': "Keep the instance of DCS Livery Manager open after running executable arguments",
-            'action': "store_true"
-          },
         },
         'args': {
           '--install': {
             'type': "string",
             'optional': True,
             'desc': "Livery ID, URL, or Path to the archive of the liveries you want to install",
-            'variable': True
+            'variable': True,
+            'skip': False
           },
           '--uninstall': {
             'type': "string",
             'optional': True,
             'desc': "Livery ID of the liveries you want to uninstall",
-            'variable': True
+            'variable': True,
+            'skip': False
           },
         },
         'subcommands': {},
@@ -445,6 +466,8 @@ class DCSLMApp:
                                 action=self.commands[command]['flags'][iF]['action'], dest=iF)
       for iA in self.commands[command]['args'].keys():
         varArg = None
+        if self.commands[command]['args'][iA]['skip']:
+          continue
         if self.commands[command]['args'][iA]['variable']:
           if command == "executable":
             varArg = "*"
@@ -714,10 +737,21 @@ class DCSLMApp:
     sArgs = self._remove_brackets_sArgs(sArgs)
     uninstallArgs = self._parse_command_args("uninstall", sArgs)
     self.reload_dcslm_config()
-    self.console.print("Attempting to uninstall " + str(len(uninstallArgs.livery)) +
-                       (" registered liveries" if len(uninstallArgs.livery) > 1 else " registered livery") + ".")
     uninstallData = {'success': [], 'failed': []}
-    for liveryStr in uninstallArgs.livery:
+    uninstallLiveries = uninstallArgs.livery
+    if len(uninstallArgs.livery) and str.lower(uninstallArgs.livery[0]) == "all":
+      confirmAll = Confirm.ask("Do you want to uninstall all [bright_cyan]" + str(self.lm.get_num_registered_liveries()) +
+                               "[/bright_cyan] registered liveries?", console=self.console)
+      if confirmAll:
+        uninstallLiveries = list(self.lm.get_registered_livery_ids())
+      else:
+        return
+    if not len(uninstallLiveries):
+      self.console.print("No liveries given to \'uninstall\' command.")
+      return
+    self.console.print("Attempting to uninstall " + str(len(uninstallLiveries)) +
+                       (" registered liveries" if len(uninstallLiveries) > 1 else " registered livery") + ".")
+    for liveryStr in uninstallLiveries:
       if str.isnumeric(liveryStr):
         try:
           self.console.print("Uninstalling \'" + liveryStr + "\'.")
@@ -736,6 +770,7 @@ class DCSLMApp:
               self.console.print("Removed " + numLiveries + " installed livery directories.")
             uninstallData['success'].append(livery)
             self.console.print("Successfully uninstalled livery \'" + livery.dcsuf.title + "\'.")
+            break
           else:
             raise RuntimeError("Livery \'" + liveryStr + "\' not found in livery registry.")
         except Exception as e:
@@ -1132,13 +1167,29 @@ class DCSLMApp:
     removeFiles = not optimizeArgs.keepunused
     optimizationReports = []
     liveryIDs = []
+    '''    
     if len(optimizeArgs.livery) == 1 and str.lower(optimizeArgs.livery[0]) == "all":
       self.console.print("Attempting to optimize all installed liveries...")
       liveryIDs = self.lm.get_registered_livery_ids()
     else:
       for l in optimizeArgs.livery:
         if l not in liveryIDs:
+          liveryIDs.append(l)'''
+    if len(optimizeArgs.livery) and str.lower(optimizeArgs.livery[0]) == "all":
+      confirmAll = Confirm.ask(
+        "Do you want to optimize all [bright_cyan]" + str(self.lm.get_num_registered_liveries()) +
+        "[/bright_cyan] registered liveries?", console=self.console)
+      if confirmAll:
+        liveryIDs = list(self.lm.get_registered_livery_ids())
+      else:
+        return
+    else:
+      for l in optimizeArgs.livery:
+        if l not in liveryIDs:
           liveryIDs.append(l)
+    if not len(liveryIDs):
+      self.console.print("No liveries given to \'optimize\' command.")
+      return
     for l in liveryIDs:
       livery = self.lm.get_registered_livery(id=l)
       if livery:
