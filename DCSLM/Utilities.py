@@ -5,6 +5,13 @@ import hashlib
 import glob
 from requests import get
 
+def find_desc_file_format(knownFilePath):
+  detectedFormat = ""
+  matchedFiles = glob.glob(knownFilePath + ".*")
+  if len(matchedFiles):
+    detectedFormat = matchedFiles[0].split(".")[-1]
+  return detectedFormat
+
 def hash_file(filePath):
   if os.path.isfile(filePath):
     with open(filePath, "rb") as hashFile:

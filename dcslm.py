@@ -1167,14 +1167,6 @@ class DCSLMApp:
     removeFiles = not optimizeArgs.keepunused
     optimizationReports = []
     liveryIDs = []
-    '''    
-    if len(optimizeArgs.livery) == 1 and str.lower(optimizeArgs.livery[0]) == "all":
-      self.console.print("Attempting to optimize all installed liveries...")
-      liveryIDs = self.lm.get_registered_livery_ids()
-    else:
-      for l in optimizeArgs.livery:
-        if l not in liveryIDs:
-          liveryIDs.append(l)'''
     if len(optimizeArgs.livery) and str.lower(optimizeArgs.livery[0]) == "all":
       confirmAll = Confirm.ask(
         "Do you want to optimize all [bright_cyan]" + str(self.lm.get_num_registered_liveries()) +
@@ -1207,7 +1199,7 @@ class DCSLMApp:
               for t in filesData['missing'].keys():
                 missingFilesStr = ', '.join(filesData['missing'][t])
                 self.console.print("[red]Missing files referenced in description.lua for " + t + ": " + missingFilesStr)
-            liveryReportStr = "Matched " + str(len(filesData['same_hash'])) + " .dds files with the same content."
+            liveryReportStr = "Matched " + str(len(filesData['same_hash'])) + " image files with the same content."
             if removeFiles:
               liveryReportStr += " Removed " + str(len(filesData['unused'])) + " unused files.\n"
               liveryReportStr += "Size Before: " + Utilities.bytes_to_mb_string(filesData['size']['before']) + " Mb\t"

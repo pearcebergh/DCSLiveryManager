@@ -535,8 +535,9 @@ class LiveryManager:
     fileHashes = {}
     for f, d in fileRefs.items():
       filepath = os.path.join(installRoot, f)
-      if not ".dds" in filepath:
-        filepath += ".dds"
+      if not "." in filepath:
+        detectedFormat = Utilities.find_desc_file_format(filepath)
+        filepath += "." + detectedFormat
       if os.path.isfile(filepath):
         fileHash = Utilities.hash_file(filepath)
         if fileHash:
@@ -720,7 +721,7 @@ class LiveryManager:
         if 'hash' not in liveryFilesData[t][f].keys():
           if t not in missingFiles:
             missingFiles[t] = []
-          missingFiles[t].append(f + ".dds")
+          missingFiles[t].append(f)
     return missingFiles
 
   def optimize_livery(self, livery, removeUnused=False, copyDesc=False, verbose=False):
