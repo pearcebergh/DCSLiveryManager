@@ -18,6 +18,12 @@ UnitDefaults = {
           "dcs_files": "A-10C II Tank Killer",
           "liveries": ["A-10A", "A-10C", "A-10CII"]
         },
+        "ah-64d": {
+          "names": ["ah-64d", "ah-64", "ah 64", "ah64", "apache"],
+          "friendly": "AH-64D",
+          "dcs_files": "AH-64D",
+          "liveries": ["AH-64D_BLK_II"]
+        },
         "ajs-37": {
           "names": ["ajs-37", "viggen", "ajs 37"],
           "friendly": "AJS-37",
@@ -181,9 +187,9 @@ UnitDefaults = {
           "liveries": ["mig-29c"]
         },
         "mosquito fb mk vi": {
-          "names": ["mosquito", "mossie", "mosquito fb mk vi", "mosquito fb mk. vi"],
+          "names": ["mosquito", "mossie", "mosquito fb vi", "mosquito fb mk vi", "mosquito fb mk. vi"],
           "friendly": "Mosquito FB Mk. VI",
-          "dcs_files": "",
+          "dcs_files": "Mosquito FB VI",
           "liveries": ["MosquitoFBMkVI"]
         },
         "p-47d": {
