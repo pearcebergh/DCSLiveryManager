@@ -48,7 +48,7 @@ UnitDefaults = {
           "dcs_files": "C-101 Aviojet",
           "liveries": ["C-101CC", "C-101EB"]
         },
-        "christen eagle II": {
+        "christen eagle ii": {
           "names": ["Christen Eagle II"],
           "friendly": "Christen Eagle II",
           "dcs_files": "Christen Eagle II",
@@ -251,6 +251,27 @@ UnitDefaults = {
           "friendly": "Yak-52",
           "dcs_files": "Yak-52",
           "liveries": ["Yak-52"]
-        }
+        },
+        "hercules": {
+          "names": ["hercules", "super hercules", "c-130j", "c-130"],
+          "friendly": "C-130J Super Hercules",
+          "dcs_files": "Other",
+          "liveries": ["Hercules"]
+        },
+        "a-4e-c": {
+          "names": ["a-4e-c", "a-4", "a-4e", "skyhawk"],
+          "friendly": "A-4E-C",
+          "dcs_files": "Other",
+          "liveries": ["a-4e-c"]
+        },
       }
     }
+# Add mods: F-104, F-117?, F-22?
+
+UnitsOfficial = {
+  "Air": ["a-10a", "a-10c", "a-10cii", "ah-64d", "ajs-37", "av-8b", "bf-109k-4", "c-101", "christen eagle ii", "f-14",
+          "f-15c", "f-16c", "f-5e", "f-86f", "fa-18c", "fw-190-a-8", "fw-190-d-9", "hawk", "i-16", "j-11a", "jf-17",
+          "ka-50", "l-39", "m-2000c", "mi-24p", "mi-8mtv2", "mig-15bis", "mig-19p", "mig-21bis", "mig-29a", "mig-29c",
+          "mosquito fb mk vi", "p-47d", "p-51d", "sa342", "spitfire lf mk ix", "su-25", "su-25t", "su-27", "su-33",
+          "uh-1h", "yak-52"]
+}

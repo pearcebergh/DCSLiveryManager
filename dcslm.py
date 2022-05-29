@@ -27,6 +27,7 @@ from rich.table import Table
 from DCSLM import __version__
 from DCSLM.DCSUFParser import DCSUFParser, DCSUFPC
 from DCSLM.LiveryManager import LiveryManager
+from DCSLM.UnitDefaults import UnitsOfficial
 from DCSLM.UnitManager import UM
 import DCSLM.Utilities as Utilities
 
@@ -38,6 +39,8 @@ import DCSLM.Utilities as Utilities
 # TODO: Add reminder since last livery update check to launch motd
 # TODO: Modify download message when -k flag is used
 # TODO: Add progress numbering to install/uninstall/optimize
+# TODO: Failing file hashes
+# TODO: Fix list formatting
 
 def set_console_title(title):
   if platform.system() == 'Windows':
@@ -1270,9 +1273,11 @@ class DCSLMApp:
               friendlyStr = "[magenta]" + friendlyStr + "[/magenta]"
             elif u.modified:
               friendlyStr = "[bold gold1]" + friendlyStr + "[/bold gold1]"
+            elif u.generic not in UnitsOfficial[c]:
+              friendlyStr = "[green]" + friendlyStr + "[/green]"
             friendlyUnits.append(friendlyStr)
           unitsStr = ', '.join(friendlyUnits)
-          self.console.print(Panel(unitsStr, title="[green]" + c + " Units", expand=False, highlight=False), justify="center")
+          self.console.print(Panel(unitsStr, title="[bold sky_blue1]" + c + " Units", expand=False, highlight=False), justify="center")
 
   def dcslm_config(self, sArgs):
     for i in range(0, len(sArgs)):
