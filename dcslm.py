@@ -10,7 +10,7 @@ from prompt_toolkit import PromptSession, HTML
 from prompt_toolkit.completion import NestedCompleter
 from rich import box
 from rich.align import Align
-from rich.console import Console, RenderGroup
+from rich.console import Console, Group
 from rich.panel import Panel
 from rich.progress import (
   BarColumn,
@@ -952,7 +952,7 @@ class DCSLMApp:
       dcsufAlign = Align(dcsufPanel, align="center")
       liveryRG = self._make_livery_rendergroup(livery)
       liveryAlign = Align(liveryRG, align="center")
-      liveryInfoPanelGroup = RenderGroup(dcsufAlign, liveryAlign)
+      liveryInfoPanelGroup = Group(dcsufAlign, liveryAlign)
       self.console.print(Panel(liveryInfoPanelGroup, title="[sky_blue1]" + livery.dcsuf.title + "[/sky_blue1] [green]Livery Info", highlight=True))
     else:
       self.console.print("[red]Unable to find installed livery from \'" + ' '.join(sArgs) + "\'.")
