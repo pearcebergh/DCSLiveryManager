@@ -37,7 +37,6 @@ import DCSLM.Utilities as Utilities
 # TODO: Allow use of dcsuf url/id to fill in archive dcsuf info
 # TODO: Change install process to begin with simultaneous downloads
 # TODO: Add fallback upgrade path to find latest DCSLM.exe when unable to parse releases page
-# TODO: Modify download message when -k flag is used
 # TODO: Add progress numbering to install/uninstall/optimize
 # TODO: Fix list formatting
 
@@ -560,7 +559,11 @@ class DCSLMApp:
                 screenshotFiles = self.lm.download_screenshots(livery, session=session)
               self.console.print("Downloaded " + str(len(screenshotFiles)) + " screenshots.", style="bold")
           if not archivePath:
-            self.console.print("\nDownloading livery archive file " + livery.dcsuf.download)
+            downloadStr = "\nDownloading livery archive file "
+            if keepFiles:
+              downloadStr += "and saving (--keep) "
+            downloadStr += livery.dcsuf.download
+            self.console.print(downloadStr)
             archivePath = self._download_archive_progress(livery, session=session)
           if archivePath:
             livery.archive = archivePath
