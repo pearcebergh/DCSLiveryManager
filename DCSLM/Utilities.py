@@ -6,7 +6,7 @@ import glob
 from requests import get
 
 def find_desc_file_format(knownFilePath):
-  detectedFormat = ""
+  detectedFormat = "dds"
   matchedFiles = glob.glob(knownFilePath + ".*")
   if len(matchedFiles):
     detectedFormat = matchedFiles[0].split(".")[-1]
