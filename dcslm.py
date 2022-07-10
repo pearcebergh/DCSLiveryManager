@@ -32,13 +32,14 @@ from DCSLM.UnitDefaults import UnitsOfficial
 from DCSLM.UnitManager import UM
 import DCSLM.Utilities as Utilities
 
-# TODO: Detect shared data folder on install
+# TODO: Detect shared data folder on install 3323004
 # TODO: Use on archive files already downloaded without DCSUF info
 # TODO: Allow use of dcsuf url/id to fill in archive dcsuf info
 # TODO: Change install process to begin with simultaneous downloads
 # TODO: Add fallback upgrade path to find latest DCSLM.exe when unable to parse releases page
 # TODO: Add progress numbering to install/uninstall/optimize
 # TODO: Fix list formatting
+# TODO: scan/register existing liveries in saved games w/o dcsuf info
 
 def set_console_title(title):
   if platform.system() == 'Windows':
@@ -1212,9 +1213,11 @@ class DCSLMApp:
             liveryReportStr = "Matched " + str(len(filesData['same_hash'])) + " image files with the same content."
             if removeFiles:
               liveryReportStr += " Removed " + str(len(filesData['unused'])) + " unused files.\n"
-              liveryReportStr += "Size Before: " + Utilities.bytes_to_mb_string(filesData['size']['before']) + " Mb\t"
-              liveryReportStr += "Size After: " + Utilities.bytes_to_mb_string(filesData['size']['after']) + " Mb\t"
-              liveryReportStr += "Size Delta: " + Utilities.bytes_to_mb_string(filesData['size']['after'] - filesData['size']['before']) + " Mb"
+              if len(filesData['unused']) > 0:
+                self.console.print(filesData['unused'])
+                liveryReportStr += "Size Before: " + Utilities.bytes_to_mb_string(filesData['size']['before']) + " Mb\t"
+                liveryReportStr += "Size After: " + Utilities.bytes_to_mb_string(filesData['size']['after']) + " Mb\t"
+                liveryReportStr += "Size Delta: " + Utilities.bytes_to_mb_string(filesData['size']['after'] - filesData['size']['before']) + " Mb"
             self.console.print(liveryReportStr)
             self.console.print("")
             if optimizeArgs.verbose:

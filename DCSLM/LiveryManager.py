@@ -535,7 +535,7 @@ class LiveryManager:
   def _optimize_generate_file_hashes(self, installRoot, liveryTitle, fileRefs):
     fileHashes = {}
     for f, d in fileRefs.items():
-      filepath = os.path.join(installRoot, f)
+      filepath = os.path.abspath(os.path.join(installRoot, f))
       if not "." in filepath:
         detectedFormat = Utilities.find_desc_file_format(filepath)
         filepath += "." + detectedFormat
