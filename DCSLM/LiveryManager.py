@@ -31,7 +31,8 @@ class LiveryManager:
       "config": {
         "ovgme": False
       },
-      "liveries": {}
+      "liveries": {},
+      "last_update": 0,
     }
     return ld
 

@@ -4,6 +4,7 @@ import os
 import platform
 import shutil
 import sys
+from datetime import datetime
 from pprint import pprint
 from patoolib.util import get_nt_7z_dir
 from prompt_toolkit import PromptSession, HTML
@@ -36,10 +37,8 @@ import DCSLM.Utilities as Utilities
 # TODO: Allow use of dcsuf url/id to fill in archive dcsuf info
 # TODO: Change install process to begin with simultaneous downloads
 # TODO: Add fallback upgrade path to find latest DCSLM.exe when unable to parse releases page
-# TODO: Add reminder since last livery update check to launch motd
 # TODO: Modify download message when -k flag is used
 # TODO: Add progress numbering to install/uninstall/optimize
-# TODO: Failing file hashes
 # TODO: Fix list formatting
 
 def set_console_title(title):
@@ -81,6 +80,7 @@ class DCSLMApp:
     self.setup_completers()
     self.quick_check_upgrade_available()
     self.check_7z_installed()
+    self.check_last_update()
     exeArgs = self.run_exe_args()
     if not exeArgs or self.parsedArgs.persist:
       self.run()
@@ -853,10 +853,13 @@ class DCSLMApp:
         updateList.append(str(l['livery'].dcsuf.id))
     if not len(updateList):
       self.console.print("[red]No liveries need updating.")
+      self.set_last_update()
+      self.lm.write_data()
       return
     self.console.print("Found " + str(len(updateList)) + " liveries that need updating.")
     self.console.print("")
     updateData = self._install_liveries(updateList, forceDownload=True)
+    self.set_last_update()
     self.lm.write_data()
     self.completers['livery_ids']['dict'] = self.make_livery_ids_completer()
     self._make_nested_completer()
@@ -1542,6 +1545,25 @@ class DCSLMApp:
       self.console.print("[red]7-Zip was not found in the environment PATH. Make sure you have 7-Zip installed or " +
                          "this program will not work correctly!")
       self.console.print("[red]7-Zip is a free program available at[/red] https://www.7-zip.org/download.html")
+
+  def check_last_update(self):
+    currentTime = datetime.now()
+    if not "last_update" in self.lm.LiveryData.keys():
+      self.lm.LiveryData['last_update'] = 0
+    numLiveries = self.lm.get_num_registered_liveries()
+    if numLiveries > 0:
+      if self.lm.LiveryData['last_update'] == 0:
+        self.console.print("Use the [deep_pink2]update[/deep_pink2] command to see if there are updates available for " +
+                           str(numLiveries) + " registered liveries.", style="gold1")
+      else:
+        lastUpdateTime = datetime.fromtimestamp(self.lm.LiveryData['last_update'])
+        timeSinceUpdate = currentTime - lastUpdateTime
+        if timeSinceUpdate.days > 0:
+          self.console.print("[bold]" + str(timeSinceUpdate.days) + " days[/bold] since last check of updates for " +
+            str(numLiveries) + " registered liveries.")
+
+  def set_last_update(self):
+    self.lm.LiveryData['last_update'] = datetime.timestamp(datetime.now())
 
   def _download_archive_rich_callback(self, dlCallback, downloadedBytes):
     dlCallback['progress'].update(dlCallback['task'], advance=downloadedBytes)
