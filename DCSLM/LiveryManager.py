@@ -548,7 +548,7 @@ class LiveryManager:
             if liveryTitle not in fileHashes[fileHash]:
               fileHashes[fileHash].append(liveryTitle)
       else:
-        self.print("Unable to hash file " + filepath, style="bold red")
+        self.print("Unable to hash missing file " + filepath, style="bold red")
     return fileHashes
 
   def _optimize_find_unused_livery_files(self, livery, liveryFilesData):
