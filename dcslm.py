@@ -36,7 +36,6 @@ import DCSLM.Utilities as Utilities
 # TODO: Use on archive files already downloaded without DCSUF info
 # TODO: Allow use of dcsuf url/id to fill in archive dcsuf info
 # TODO: Add fallback upgrade path to find latest DCSLM.exe when unable to parse releases page
-# TODO: Fix list formatting
 # TODO: scan/register existing liveries in saved games w/o dcsuf info
 # TODO: add # liveries installed/size on disk to motd
 
@@ -910,7 +909,7 @@ class DCSLMApp:
     statusTable = Table(title="List of Registered Liveries", expand=True, box=box.ROUNDED, highlight=False)
     statusTable.add_column("Unit", justify="center", no_wrap=True, style="green", width=unitColWidth)
     statusTable.add_column("ID", justify="center", no_wrap=True, style="sky_blue1", width=8)
-    statusTable.add_column("Livery Title", justify="center", no_wrap=True, overflow='ellipsis')
+    statusTable.add_column("Livery Title", justify="center", no_wrap=True, overflow='ellipsis', max_width=72)
     statusTable.add_column("Size (MB)", justify="right", no_wrap=True, style="bold gold1", width=10)
     liveryRows.sort(key=sort_list_by_unit_then_title)
     for i in range(0, len(liveryRows)):
