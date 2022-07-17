@@ -211,6 +211,13 @@ class LiveryManager:
   def get_registered_livery_ids(self):
     return self.LiveryData['liveries'].keys()
 
+  def get_size_registered_liveries(self):
+    totalSize = 0
+    for l in self.Liveries.values():
+      liverySizeMB = Utilities.bytes_to_mb(l.get_size_installed_liveries())
+      totalSize += liverySizeMB
+    return totalSize
+
   def download_screenshots(self, livery, session=None):
     DCSUFURLRoot = DCSUFParser().DCSDownloadUrlPrefix
     if livery.dcsuf.screenshots and len(livery.dcsuf.screenshots):

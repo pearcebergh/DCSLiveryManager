@@ -37,6 +37,9 @@ def bytes_to_mb_string(sizeBytes):
 def mb_to_mb_string(sizeMegabytes):
   return "{:.2f}".format(sizeMegabytes)
 
+def mb_to_gb_string(sizeMegabytes):
+  return "{:.2f}".format(sizeMegabytes/(10**3))
+
 def request_file_size(fileURL):
   return int(get(fileURL, stream=True).headers['Content-length'])
 

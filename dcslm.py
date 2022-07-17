@@ -37,7 +37,6 @@ import DCSLM.Utilities as Utilities
 # TODO: Allow use of dcsuf url/id to fill in archive dcsuf info
 # TODO: Add fallback upgrade path to find latest DCSLM.exe when unable to parse releases page
 # TODO: scan/register existing liveries in saved games w/o dcsuf info
-# TODO: add # liveries installed/size on disk to motd
 
 def set_console_title(title):
   if platform.system() == 'Windows':
@@ -79,6 +78,7 @@ class DCSLMApp:
     self.quick_check_upgrade_available()
     self.check_7z_installed()
     self.check_last_update()
+    self.print_motd()
     exeArgs = self.run_exe_args()
     if not exeArgs or self.parsedArgs.persist:
       self.run()
@@ -1581,6 +1581,15 @@ class DCSLMApp:
 
   def set_last_update(self):
     self.lm.LiveryData['last_update'] = datetime.timestamp(datetime.now())
+
+  def print_motd(self):
+    if self.lm.get_num_registered_liveries() > 0:
+      liveryMB = self.lm.get_size_registered_liveries()
+      if liveryMB > 10000.0:
+        sizeStr = Utilities.mb_to_gb_string(liveryMB) + " [bold gold1]GB[/bold gold1]"
+      else:
+        sizeStr = Utilities.mb_to_mb_string(liveryMB) + " [bold gold1]MB[/bold gold1]"
+      self.console.print(str(self.lm.get_num_registered_liveries()) + " registered liveries (" + sizeStr +")")
 
   def _download_archive_rich_callback(self, dlCallback, downloadedBytes):
     dlCallback['progress'].update(dlCallback['task'], advance=downloadedBytes)
