@@ -1471,7 +1471,7 @@ class DCSLMApp:
     self.console.print('')
 
   def setup_console_window(self):
-    self.console = Console(width=120, tab_size=4)
+    self.console = Console(tab_size=4)
 
   def setup_livery_manager(self):
     self.console.print("DCSLM.exe Directory: \'" + os.getcwd() + "\'")
