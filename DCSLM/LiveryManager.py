@@ -723,7 +723,7 @@ class LiveryManager:
         if 'hash' not in liveryFilesData[t][f].keys():
           if t not in missingFiles:
             missingFiles[t] = []
-          missingFiles[t].append(f)
+          missingFiles[t].append(f + ".dds")
     return missingFiles
 
   def optimize_livery(self, livery, removeUnused=False, copyDesc=False, verbose=False):
