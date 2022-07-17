@@ -892,7 +892,10 @@ class DCSLMApp:
     footerData = {'size': 0, 'units': [], 'installed': 0, 'registered': 0}
     for l in self.lm.Liveries.values():
       unitData = UM.get_unit_from_generic_name(l.dcsuf.unit)
-      friendlyUnit = unitData.friendly
+      if unitData:
+        friendlyUnit = unitData.friendly
+      else:
+        friendlyUnit = l.dcsuf.unit
       liverySizeMB = Utilities.bytes_to_mb(l.get_size_installed_liveries())
       footerData['size'] += liverySizeMB
       footerData['registered'] += 1
