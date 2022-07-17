@@ -1041,6 +1041,46 @@ class DCSLMApp:
                            "Use the \'upgrade\' command to upgrade [sky_blue1]DCSLM[/sky_blue1] to [bold green]v" +
                            relData[0]['version'] + "[/bold green]")
 
+  def request_latest_upgrade_download(self):
+    import requests
+    import pkg_resources
+    from bs4 import BeautifulSoup
+    # Get all links and find released exe downloads
+    try:
+      releaseData = []
+      rData = {
+        'name': "",
+        'version': "",
+        'desc': "N/A",
+        'date': "N/A",
+        'download': ""
+      }
+      relReq = requests.get("https://github.com/pearcebergh/DCSLiveryManager/releases", timeout=5)
+      relHTML = BeautifulSoup(relReq.text, 'html.parser')
+      rootPath = "/pearcebergh/DCSLiveryManager/releases/download/"
+      releaseLinks = []
+      for href in relHTML.find_all('a', href=True):
+        hrefStr = str(href.get('href'))
+        if rootPath in hrefStr:
+          releaseLinks.append(hrefStr)
+      highestTag = "0.0.0"
+      parsedHighest = pkg_resources.parse_version(highestTag)
+      for rL in releaseLinks:
+        splitRL = rL.split("/")
+        if pkg_resources.parse_version(splitRL[5]) > parsedHighest:
+          highestTag = splitRL[5]
+          parsedHighest = pkg_resources.parse_version(splitRL[5])
+      if highestTag != "0.0.0":
+        rData['name'] = highestTag + " Release"
+        rData['version'] = highestTag
+        rData['download'] = "https://github.com" + rootPath + highestTag + "/DCSLM.exe"
+        releaseData.append(rData)
+      pprint(releaseData)
+      return releaseData
+    except Exception as e:
+      self.console.print("Failed to parse GitHub release page for upgrade information.", style="bold red")
+      return None
+
   def request_upgrade_information(self):
     import requests
     import pkg_resources
