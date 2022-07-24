@@ -37,6 +37,7 @@ import DCSLM.Utilities as Utilities
 # TODO: Allow use of dcsuf url/id to fill in archive dcsuf info
 # TODO: Add fallback upgrade path to find latest DCSLM.exe when unable to parse releases page
 # TODO: scan/register existing liveries in saved games w/o dcsuf info
+# TODO: add color legend to units panel
 
 def set_console_title(title):
   if platform.system() == 'Windows':
@@ -358,6 +359,15 @@ class DCSLMApp:
         'hidden': False,
         'exec': None
       },
+      'test': {
+        'usage': "",
+        'desc': "test function",
+        'flags': {},
+        'args': {},
+        'subcommands': {},
+        'hidden': True,
+        'exec': self.prompt_dcsuf_info
+      },
       'executable': {
         'usage': "DCSLM.exe \[flags] \[args]",
         'desc': "Command line arguments to be passed to the executable when launching",
@@ -520,7 +530,7 @@ class DCSLMApp:
               showDCSUFTags = False
             else:
               unitName = "Unknown"
-          self.print_dcsuf_panel(livery, unitName=unitName, showTags=showDCSUFTags)
+          self.print_dcsuf_panel(livery.dcsuf, unitName=unitName, showTags=showDCSUFTags)
           existingLivery = self.lm.get_registered_livery(id=int(urlID))
           if existingLivery and not forceInstall:
             if existingLivery.dcsuf.datetime == livery.dcsuf.datetime:
@@ -657,6 +667,21 @@ class DCSLMApp:
             self.console.print("")
     return installData
 
+  def _install_prompt_unit_input(self):
+    inputUnit = None
+    inputStr = self.session.prompt(HTML("<b>Enter unit name:</b> "),
+                                   completer=NestedCompleter.from_nested_dict(self.completers['units']['dict']))
+    inputStr = str.strip(inputStr)
+    if inputStr == "units":
+      self.dcs_units(sArgs="")
+      return None
+    inputUnit = UM.get_unit_from_friendly_name(inputStr)
+    if not inputUnit:
+      self.console.print("[red]No matching unit found from input \'" + inputStr + "\'.")
+      inputUnit = None
+    return inputUnit
+
+  # TODO: _install_prompt_unit_input change
   def _install_prompt_unit(self, livery, manualUnitSelection=False):
     selectedUnit = None
     if len(livery.dcsuf.tags) and not manualUnitSelection:
@@ -1403,6 +1428,102 @@ class DCSLMApp:
             dcsufTable.add_row(v, str(s))
           self.console.print(dcsufTable)
 
+  def prompt_dcsuf_info(self, titles=None):
+    from DCSLM.Livery import DCSUserFile
+    from DCSLM.Unit import Unit
+    dcsuf = None
+    self.console.print("Prompting user for DCS User Files livery information\n")
+    self.console.print("Fill in the information with the \'DCS User Files ID\' or leave the line blank and hit [bold]ENTER[/bold].")
+    dcsufID = Prompt.ask("[bold]DCS User Files ID[/bold]", console=self.console)
+    if dcsufID and len(dcsufID):
+      if dcsufID.isnumeric():
+        id = int(dcsufID)
+        if id > self.lm.IDLocalMax:
+          self.console.print("Getting DCS User Files information from ID " + str(id))
+          parsedDCSUF = DCSUFParser().get_dcsuserfile_from_url(dcsufID)
+          if parsedDCSUF:
+            self.console.print("Successfully parsed data from DCS User Files (" + str(id) + ").")
+            dcsuf = parsedDCSUF
+          else:
+            self.console.print("Failed to parse data from DCS User Files (" + str(id) + ").")
+        else:
+          self.console.print(str(id) + " not high enough for a valid DCS User Files ID (>" + str(self.lm.IDLocalMax) + ").")
+      else:
+        self.console.print("\'" + dcsufID + "\' not a valid number.")
+    if dcsuf:
+      self.print_dcsuf_panel(dcsuf, dcsuf.unit, True)
+      if Confirm.ask("[bold]Confirm DCS User Files Information[/bold]", console=self.console):
+        return dcsuf
+      else:
+        dcsuf = None
+    else:
+      confirmData = False
+      dcsuf = DCSUserFile()
+      self.console.print("\n[bold]Please manually enter livery information. Some fields are optional.")
+      titles = ["Test title 1", "test 2", "t3"]
+      promptTitles = None
+      choiceStr = "\t[0] Custom Title"
+      if titles and len(titles):
+        promptTitles = [t for t in titles]
+        for i in range(0, len(titles)):
+          choiceStr += "\n\t[" + str(i + 1) + "] " + titles[i]
+      while not confirmData:
+        while not dcsuf.title:
+          self.console.print("[bold]\nLivery Title Choices:")
+          self.console.print(choiceStr)
+          numChoices = [str(i) for i in range(0, len(promptTitles) + 1)]
+          tChoice = Prompt.ask("\n[bold]Select Livery Title[/bold]", console=self.console, choices=numChoices)
+          if tChoice:
+            if tChoice == "0":
+              customTitle = Prompt.ask("[bold]Enter custom livery title[/bold]", console=self.console)
+              if len(customTitle):
+                dcsuf.title = customTitle
+              else:
+                self.console.print("Invalid custom livery title.")
+            else:
+              dcsuf.title = promptTitles[int(tChoice) - 1]
+          if dcsuf.title:
+            self.console.print("Using \'" + dcsuf.title + "\' as livery title.")
+        while not dcsuf.unit:
+          unitInput = self._install_prompt_unit_input()
+          if unitInput:
+            dcsuf.unit = unitInput.generic
+          if dcsuf.unit:
+            self.console.print("Using \'" + dcsuf.unit + "\' as livery unit.")
+        while not dcsuf.author:
+          authorInput = Prompt.ask("[bold](OPTIONAL) Enter livery author[/bold]", console=self.console)
+          if not authorInput or (authorInput and len(authorInput) == 0):
+            dcsuf.author = "None"
+          else:
+            dcsuf.author = authorInput.strip()
+          if dcsuf.author:
+            self.console.print("Using \'" + dcsuf.author + "\' as livery author.")
+        dataCheckChoices = ['c','t','u','a']
+        self.console.print("\n\t[[sky_blue1]c[/sky_blue1]]onfirm Data")
+        self.console.print("\t[[sky_blue1]t[/sky_blue1]]itle: [green]" + dcsuf.title)
+        self.console.print("\t[[sky_blue1]u[/sky_blue1]]nit: [bold magenta]" + dcsuf.unit)
+        self.console.print("\t[[sky_blue1]a[/sky_blue1]]uthor: [bold gold1]" + dcsuf.author)
+        checkConfirm = Prompt.ask("\n[bold]Confirm or edit livery information[/bold]", console=self.console, choices=dataCheckChoices)
+        if checkConfirm == 't':
+          dcsuf.title = None
+        elif checkConfirm == 'u':
+          dcsuf.unit = None
+        elif checkConfirm == 'a':
+          dcsuf.author = None
+        else:
+          confirmData = True
+    generatedID = self.lm.get_next_local_livery_id()
+    dcsuf.id = generatedID
+    self.console.print("Generated Livery ID " + str(generatedID))
+    dcsuf.datetime = datetime.now()
+    dcsuf.date = dcsuf.datetime_to_date(dcsuf.datetime)
+    self.console.print("Setting upload date to now (" + str(dcsuf.datetime) + ")")
+    dcsuf.tags = []
+    dcsuf.size = "0"
+    dcsuf.download = ""
+    self.print_dcsuf_panel(dcsuf)
+    return
+
   def print_help(self):
     for k, v in self.commands.items():
       self.console.print("[deep_pink2]" + k + "[/deep_pink2] [sky_blue1]" + v['usage'] + "[/sky_blue1]")
@@ -1451,12 +1572,13 @@ class DCSLMApp:
       return strList
     return justifiedList
 
-  def _make_dcsuf_panel(self, livery, childPanel=False, unitName="", showTags=False):
-    dcsufLines = ["ID: " + str(livery.dcsuf.id) + " | Author: " + livery.dcsuf.author + " | Upload Date: " +
-                  livery.dcsuf.date + " | Archive Size: " + livery.dcsuf.size,
-                  livery.dcsuf.download]
+  def _make_dcsuf_panel(self, dcsuf, childPanel=False, unitName="", showTags=False):
+    from DCSLM.Livery import DCSUserFile
+    dcsufLines = ["ID: " + str(dcsuf.id) + " | Author: " + dcsuf.author + " | Upload Date: " +
+                  dcsuf.date + " | Archive Size: " + dcsuf.size,
+                  dcsuf.download]
     if showTags:
-      dcsufLines.append("Tags: " + ', '.join(livery.dcsuf.tags))
+      dcsufLines.append("Tags: " + ', '.join(dcsuf.tags))
     maxWidth = self.console.width
     if childPanel:
       maxWidth -= 8
@@ -1469,12 +1591,12 @@ class DCSLMApp:
       justifiedLines[2] = "[sky_blue1]" + justifiedLines[2][:5] + "[/sky_blue1]" + justifiedLines[2][5:]
     dcsufStr = "\n".join(justifiedLines)
 
-    return Panel(dcsufStr, title="[bold green]" + unitName + "[/bold green] - [sky_blue1]" + livery.dcsuf.title,
+    return Panel(dcsufStr, title="[bold green]" + unitName + "[/bold green] - [sky_blue1]" + dcsuf.title,
                  expand=False, highlight=True)
 
-  def print_dcsuf_panel(self, livery, unitName="", showTags=False):
-    if livery:
-      self.console.print(self._make_dcsuf_panel(livery, unitName=unitName, showTags=showTags))
+  def print_dcsuf_panel(self, dcsuf, unitName="", showTags=False):
+    if dcsuf:
+      self.console.print(self._make_dcsuf_panel(dcsuf, unitName=unitName, showTags=showTags))
 
   def make_commands_completer(self):
     completerDict = {}

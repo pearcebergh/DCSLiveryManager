@@ -19,6 +19,8 @@ class LiveryManager:
     self.Liveries = {}
     self.FolderRoot = "DCSLM"
     self.console = None
+    self.IDLocalMax = 200000
+    self.IDLocalLast = 1000
 
   def print(self, *args, **kwargs):
     if self.console:
@@ -217,6 +219,18 @@ class LiveryManager:
       liverySizeMB = Utilities.bytes_to_mb(l.get_size_installed_liveries())
       totalSize += liverySizeMB
     return totalSize
+
+  def get_next_local_livery_id(self):
+    validID = False
+    localID = self.IDLocalLast + 1
+    while not validID:
+      if not self.get_registered_livery(localID):
+        validID = True
+      else:
+        localID += 1
+    if localID > self.IDLocalLast:
+      self.IDLocalLast = localID
+    return localID
 
   def download_screenshots(self, livery, session=None):
     DCSUFURLRoot = DCSUFParser().DCSDownloadUrlPrefix
