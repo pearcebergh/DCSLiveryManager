@@ -22,7 +22,7 @@ class DCSUserFile:
       'author': self.author,
       'title': self.title,
       'date': self.date,
-      'datetime': datetime.timestamp(self.datetime),
+      'datetime': datetime.timestamp(self.datetime) if self.datetime else None,
       'size': self.size,
       'download': self.download,
       'tags': self.tags,
