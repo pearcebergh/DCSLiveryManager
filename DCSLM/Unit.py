@@ -41,9 +41,9 @@ class Unit:
 
   def validate_unit(self):
     errors = []
-    if not self.generic or self.generic is "none":
+    if not self.generic or self.generic == "none":
       errors.append("missing generic name")
-    if not self.friendly or self.friendly is "None":
+    if not self.friendly or self.friendly == "None":
       errors.append("missing friendly name")
     if not self.names or len(self.names) == 0:
       errors.append("missing name(s)")

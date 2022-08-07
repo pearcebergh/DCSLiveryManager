@@ -497,6 +497,100 @@ class DCSLMApp:
     except SystemExit:
       raise RuntimeError("Unable to parse \'" + command + "\' command.")
 
+  def _install_get_livery_unitdata(self, liveryStr, liveryURL, reqSession, progStr, forceInstall, urlID):
+    getUFStr = "Getting DCS User File information from " + liveryURL
+    with self.console.status(progStr + getUFStr):
+      livery = self.lm.get_livery_data_from_dcsuf_url(liveryURL, reqSession)
+    if not livery or (livery and not livery.dcsuf):
+      raise RuntimeError("Unable to get DCSUF info from livery \'" + liveryStr + "\'")
+    self.console.print(progStr + getUFStr + "\n")
+    unitName = "Other"
+    showDCSUFTags = True
+    liveryUnitData = None
+    if livery.dcsuf.unit != "Other" and livery.dcsuf.unit != "Vehicle":
+      liveryUnitData = UM.get_unit_from_dcsuf_text(livery.dcsuf.unit)
+      if liveryUnitData:
+        unitName = livery.dcsuf.unit
+        livery.dcsuf.unit = liveryUnitData.generic
+        showDCSUFTags = False
+      else:
+        unitName = "Unknown"
+    self.print_dcsuf_panel(livery.dcsuf, unitName=unitName, showTags=showDCSUFTags)
+    existingLivery = self.lm.get_registered_livery(id=int(urlID))
+    if existingLivery and not forceInstall:
+      if existingLivery.dcsuf.datetime == livery.dcsuf.datetime:
+        if not self.prompt_existing_livery(existingLivery):
+          raise RuntimeError("Skipping reinstalling livery.")
+        else:
+          liveryUnitData = UM.get_unit_from_generic_name(existingLivery.dcsuf.unit)
+    return livery, liveryUnitData, unitName, showDCSUFTags
+
+  def _install_select_unit(self, livery, liveryUnitData, manualUnitSelection, forceAllUnits):
+    if livery.dcsuf.unit == "Other" or livery.dcsuf.unit == "Vehicle" or livery.dcsuf.unit == "Unknown"  or manualUnitSelection:
+      liveryUnitData = self._install_prompt_unit(livery, manualUnitSelection)
+    if not liveryUnitData:
+      raise RuntimeError("Unable to find unit to install livery to.")
+    else:
+      livery.dcsuf.unit = liveryUnitData.generic
+    unitChoices = liveryUnitData.liveries
+    if len(unitChoices) > 1 and not forceAllUnits:
+      unitChoices = self.prompt_aircraft_livery_choice(livery, unitChoices)
+    if len(unitChoices) == 0:
+      raise RuntimeError("No units selected for install.")
+    return unitChoices
+
+  def _install_check_archive_path(self, livery, archiveName, progressStr, forceDownload):
+    archivePath = self.lm.does_archive_exist(archiveName)
+    liveryArchiveName = str(livery.dcsuf.id) + "_" + archiveName
+    if not archivePath:
+      archivePath = self.lm.does_archive_exist(liveryArchiveName)
+    if archivePath:
+      if not forceDownload and self.lm.compare_archive_sizes(archivePath, livery.dcsuf.download):
+        self.console.print(progressStr + "\nArchive file \'" + livery.dcsuf.download.split('/')[-1] + "\' for \'" +
+                           livery.dcsuf.title + "\' already exists. Using that instead.")
+      else:
+        archivePath = None
+    return archivePath
+
+  def _install_download_screenshots(self, livery, progressStr, session):
+    if len(livery.dcsuf.screenshots):
+      self.console.print("")
+      with self.console.status(progressStr + "[bold]Downloading " + str(len(livery.dcsuf.screenshots)) +
+                               " screenshots (--screenshots)..."):
+        screenshotFiles = self.lm.download_screenshots(livery, session=session)
+      self.console.print(progressStr + "Downloaded " + str(len(screenshotFiles)) + " screenshots.", style="bold")
+
+  def _install_download_archive(self, livery, archivePath, progressStr, session, keepFiles):
+    if not archivePath:
+      downloadStr = "Downloading livery archive file "
+      if keepFiles:
+        downloadStr += "and saving (--keep) "
+      downloadStr += livery.dcsuf.download
+      self.console.print("\n" + progressStr + downloadStr)
+      archivePath = self._download_archive_progress(livery, session=session)
+    return archivePath
+
+  def _install_copy_screenshots(self, livery, screenshotFiles, destinationPath, progressStr=""):
+    copiedFolderPath = ""
+    copiedScreenshots = []
+    if len(screenshotFiles):
+      with self.console.status(progressStr + "Copying screenshots to livery folder..."):
+        firstLiveryName = list(livery.installs['liveries'].keys())[0]
+        firstLivery = livery.installs['liveries'].get(firstLiveryName)
+        destinationRoot = os.path.join(os.getcwd(), destinationPath, firstLivery['paths'][0])
+        destinationFolder = os.path.join(destinationRoot, "screenshots")
+        copiedFolderPath = destinationFolder
+        if not os.path.isdir(destinationFolder):
+          os.mkdir(destinationFolder)
+        for s in screenshotFiles:
+          if not len(s):
+            continue
+          destinationFilename = os.path.split(s)[-1]
+          destinationFilepath = os.path.join(destinationFolder, destinationFilename)
+          shutil.move(s, destinationFilepath)
+          copiedScreenshots.append(destinationFilepath)
+    return copiedFolderPath, copiedScreenshots
+
   def _install_liveries(self, liveryStrings, keepFiles=False, forceDownload=False, forceInstall=False,
                         forceAllUnits=False, manualUnitSelection=False, verbose=False, screenshots=False):
     installData = {'success': [], 'failed': []}
@@ -513,71 +607,19 @@ class DCSLMApp:
       else:
         livery = None
         try:
-          getUFStr = "Getting DCS User File information from " + correctedLiveryURL
-          with self.console.status(progressStr + getUFStr):
-            livery = self.lm.get_livery_data_from_dcsuf_url(correctedLiveryURL, session)
-          if not livery or (livery and not livery.dcsuf):
-            raise RuntimeError("Unable to get DCSUF info from livery \'" + liveryStr + "\'")
-          self.console.print(progressStr + getUFStr + "\n")
-          unitName = "Other"
-          showDCSUFTags = True
-          liveryUnitData = None
-          if livery.dcsuf.unit != "Other":
-            liveryUnitData = UM.get_unit_from_dcsuf_text(livery.dcsuf.unit)
-            if liveryUnitData:
-              unitName = livery.dcsuf.unit
-              livery.dcsuf.unit = liveryUnitData.generic
-              showDCSUFTags = False
-            else:
-              unitName = "Unknown"
-          self.print_dcsuf_panel(livery.dcsuf, unitName=unitName, showTags=showDCSUFTags)
-          existingLivery = self.lm.get_registered_livery(id=int(urlID))
-          if existingLivery and not forceInstall:
-            if existingLivery.dcsuf.datetime == livery.dcsuf.datetime:
-              if not self.prompt_existing_livery(existingLivery):
-                raise RuntimeError("Skipping reinstalling livery.")
-              else:
-                liveryUnitData = UM.get_unit_from_generic_name(existingLivery.dcsuf.unit)
-          if livery.dcsuf.unit == "Other" or livery.dcsuf.unit == "Unknown" or manualUnitSelection:
-            liveryUnitData = self._install_prompt_unit(livery, manualUnitSelection)
-          if not liveryUnitData:
-            raise RuntimeError("Unable to find unit to install livery to.")
-          else:
-            livery.dcsuf.unit = liveryUnitData.generic
-          unitChoices = liveryUnitData.liveries
-          if len(unitChoices) > 1 and not forceAllUnits:
-            unitChoices = self.prompt_aircraft_livery_choice(livery, unitChoices)
-          if len(unitChoices) == 0:
-            raise RuntimeError("No units selected for install.")
+          livery, liveryUnitData, unitName, dcsufTags = self._install_get_livery_unitdata(liveryStr, correctedLiveryURL,
+                                                                                      session, progressStr, forceInstall,
+                                                                                      urlID)
+          unitChoices = self._install_select_unit(livery, liveryUnitData, manualUnitSelection, forceAllUnits)
           livery.installs['units'] = unitChoices
           livery.ovgme = livery.generate_ovgme_folder()
           archiveName = livery.dcsuf.download.split('/')[-1]
-          archivePath = self.lm.does_archive_exist(archiveName)
-          liveryArchiveName = str(livery.dcsuf.id) + "_" + archiveName
-          if not archivePath:
-            archivePath = self.lm.does_archive_exist(liveryArchiveName)
-          if archivePath:
-            if not forceDownload and self.lm.compare_archive_sizes(archivePath, livery.dcsuf.download):
-              self.console.print(progressStr + "\nArchive file \'" + livery.dcsuf.download.split('/')[-1] + "\' for \'" +
-                                 livery.dcsuf.title + "\' already exists. Using that instead.")
-              keepFiles = True
-            else:
-              archivePath = None
-          screenshotFiles = []
+          archivePath = self._install_check_archive_path(livery, archiveName, progressStr, forceDownload)
           if screenshots:
-            if len(livery.dcsuf.screenshots):
-              self.console.print("")
-              with self.console.status(progressStr + "[bold]Downloading " + str(len(livery.dcsuf.screenshots)) +
-                                       " screenshots (--screenshots)..."):
-                screenshotFiles = self.lm.download_screenshots(livery, session=session)
-              self.console.print(progressStr + "Downloaded " + str(len(screenshotFiles)) + " screenshots.", style="bold")
-          if not archivePath:
-            downloadStr = "Downloading livery archive file "
-            if keepFiles:
-              downloadStr += "and saving (--keep) "
-            downloadStr += livery.dcsuf.download
-            self.console.print("\n" + progressStr + downloadStr)
-            archivePath = self._download_archive_progress(livery, session=session)
+            screenshotFiles = self._install_download_screenshots(livery, progressStr)
+          else:
+            screenshotFiles = []
+          archivePath = self._install_download_archive(livery, archivePath, progressStr, session, keepFiles)
           if archivePath:
             livery.archive = archivePath
             self.console.print("\n" + progressStr + "[bold]Running extraction program on downloaded archive:")
@@ -604,22 +646,8 @@ class DCSLMApp:
                                                                     extractedLiveryFiles, installPaths)
                   if len(copiedLiveries):
                     if screenshots:
-                      copiedFolderPath = ""
-                      copiedScreenshots = []
-                      if len(screenshotFiles[0]):
-                        with self.console.status(progressStr + "Copying screenshots to livery folder..."):
-                          firstLiveryName = list(livery.installs['liveries'].keys())[0]
-                          firstLivery = livery.installs['liveries'].get(firstLiveryName)
-                          destinationRoot = os.path.join(os.getcwd(), destinationPath, firstLivery['paths'][0])
-                          destinationFolder = os.path.join(destinationRoot, "screenshots")
-                          copiedFolderPath = destinationFolder
-                          if not os.path.isdir(destinationFolder):
-                            os.mkdir(destinationFolder)
-                          for s in screenshotFiles:
-                            destinationFilename = os.path.split(s)[-1]
-                            destinationFilepath = os.path.join(destinationFolder, destinationFilename)
-                            shutil.move(s, destinationFilepath)
-                            copiedScreenshots.append(destinationFilepath)
+                      copiedFolderPath, copiedScreenshots = self._install_copy_screenshots(livery, screenshotFiles,
+                                                                                           destinationPath, progressStr)
                       if len(copiedScreenshots):
                         self.console.print(progressStr + "Downloaded " + str(len(copiedScreenshots)) +
                                            " screenshots to \'" + copiedFolderPath + "\'")
@@ -668,7 +696,6 @@ class DCSLMApp:
     return installData
 
   def _install_prompt_unit_input(self):
-    inputUnit = None
     inputStr = self.session.prompt(HTML("<b>Enter unit name:</b> "),
                                    completer=NestedCompleter.from_nested_dict(self.completers['units']['dict']))
     inputStr = str.strip(inputStr)
@@ -1636,7 +1663,7 @@ class DCSLMApp:
     self.console.print('')
 
   def setup_console_window(self):
-    self.console = Console(tab_size=4)
+    self.console = Console(tab_size=4, width=120)
 
   def setup_livery_manager(self):
     self.console.print("DCSLM.exe Directory: \'" + os.getcwd() + "\'")
