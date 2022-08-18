@@ -750,6 +750,8 @@ class DCSLMApp:
           if inputStr == "units":
             self.dcs_units(sArgs="")
             continue
+          elif inputStr == "none":
+            break
           inputUnit = UM.get_unit_from_friendly_name(inputStr)
           if not inputUnit:
             self.console.print("[red]No matching unit found from input \'" + inputStr + "\'.")
@@ -1663,7 +1665,7 @@ class DCSLMApp:
     self.console.print('')
 
   def setup_console_window(self):
-    self.console = Console(tab_size=4, width=120)
+    self.console = Console(tab_size=4)
 
   def setup_livery_manager(self):
     self.console.print("DCSLM.exe Directory: \'" + os.getcwd() + "\'")
