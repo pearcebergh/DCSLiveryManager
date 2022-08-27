@@ -144,6 +144,12 @@ UnitDefaults = {
           "dcs_files": "M-2000C",
           "liveries": ["M-2000C"]
         },
+        "mirage f1": {
+          "names": ["mirage", "f1", "f1ce", "mirage f1ce"],
+          "friendly": "Mirage F1",
+          "dcs_files": "Other",
+          "liveries": ["Mirage-F1CE"] ## EE, BE, M later
+        },
         "mi-24p": {
           "names": ["mi-24p", "mi-24", "mi-24p hind", "hind"],
           "friendly": "Mi-24P",
@@ -273,5 +279,5 @@ UnitsOfficial = {
           "f-15c", "f-16c", "f-5e", "f-86f", "fa-18c", "fw-190-a-8", "fw-190-d-9", "hawk", "i-16", "j-11a", "jf-17",
           "ka-50", "l-39", "m-2000c", "mi-24p", "mi-8mtv2", "mig-15bis", "mig-19p", "mig-21bis", "mig-29a", "mig-29c",
           "mosquito fb mk vi", "p-47d", "p-51d", "sa342", "spitfire lf mk ix", "su-25", "su-25t", "su-27", "su-33",
-          "uh-1h", "yak-52"]
+          "uh-1h", "yak-52", "mirage f1"]
 }
