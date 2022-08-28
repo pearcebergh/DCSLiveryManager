@@ -38,6 +38,8 @@ import DCSLM.Utilities as Utilities
 # TODO: Add fallback upgrade path to find latest DCSLM.exe when unable to parse releases page
 # TODO: scan/register existing liveries in saved games w/o dcsuf info
 # TODO: add color legend to units panel
+# TODO: optimize flag to detect possible optimizations/issues in livery
+# TODO: standardize style colors
 
 def set_console_title(title):
   if platform.system() == 'Windows':
@@ -669,10 +671,10 @@ class DCSLMApp:
             else:
               raise RuntimeError(progressStr + "Failed to extract livery archive \'" + livery.archive + "\'.")
         except KeyboardInterrupt as e:
-          installData['failed'].append({'url': correctedLiveryURL, 'error': e})
+          installData['failed'].append({'path': correctedLiveryURL, 'error': e})
           self.console.print("Install exception: keyboard interrupt", style="bold red")
         except Exception as e:
-          installData['failed'].append({'url': correctedLiveryURL, 'error': e})
+          installData['failed'].append({'path': correctedLiveryURL, 'error': e})
           self.console.print(e, style="bold red")
         finally:
           if livery:
@@ -682,7 +684,7 @@ class DCSLMApp:
                 failedExtractPath = os.path.join(os.getcwd(), self.lm.FolderRoot, "extract", str(livery.dcsuf.id))
                 failedMsg = "Failed to remove all extracted files to directory " + failedExtractPath
                 self.console.print(progressStr + failedMsg, style="red")
-                installData['failed'].append({'url': livery.dcsuf.id, 'error': failedMsg})
+                installData['failed'].append({'path': livery.dcsuf.id, 'error': failedMsg})
             if livery.archive and not keepFiles:
               self.console.print(progressStr + "Removing downloaded archive file \'" + os.path.split(livery.archive)[1] + "\'.")
               self.lm.remove_downloaded_archive(livery, livery.archive)
@@ -722,7 +724,7 @@ class DCSLMApp:
             choicesList = [str(i) for i in range(len(matchedUnits) + 1)]
             choicesStr = "\t[[sky_blue1]0[/sky_blue1]][white]None[/white] "
             for i in range(0, len(matchedUnits)):
-              choicesStr += "[[sky_blue1]" + str(i) + "[/sky_blue1]]" + matchedUnits[i].friendly + " "
+              choicesStr += "[[sky_blue1]" + str(i + 1) + "[/sky_blue1]]" + matchedUnits[i].friendly + " "
             self.console.print("\nMultiple units matched. Select from one of the following to set as the unit by " +
                                "inputting the corresponding index number:\n")
             self.console.print(choicesStr)
@@ -781,7 +783,7 @@ class DCSLMApp:
     if len(installData['failed']):
       self.console.print("[bold red]Failed Livery Installs:")
       for l in installData['failed']:
-        self.console.print("[bold red]" + l['url'] + "[/bold red][red]: " + str(l['error']))
+        self.console.print("[bold red]" + l['path'] + "[/bold red][red]: " + str(l['error']))
 
   def install_liveries(self, sArgs):
     installArgs = self._parse_command_args("install", sArgs)
