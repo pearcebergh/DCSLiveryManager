@@ -1,12 +1,11 @@
 import glob
 import json
-import logging
 import os
 import shutil
-import sys
 import re
 import patoolib
 import requests
+from datetime import datetime
 import DCSLM.Utilities as Utilities
 from pprint import pprint
 from .DCSUFParser import DCSUFParser
@@ -19,8 +18,8 @@ class LiveryManager:
     self.Liveries = {}
     self.FolderRoot = "DCSLM"
     self.console = None
-    self.IDLocalMax = 200000
-    self.IDLocalLast = 1000
+    self.IDLocalMax = 3000000
+    self.IDLocalLast = 1000000
 
   def print(self, *args, **kwargs):
     if self.console:
@@ -407,14 +406,18 @@ class LiveryManager:
               copiedLiveries.append(install)
     return copiedLiveries
 
-  def remove_extracted_livery_archive(self, livery):
+  def remove_extracted_livery_archive(self, livery, extractedID=None):
     if livery:
-      extractRoot = os.path.join(os.getcwd(), self.FolderRoot, "extract", str(livery.dcsuf.id))
-      if Utilities.validate_remove_path(extractRoot):
-        shutil.rmtree(extractRoot, onerror=Utilities.remove_readonly)
-        return True
-      else:
-        raise RuntimeError("Invalid path provided to remove extracted livery archive: " + extractRoot)
+      folderID = livery.dcsuf.id
+      if extractedID:
+        folderID = extractedID
+      extractRoot = os.path.join(os.getcwd(), self.FolderRoot, "extract", str(folderID))
+      if os.path.exists(extractRoot):
+        if Utilities.validate_remove_path(extractRoot):
+          shutil.rmtree(extractRoot, onerror=Utilities.remove_readonly)
+          return True
+        else:
+          raise RuntimeError("Invalid path provided to remove extracted livery archive: " + extractRoot)
     return False
 
   def remove_downloaded_archive(self, livery, downloadPath):
@@ -455,7 +458,21 @@ class LiveryManager:
       l = Livery()
       l.dcsuf = DCSUFParser().get_dcsuserfile_from_url(url, session)
       return l
-    raise RuntimeError("Unable to get livery data from url " + url)
+    raise RuntimeError("Unable to get livery data from url \'" + url + "\'")
+
+  def get_livery_data_from_archive(self, path, id):
+    if len(path) and os.path.isfile(path):
+      l = Livery()
+      l.dcsuf.id = id
+      l.dcsuf.size = Utilities.bytes_to_mb_string(os.path.getsize(path)) + " Mb"
+      l.dcsuf.datetime = datetime.fromtimestamp(os.path.getmtime("{}".format(path)))
+      l.dcsuf.date = l.dcsuf.datetime_to_date(l.dcsuf.datetime)
+      l.dcsuf.download = path
+      l.dcsuf.author = "Unknown"
+      l.dcsuf.tags = []
+      l.dcsuf.title = "Livery " + str(id)
+      return l
+    raise RuntimeError("Unable to get livery data from path \'" + path + "\'")
 
   def request_archive_size(self, archiveURL):
     if len(archiveURL):

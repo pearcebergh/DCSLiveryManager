@@ -76,3 +76,13 @@ def get_size_of_directory(dirPath):
 def remove_readonly(func, path, _):
   os.chmod(path, stat.S_IWRITE)
   func(path)
+
+def determine_livery_string_location(liveryStr):
+  if not liveryStr or len(liveryStr) == 0:
+    return None
+  if str.isnumeric(liveryStr) or "digitalcombatsimulator.com" in liveryStr:
+    return "DCSUF"
+  liveryPath = os.path.normpath(liveryStr)
+  if os.path.isfile(liveryPath):
+    return "Archive"
+  return None
