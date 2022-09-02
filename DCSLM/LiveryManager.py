@@ -720,8 +720,9 @@ class LiveryManager:
     rootUnit = livery.installs['units'][0]
     for t, l in livery.installs['liveries'].items():
       if t in descLines.keys():
-        fileRefs = self._get_file_refs_from_description(descLines[t][rootUnit])
-        filesData[t] = fileRefs
+        if rootUnit in descLines[t].keys():
+          fileRefs = self._get_file_refs_from_description(descLines[t][rootUnit])
+          filesData[t] = fileRefs
     # Consolidate relative file paths with other liveries
     for t in filesData.keys():
       movedFiles = []
@@ -763,7 +764,7 @@ class LiveryManager:
           missingFiles[t].append(f + ".dds")
     return missingFiles
 
-  def optimize_livery(self, livery, removeUnused=False, copyDesc=False, verbose=False):
+  def optimize_livery(self, livery, removeUnused=False, copyDesc=False, verbose=False, checkOnly=False):
     if livery:
       filesData = {'liveries': {}, 'hashes': {}, 'same_hash':[], 'size': {} }
       descLines = self._optimize_get_desclines_from_livery(livery)
@@ -774,24 +775,25 @@ class LiveryManager:
       filesData['missing'] = self._optimize_find_missing_files(filesData['hashes'], filesData['liveries'])
       livery.calculate_size_installed_liveries()
       filesData['size']['before'] = livery.get_size_installed_liveries()
-      if len(filesData['same_hash']) or len(livery.installs['units']) > 1:
+      if (len(filesData['same_hash']) or len(livery.installs['units']) > 1) and not checkOnly:
         correctedLines = self._optimize_correct_desc_lines(filesData, descLines, livery.installs['units'])
         self._optimize_write_corrected_desc_files(livery, correctedLines, keepCopy=copyDesc)
-      if removeUnused:
+      if removeUnused or checkOnly:
         newDescLines = self._optimize_get_desclines_from_livery(livery)
         filesData['new_liveries'] = self._optimize_get_filerefs_from_desclines(livery, newDescLines)
         filesData['unused'] = self._optimize_find_unused_livery_files(livery, filesData['new_liveries'])
-        if len(filesData['unused']):
-          if verbose:
-            self.print("Removing the following unused files:")
-            shortUnused = []
-            for u in filesData['unused']:
-              shortUnused.append('\\'.join(str.split(u, "\\")[-2:]))
-            self.print(shortUnused)
-          else:
-            self.print("Removing " + str(len(filesData['unused'])) + " unused files.")
-        self._optimize_remove_unused_files(filesData['unused'])
-        livery.calculate_size_installed_liveries()
+        if not checkOnly:
+          if len(filesData['unused']):
+            if verbose:
+              self.print("Removing the following unused files:")
+              shortUnused = []
+              for u in filesData['unused']:
+                shortUnused.append('\\'.join(str.split(u, "\\")[-2:]))
+              self.print(shortUnused)
+            else:
+              self.print("Removing " + str(len(filesData['unused'])) + " unused files.")
+          self._optimize_remove_unused_files(filesData['unused'])
+          livery.calculate_size_installed_liveries()
       filesData['size']['after'] = livery.get_size_installed_liveries()
       return filesData
     return None

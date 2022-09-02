@@ -38,8 +38,6 @@ import DCSLM.Utilities as Utilities
 # TODO: Add fallback upgrade path to find latest DCSLM.exe when unable to parse releases page
 # TODO: scan/register existing liveries in saved games w/o dcsuf info
 # TODO: add color legend to units panel
-# TODO: optimize flag to detect possible optimizations/issues in livery
-# TODO: standardize style colors
 
 def set_console_title(title):
   if platform.system() == 'Windows':
@@ -236,6 +234,11 @@ class DCSLMApp:
         'usage': "\[flags] livery",
         'desc': "Attempt to optimize an installed livery by looking for unused or shared files between liveries within packs",
         'flags': {
+          'check': {
+            'tags': ['-c', '--check'],
+            'desc': "Check for possible optimizations and any errors with the livery",
+            'action': "store_true"
+          },
           'keepdesc': {
             'tags': ['-d','--keepdesc'],
             'desc': "Keep a copy of the original unmodified description.lua files",
@@ -1321,7 +1324,7 @@ class DCSLMApp:
     except Exception as e:
       self.console.print("[err][exe]DCSLM[/exe] upgrade failed:[/err] [red]" + str(e))
 
-  def _print_optimization_report(self, optimizationReport):
+  def _print_optimization_report(self, optimizationReport, checkOnly=False):
     if len(optimizationReport):
       optimizationTable = Table(title="Livery Optimization Report", expand=True, box=box.ROUNDED)
       optimizationTable.add_column("ID", justify="center", no_wrap=True, style="sky_blue1")
@@ -1378,10 +1381,15 @@ class DCSLMApp:
       progressStr = "[" + str(liveryIndex) + "/" + str(len(liveryIDs)) + "] "
       if livery:
         if not 'optimized' in livery.installs.keys() or not livery.installs['optimized'] or optimizeArgs.reoptimize:
-          self.console.print(progressStr + "Optimizing livery \'" + livery.dcsuf.title + "\'")
-          filesData = self.lm.optimize_livery(livery, copyDesc=optimizeArgs.keepdesc, removeUnused=removeFiles)
+          if not optimizeArgs.check:
+            self.console.print(progressStr + "Optimizing livery \'" + livery.dcsuf.title + "\'")
+          else:
+            self.console.print(progressStr + "Checking livery optimization (--check) \'" + livery.dcsuf.title + "\'")
+          filesData = self.lm.optimize_livery(livery, copyDesc=optimizeArgs.keepdesc, removeUnused=removeFiles,
+                                              checkOnly=optimizeArgs.check)
           if filesData:
-            livery.installs['optimized'] = True
+            if not optimizeArgs.check:
+              livery.installs['optimized'] = True
             optimizationData = {'matches': len(filesData['same_hash']),
                                 'size_before': filesData['size']['before'],
                                 'size_after': filesData['size']['after'],
@@ -1393,7 +1401,7 @@ class DCSLMApp:
                 self.console.print(progressStr + "[red]Missing files referenced in description.lua for " + t + ": "
                                    + missingFilesStr)
             liveryReportStr = "Matched " + str(len(filesData['same_hash'])) + " image files with the same content."
-            if removeFiles:
+            if removeFiles and not optimizeArgs.check:
               liveryReportStr += " Removed " + str(len(filesData['unused'])) + " unused files.\n"
               if len(filesData['unused']) > 0:
                 self.console.print(filesData['unused'])
@@ -1409,12 +1417,13 @@ class DCSLMApp:
           self.console.print(progressStr + "Skipping re-optimizing livery \'" + livery.dcsuf.title + "\'.")
       else:
         self.console.print(progressStr + "[red]No livery found for input \'" + l + "\'.")
-    with self.console.status("Updating livery .dcslm files..."):
-      for op in optimizationReports:
-        l = op['livery']
-        self.lm.write_livery_registry_files(l)
-      self.lm.write_data()
-    self._print_optimization_report(optimizationReports)
+    if not optimizeArgs.check:
+      with self.console.status("Updating livery .dcslm files..."):
+        for op in optimizationReports:
+          l = op['livery']
+          self.lm.write_livery_registry_files(l)
+        self.lm.write_data()
+    self._print_optimization_report(optimizationReports, checkOnly=optimizeArgs.check)
 
   def _make_unit_panel(self, unitData):
     unitTable = Table.grid(expand=False, padding=(0, 2, 2, 0))
