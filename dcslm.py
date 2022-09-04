@@ -1039,7 +1039,7 @@ class DCSLMApp:
         footerData['units'].append(l.dcsuf.unit)
       sizeStr = Utilities.mb_to_mb_string(liverySizeMB)
       if l.is_optimized():
-        sizeStr = "[green]" + sizeStr + "[/green]"
+        sizeStr = "[size.opt]" + sizeStr + "[/size.opt]"
       liveryRows.append((friendlyUnit, str(l.dcsuf.id), l.dcsuf.title, sizeStr))
       if len(friendlyUnit) > len(longestUnit):
         longestUnit = friendlyUnit
@@ -1050,10 +1050,10 @@ class DCSLMApp:
     unitColWidth = max(8, min(13, len(longestUnit)))
     statusTable = Table(title="List of Registered Liveries", expand=False, box=box.ROUNDED, highlight=False,
                         caption=footerString, caption_justify="center")
-    statusTable.add_column("Unit", justify="center", no_wrap=True, style="green", min_width=unitColWidth)
-    statusTable.add_column("ID", justify="center", no_wrap=True, style="sky_blue1", width=8)
+    statusTable.add_column("Unit", justify="center", no_wrap=True, style="unit", min_width=unitColWidth)
+    statusTable.add_column("ID", justify="center", no_wrap=True, style="sky_blue1", width=9)
     statusTable.add_column("Livery Title", justify="center", no_wrap=True, overflow='ellipsis', max_width=72)
-    statusTable.add_column("Size (MB)", justify="right", no_wrap=True, style="bold gold1", width=10)
+    statusTable.add_column("Size (MB)", justify="right", no_wrap=True, style="size", width=10)
     liveryRows.sort(key=sort_list_by_unit_then_title)
     for i in range(0, len(liveryRows)):
       l = liveryRows[i]
@@ -1771,7 +1771,8 @@ class DCSLMApp:
       'path': "bold green",
       'title': "magenta",
       'size': "bold gold1",
-      'unit': "sky_blue1",
+      'size.opt': "green",
+      'unit': "green",
       'unit.official': "green",
       'unit.modified': "bold gold1",
       'unit.custom': "magenta",
