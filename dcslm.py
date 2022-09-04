@@ -943,17 +943,18 @@ class DCSLMApp:
       session = DCSUFParser().make_request_session()
       for l in self.lm.Liveries.values():
         if l.dcsuf.id <= self.lm.IDLocalMax:
+          liveryStatus.append({'livery': l, 'update': False, 'skipped': True})
           continue
         reqDCSUF = DCSUFParser().get_dcsuserfile_from_url(str(l.dcsuf.id), session)
         if reqDCSUF:
           if l.dcsuf.datetime < reqDCSUF.datetime:
-            liveryStatus.append({'livery': l, 'update': True})
+            liveryStatus.append({'livery': l, 'update': True, 'skipped': False})
             if verbose:
               checkProgress.print("Found update for livery \'" + l.dcsuf.title + "\'!")
           else:
-            liveryStatus.append({'livery': l, 'update': False})
+            liveryStatus.append({'livery': l, 'update': False, 'skipped': False})
         else:
-          liveryStatus.append({'livery': l, 'update': False, 'failed': "Failed to parse HTML"})
+          liveryStatus.append({'livery': l, 'update': False, 'skipped': False, 'failed': "Failed to parse HTML"})
         checkProgress.update(checkTask, advance=1)
     return liveryStatus
 
@@ -962,18 +963,21 @@ class DCSLMApp:
       self.console.print("[red]No liveries registered to check.")
       return
     liveryStatus = self._check_all_liveries_updates()
-    statusTable = Table(title="Livery Update Status", expand=True, box=box.ROUNDED)
+    statusTable = Table(title="Livery Update Status", expand=False, box=box.ROUNDED)
+    statusTable.add_column("Livery ID", justify="center", no_wrap=True, width=10, style="bright_cyan")
     statusTable.add_column("Livery Title", justify="center", no_wrap=True)
     statusTable.add_column("Status", justify="center", no_wrap=True)
     numToUpdate = 0
     for l in liveryStatus:
       if l['update']:
-        statusTable.add_row(l['livery'].dcsuf.title, "[red]Out of date")
+        statusTable.add_row(str(l['livery'].dcsuf.id), l['livery'].dcsuf.title, "[red]Out of date")
         numToUpdate += 1
       elif 'failed' in l.keys():
-        statusTable.add_row(l['livery'].dcsuf.title, "[err]" + l['failed'])
+        statusTable.add_row(str(l['livery'].dcsuf.id), l['livery'].dcsuf.title, "[err]" + l['failed'])
+      elif l['skipped']:
+        statusTable.add_row(str(l['livery'].dcsuf.id), l['livery'].dcsuf.title, "[red]Skipped")
       else:
-        statusTable.add_row(l['livery'].dcsuf.title, "[green]Up to date")
+        statusTable.add_row(str(l['livery'].dcsuf.id), l['livery'].dcsuf.title, "[green]Up to date")
     self.console.print(statusTable)
     if numToUpdate > 0:
       liveryStr = " livery"
@@ -1437,9 +1441,9 @@ class DCSLMApp:
     unitAlign = Align(unitTable, align="center")
     unitTitle = unitData.friendly + " Config"
     if unitData.custom:
-      unitTitle = "[unit.custom]" + unitTitle + " (CUSTOM)"
+      unitTitle = "[unit.custom]" + unitTitle # + " (CUSTOM)"
     elif unitData.modified:
-      unitTitle = "[unit.modified]" + unitTitle + " (MODIFIED)"
+      unitTitle = "[unit.modified]" + unitTitle # + " (MODIFIED)"
     else:
       unitTitle = "[green]" + unitTitle
     unitPanel = Panel(unitAlign, title=unitTitle, highlight=True, expand=False)
