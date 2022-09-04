@@ -1043,9 +1043,14 @@ class DCSLMApp:
       liveryRows.append((friendlyUnit, str(l.dcsuf.id), l.dcsuf.title, sizeStr))
       if len(friendlyUnit) > len(longestUnit):
         longestUnit = friendlyUnit
+    footerString = "[num]" + str(footerData['registered']) + "[/num] Registered Liveries    "
+    footerString += "[num]" + str(footerData['installed']) + "[/num] Installed Livery Directories    "
+    footerString += "[num]" + str(len(footerData['units'])) + "[/num] Units    "
+    footerString += "[size]" + Utilities.mb_to_mb_string(footerData['size']) + "[/size] MB Total Size"
     unitColWidth = max(8, min(13, len(longestUnit)))
-    statusTable = Table(title="List of Registered Liveries", expand=True, box=box.ROUNDED, highlight=False)
-    statusTable.add_column("Unit", justify="center", no_wrap=True, style="green", width=unitColWidth)
+    statusTable = Table(title="List of Registered Liveries", expand=False, box=box.ROUNDED, highlight=False,
+                        caption=footerString, caption_justify="center")
+    statusTable.add_column("Unit", justify="center", no_wrap=True, style="green", min_width=unitColWidth)
     statusTable.add_column("ID", justify="center", no_wrap=True, style="sky_blue1", width=8)
     statusTable.add_column("Livery Title", justify="center", no_wrap=True, overflow='ellipsis', max_width=72)
     statusTable.add_column("Size (MB)", justify="right", no_wrap=True, style="bold gold1", width=10)
@@ -1060,11 +1065,8 @@ class DCSLMApp:
       if i == len(liveryRows) - 1: # for footer
         isEndSection = True
       statusTable.add_row(*l, end_section=isEndSection)
-    footerString = str(footerData['registered']) + " Registered Liveries    " + str(footerData['installed']) + \
-                   " Installed Livery Directories    " + str(len(footerData['units'])) + " Units    Total Size: " + \
-                   Utilities.mb_to_mb_string(footerData['size']) + " MB"
     self.console.print(statusTable)
-    self.console.print(footerString, justify="center")
+    #self.console.print(footerString, justify="center")
 
   def _make_livery_rendergroup(self, livery):
     liveryTable = Table.grid(expand=True, padding=(0,2,2,0))
@@ -1775,7 +1777,8 @@ class DCSLMApp:
       'unit.custom': "magenta",
       'warn': "bold gold1",
       'err': "bold red",
-      'exe': "sky_blue1"
+      'exe': "sky_blue1",
+      'num': "bright_cyan"
     }
     dcslmTheme = Theme(themeConfig)
     self.theme = dcslmTheme
