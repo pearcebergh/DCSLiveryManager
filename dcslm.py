@@ -37,7 +37,6 @@ import DCSLM.Utilities as Utilities
 # TODO: Detect shared data folder on install 3323004
 # TODO: Add fallback upgrade path to find latest DCSLM.exe when unable to parse releases page
 # TODO: scan/register existing liveries in saved games w/o dcsuf info
-# TODO: add color legend to units panel
 
 def set_console_title(title):
   if platform.system() == 'Windows':
@@ -291,7 +290,7 @@ class DCSLMApp:
       },
       'units': {
         'usage': "[flags] [unit]",
-        'desc': "Display information about units and their settings",
+        'desc': "Display information about units and their configuration",
         'flags': {
           'export': {
             'tags': ['-e', '--export'],
@@ -1478,7 +1477,11 @@ class DCSLMApp:
               friendlyStr = "[unit.official]" + friendlyStr + "[/unit.official]"
             friendlyUnits.append(friendlyStr)
           unitsStr = ', '.join(friendlyUnits)
-          self.console.print(Panel(unitsStr, title="[bold sky_blue1]" + c + " Units", expand=False, highlight=False), justify="center")
+          subtitleStr = "Unit ── [unit.official]Official[/unit.official] ── "
+          subtitleStr += "[unit.modified]Modified[/unit.modified] ── "
+          subtitleStr += "[unit.custom]Custom[/unit.custom]"
+          self.console.print(Panel(unitsStr, title="[bold sky_blue1]" + c + " Units", expand=False, highlight=False,
+                                   subtitle=subtitleStr, subtitle_align="center"), justify="center")
 
   def dcslm_config(self, sArgs):
     for i in range(0, len(sArgs)):
@@ -1765,7 +1768,7 @@ class DCSLMApp:
       'unit': "sky_blue1",
       'unit.official': "green",
       'unit.modified': "bold gold1",
-      'unit.custom': "green",
+      'unit.custom': "magenta",
       'warn': "bold gold1",
       'err': "bold red",
       'exe': "sky_blue1"
