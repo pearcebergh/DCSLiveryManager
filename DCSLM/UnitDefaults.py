@@ -252,6 +252,12 @@ UnitDefaults = {
           "dcs_files": "UH-1H Huey",
           "liveries": ["uh-1h"]
         },
+        "tf-51d": {
+          "names": ["tf-51d"],
+          "friendly": "TF-51D",
+          "dcs_files": "TF-51D Mustang",
+          "liveries": ["TF-51D"]
+        },
         "yak-52": {
           "names": ["yak-52"],
           "friendly": "Yak-52",
