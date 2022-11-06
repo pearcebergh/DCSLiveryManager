@@ -144,6 +144,12 @@ UnitDefaults = {
           "dcs_files": "M-2000C",
           "liveries": ["M-2000C"]
         },
+        "mb-339": {
+          "names": ["mb-339"],
+          "friendly": "MB-339",
+          "dcs_files": "MB-339",
+          "liveries": ["MB-339A", "MB-339APAN"]
+        },
         "mirage f1": {
           "names": ["mirage", "f1", "f1ce", "mirage f1ce"],
           "friendly": "Mirage F1",
