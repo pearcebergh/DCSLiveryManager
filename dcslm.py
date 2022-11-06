@@ -866,11 +866,11 @@ class DCSLMApp:
 
   def install_liveries(self, sArgs):
     installArgs = self._parse_command_args("install", sArgs)
-    installArgs.url = self._install_correct_parsed_arg_paths(installArgs.url)
+    installArgs.path = self._install_correct_parsed_arg_paths(installArgs.path)
     self.reload_dcslm_config()
-    self.console.print("Attempting to install " + str(len(installArgs.url)) +
-                       (" liveries" if len(installArgs.url) != 1 else " livery") + ".")
-    installData = self._install_liveries(installArgs.url, keepFiles=installArgs.keep,
+    self.console.print("Attempting to install " + str(len(installArgs.path)) +
+                       (" liveries" if len(installArgs.path) != 1 else " livery") + ".")
+    installData = self._install_liveries(installArgs.path, keepFiles=installArgs.keep,
                                          forceInstall=installArgs.reinstall, forceAllUnits=installArgs.allunits,
                                          manualUnitSelection=installArgs.unitselection, verbose=installArgs.verbose,
                                          screenshots=installArgs.screenshots)
@@ -1544,7 +1544,7 @@ class DCSLMApp:
               friendlyStr = "[unit.custom]" + friendlyStr + "[/unit.custom]"
             elif u.modified:
               friendlyStr = "[unit.modified]" + friendlyStr + "[/unit.modified]"
-            elif u.generic not in UnitsOfficial[c]:
+            elif u.generic in UnitsOfficial[c]:
               friendlyStr = "[unit.official]" + friendlyStr + "[/unit.official]"
             friendlyUnits.append(friendlyStr)
           unitsStr = ', '.join(friendlyUnits)
