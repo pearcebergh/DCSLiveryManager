@@ -847,7 +847,7 @@ class DCSLMApp:
     fixedPaths = []
     openQuotes = False
     openIndex = 0
-    pprint(parsedPaths)
+    pprint(parsedPaths) # Rem
     for i in range(0, len(parsedPaths)):
       p = parsedPaths[i]
       if p[0] == "\"" or p[0] == "\'":
@@ -861,7 +861,7 @@ class DCSLMApp:
           fixedPaths.append(combinedPath[1:-1])
       else:
         fixedPaths.append(p)
-    pprint(fixedPaths)
+    pprint(fixedPaths) # Rem
     return fixedPaths
 
   def install_liveries(self, sArgs):
@@ -1073,7 +1073,6 @@ class DCSLMApp:
         isEndSection = True
       statusTable.add_row(*l, end_section=isEndSection)
     self.console.print(statusTable)
-    #self.console.print(footerString, justify="center")
 
   def _make_livery_rendergroup(self, livery):
     liveryTable = Table.grid(expand=True, padding=(0,2,2,0))
@@ -1120,8 +1119,23 @@ class DCSLMApp:
     else:
       self.console.print("[red]Unable to find installed livery from \'" + ' '.join(sArgs) + "\'.")
 
+  def _scan_register_unknown_liveries_register(self, liveryData):
+    l = Livery()
+    titleOptions = []
+    for u in liveryData.keys():
+      l.installs['units'].append(u)
+      for ld in liveryData[u]:
+        ld['livery'] = l
+        titleOptions.append(ld['title'])
+        liverySize = Utilities.get_size_of_directory(ld['path'])
+        nl = { 'size': liverySize, 'paths': [ld['path'][11:-1]]}
+        l.installs['liveries'][ld['title']] = nl
+    liveryInfo, dcsufInfo = self.prompt_dcsuf_info(titles=titleOptions, unit=l.installs['units'][0])
+    l.dcsuf = liveryInfo
+    return l
+
   def _scan_register_unknown_liveries(self, unknownPaths):
-    scanReport = {'success': [], 'failed':[]}
+    scanReport = {'success': {}, 'failed':[]}
     unitLiveryPairs = []
     for p in unknownPaths:
       splitPath = p.split("\\")
@@ -1143,12 +1157,12 @@ class DCSLMApp:
         for i in range(0, len(unitLiveryPairs)):
           u = unitLiveryPairs[i]
           self.console.print("\t[" + str(i + 1) + "] [unit]" + u['unit'].friendly + "[/unit] - " + u['title'])
+        self.console.print("\t[0] [unit] None")
         self.console.print("\nSelect which liveries to register. Enter multiple numbers to register a livery pack.")
         selectingLiveries = True
         selectedLiveries = {}
         while selectingLiveries:
           choiceInput = Prompt.ask("[bold]Liveries to Register[/bold]", console=self.console)
-          self.console.print(choiceInput)
           selectedIndices = []
           if len(choiceInput):
             choices = choiceInput.split(' ')
@@ -1157,18 +1171,37 @@ class DCSLMApp:
                 pairIndex = int(choices[i])
                 if pairIndex > 0 and pairIndex <= len(unitLiveryPairs):
                   c = unitLiveryPairs[pairIndex - 1]
-                  if c['unit'] not in selectedLiveries.keys():
-                    selectedLiveries[c['unit']] = []
-                  selectedLiveries[c['unit']].append(c)
+                  if c['unit'].generic not in selectedLiveries.keys():
+                    selectedLiveries[c['unit'].generic] = []
+                  selectedLiveries[c['unit'].generic].append(c)
                   selectedIndices.append(pairIndex)
-          pprint(selectedIndices)
-          pprint(selectedLiveries)
-        registerLiveries = False
+                elif pairIndex == 0 and len(choices) == 1:
+                  selectingLiveries = False
+                  registerLiveries = False
+                  break
+            if not selectingLiveries: # Selected none
+              break
+            # Register Liveries
+            if len(selectedLiveries):
+              nL = self._scan_register_unknown_liveries_register(selectedLiveries)
+              if nL:
+                self.lm.register_livery(nL)
+                scanReport['success'][nL.dcsuf.id] = nL
+              else:
+                scanReport['failed'].append({'path': "none", 'error': "Invalid path"})
+            # Remove from list of unknown liveries
+            for u in selectedLiveries.keys():
+              for sL in selectedLiveries[u]:
+                if 'livery' in sL.keys():
+                  if sL['livery']:
+                    if sL in unitLiveryPairs:
+                      unitLiveryPairs.remove(sL)
+        if len(unitLiveryPairs) == 0:
+          registerLiveries = False
     return scanReport
 
   def scan_for_liveries(self, sArgs):
     scanArgs = self._parse_command_args("scan", sArgs)
-    #with self.console.status("Scanning directories for [exe]DCSLM[/exe] installed liveries..."):
     liveryFolders = []
     rootFolders = glob.glob("./*/")
     if self.lm.LiveryData['config']['ovgme']:
@@ -1210,11 +1243,11 @@ class DCSLMApp:
     if not scanArgs.register:
       unknownStr += " (Use --register to add local liveries to [exe]DCSLM[/exe])"
     self.console.print(unknownStr)
-    registeredLiveries = {'success':{}, 'failed':[], 'existing':{}, 'registered': {}, 'unknown': []}
+    registeredLiveries = {'success':{}, 'failed':[], 'existing':{}}
     if scanArgs.register and len(unknownLiveries):
       scanRegisterReport = self._scan_register_unknown_liveries(unknownLiveries)
-      registeredLiveries['registered'] = scanRegisterReport['success']
-      registeredLiveries['unknown'] = scanRegisterReport['failed']
+      registeredLiveries['success'] = scanRegisterReport['success']
+      registeredLiveries['failed'] = scanRegisterReport['failed']
     for dF in installedDCSLMFiles:
       livery = self.lm.load_livery_from_livery_registry_file(dF)
       if livery:
@@ -1228,7 +1261,7 @@ class DCSLMApp:
         registeredLiveries['failed'].append(dF)
     reportStr = ""
     if len(registeredLiveries['success']):
-      reportStr += "Registered " + str(len(registeredLiveries['success'])) + " missing liveries. "
+      reportStr += "Registered " + str(len(registeredLiveries['success'])) + " liveries. "
       self.completers['livery_ids']['dict'] = self.make_livery_ids_completer()
       self._make_nested_completer()
     if len(registeredLiveries['existing']):
@@ -1615,7 +1648,7 @@ class DCSLMApp:
             dcsufTable.add_row(v, str(s))
           self.console.print(dcsufTable)
 
-  def prompt_dcsuf_info(self, titles=None, display=True, livery=None):
+  def prompt_dcsuf_info(self, titles=None, display=True, livery=None, unit=None):
     from DCSLM.Livery import DCSUserFile
     from DCSLM.Unit import Unit
     dcsuf = None
@@ -1674,12 +1707,18 @@ class DCSLMApp:
           if dcsuf.title:
             self.console.print("Using \'" + dcsuf.title + "\' as livery title.")
         while not dcsuf.unit:
-          unitInput = self._install_prompt_unit_input()
-          if unitInput:
-            dcsuf.unit = unitInput.generic
-          if dcsuf.unit:
-            self.console.print("Using \'" + dcsuf.unit + "\' as livery unit.")
-            selectedUnit = unitInput
+          if unit:
+            selectedUnit = UM.get_unit_from_generic_name(unit)
+            if selectedUnit:
+              dcsuf.unit = selectedUnit.generic
+              self.console.print("Using \'" + dcsuf.unit + "\' as livery unit.")
+          else:
+            unitInput = self._install_prompt_unit_input()
+            if unitInput:
+              dcsuf.unit = unitInput.generic
+            if dcsuf.unit:
+              self.console.print("Using \'" + dcsuf.unit + "\' as livery unit.")
+              selectedUnit = unitInput
         while not dcsuf.author:
           authorInput = Prompt.ask("[bold](OPTIONAL) Enter livery author[/bold]", console=self.console)
           if not authorInput or (authorInput and len(authorInput) == 0):
