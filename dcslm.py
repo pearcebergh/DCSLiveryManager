@@ -847,7 +847,6 @@ class DCSLMApp:
     fixedPaths = []
     openQuotes = False
     openIndex = 0
-    pprint(parsedPaths) # Rem
     for i in range(0, len(parsedPaths)):
       p = parsedPaths[i]
       if p[0] == "\"" or p[0] == "\'":
@@ -861,7 +860,6 @@ class DCSLMApp:
           fixedPaths.append(combinedPath[1:-1])
       else:
         fixedPaths.append(p)
-    pprint(fixedPaths) # Rem
     return fixedPaths
 
   def install_liveries(self, sArgs):
@@ -1122,15 +1120,19 @@ class DCSLMApp:
   def _scan_register_unknown_liveries_register(self, liveryData):
     l = Livery()
     titleOptions = []
+    selectedUnit = None
     for u in liveryData.keys():
       l.installs['units'].append(u)
       for ld in liveryData[u]:
         ld['livery'] = l
+        if not selectedUnit:
+          selectedUnit = ld['unit']
         titleOptions.append(ld['title'])
         liverySize = Utilities.get_size_of_directory(ld['path'])
         nl = { 'size': liverySize, 'paths': [ld['path'][11:-1]]}
         l.installs['liveries'][ld['title']] = nl
-    liveryInfo, dcsufInfo = self.prompt_dcsuf_info(titles=titleOptions, unit=l.installs['units'][0])
+    l.destination = self.lm.generate_livery_destination_path(l)
+    liveryInfo, dcsufInfo = self.prompt_dcsuf_info(titles=titleOptions, unit=selectedUnit)
     l.dcsuf = liveryInfo
     return l
 
@@ -1148,7 +1150,7 @@ class DCSLMApp:
       if not unit:
         scanReport['failed'].append({'path': p, 'error': "Unit root folder not found in configured units"})
         continue
-      unitLiveryPairs.append({'path': p, 'title': liveryPath, 'unit': unit})
+      unitLiveryPairs.append({'path': p, 'title': liveryPath, 'unit': unit, 'unitPath': unitPath})
     if len(unitLiveryPairs):
       registerLiveries = True
       self.console.print("Matched " + str(len(unitLiveryPairs)) + " livery unit roots with configured units.")
@@ -1171,9 +1173,9 @@ class DCSLMApp:
                 pairIndex = int(choices[i])
                 if pairIndex > 0 and pairIndex <= len(unitLiveryPairs):
                   c = unitLiveryPairs[pairIndex - 1]
-                  if c['unit'].generic not in selectedLiveries.keys():
-                    selectedLiveries[c['unit'].generic] = []
-                  selectedLiveries[c['unit'].generic].append(c)
+                  if c['unitPath'] not in selectedLiveries.keys():
+                    selectedLiveries[c['unitPath']] = []
+                  selectedLiveries[c['unitPath']].append(c)
                   selectedIndices.append(pairIndex)
                 elif pairIndex == 0 and len(choices) == 1:
                   selectingLiveries = False
@@ -1183,9 +1185,11 @@ class DCSLMApp:
               break
             # Register Liveries
             if len(selectedLiveries):
+              selectingLiveries = False
               nL = self._scan_register_unknown_liveries_register(selectedLiveries)
               if nL:
                 self.lm.register_livery(nL)
+                self.lm.write_livery_registry_files(nL)
                 scanReport['success'][nL.dcsuf.id] = nL
               else:
                 scanReport['failed'].append({'path': "none", 'error': "Invalid path"})
@@ -1708,16 +1712,15 @@ class DCSLMApp:
             self.console.print("Using \'" + dcsuf.title + "\' as livery title.")
         while not dcsuf.unit:
           if unit:
-            selectedUnit = UM.get_unit_from_generic_name(unit)
-            if selectedUnit:
-              dcsuf.unit = selectedUnit.generic
-              self.console.print("Using \'" + dcsuf.unit + "\' as livery unit.")
+            selectedUnit = unit
+            dcsuf.unit = unit.generic
+            self.console.print("Using \'" + unit.friendly + "\' as livery unit.")
           else:
             unitInput = self._install_prompt_unit_input()
             if unitInput:
               dcsuf.unit = unitInput.generic
             if dcsuf.unit:
-              self.console.print("Using \'" + dcsuf.unit + "\' as livery unit.")
+              self.console.print("Using \'" + unitInput.friendly + "\' as livery unit.")
               selectedUnit = unitInput
         while not dcsuf.author:
           authorInput = Prompt.ask("[bold](OPTIONAL) Enter livery author[/bold]", console=self.console)
