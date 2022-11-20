@@ -1132,6 +1132,8 @@ class DCSLMApp:
         nl = { 'size': liverySize, 'paths': [ld['path'][11:-1]]}
         l.installs['liveries'][ld['title']] = nl
     l.destination = self.lm.generate_livery_destination_path(l)
+    l.archive = ""
+    l.ovgme = l.generate_ovgme_folder()
     liveryInfo, dcsufInfo = self.prompt_dcsuf_info(titles=titleOptions, unit=selectedUnit)
     l.dcsuf = liveryInfo
     return l
