@@ -1133,9 +1133,9 @@ class DCSLMApp:
         l.installs['liveries'][ld['title']] = nl
     l.destination = self.lm.generate_livery_destination_path(l)
     l.archive = ""
-    l.ovgme = l.generate_ovgme_folder()
     liveryInfo, dcsufInfo = self.prompt_dcsuf_info(titles=titleOptions, unit=selectedUnit)
     l.dcsuf = liveryInfo
+    l.ovgme = l.generate_ovgme_folder()
     return l
 
   def _scan_register_unknown_liveries(self, unknownPaths):
