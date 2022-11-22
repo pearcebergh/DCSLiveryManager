@@ -768,7 +768,6 @@ class DCSLMApp:
       inputUnit = None
     return inputUnit
 
-  # TODO: _install_prompt_unit_input change
   def _install_prompt_unit(self, livery, manualUnitSelection=False):
     selectedUnit = None
     if len(livery.dcsuf.tags) and not manualUnitSelection:
@@ -1117,6 +1116,7 @@ class DCSLMApp:
     else:
       self.console.print("[red]Unable to find installed livery from \'" + ' '.join(sArgs) + "\'.")
 
+  # TODO: Fix unit registered (A-10C II Tank Killer, 3326863)
   def _scan_register_unknown_liveries_register(self, liveryData):
     l = Livery()
     titleOptions = []
@@ -1130,7 +1130,10 @@ class DCSLMApp:
         titleOptions.append(ld['title'])
         liverySize = Utilities.get_size_of_directory(ld['path'])
         nl = { 'size': liverySize, 'paths': [ld['path'][11:-1]]}
-        l.installs['liveries'][ld['title']] = nl
+        if not ld['title'] in l.installs['liveries'].keys():
+          l.installs['liveries'][ld['title']] = nl
+        else:
+          l.installs['liveries'][ld['title']]['paths'].extend(nl['paths'])
     l.destination = self.lm.generate_livery_destination_path(l)
     l.archive = ""
     liveryInfo, dcsufInfo = self.prompt_dcsuf_info(titles=titleOptions, unit=selectedUnit)
@@ -1189,12 +1192,20 @@ class DCSLMApp:
             if len(selectedLiveries):
               selectingLiveries = False
               nL = self._scan_register_unknown_liveries_register(selectedLiveries)
-              if nL:
+              if not nL:
                 self.lm.register_livery(nL)
+                self.console.print("[bold green]Livery[/bold green] \'" + str(nL.dcsuf.title) + "\' [bold green]Registered!")
                 self.lm.write_livery_registry_files(nL)
+                self.console.print("Wrote " + str(len(nL.installs['units']) * nL.get_num_liveries()) +
+                                   " registry files to installed livery directories.")
                 scanReport['success'][nL.dcsuf.id] = nL
               else:
-                scanReport['failed'].append({'path': "none", 'error': "Invalid path"})
+                titleString = ""
+                for u in selectedLiveries.keys():
+                  for sL in selectedLiveries[u]:
+                    titleString += sL['title'] + "/"
+                self.console.print("[err]Unable to create and register livery[/err] \'" + titleString[:-1] + "\'")
+                scanReport['failed'].append(titleString[:-1])
             # Remove from list of unknown liveries
             for u in selectedLiveries.keys():
               for sL in selectedLiveries[u]:
@@ -1254,17 +1265,18 @@ class DCSLMApp:
       scanRegisterReport = self._scan_register_unknown_liveries(unknownLiveries)
       registeredLiveries['success'] = scanRegisterReport['success']
       registeredLiveries['failed'] = scanRegisterReport['failed']
-    for dF in installedDCSLMFiles:
-      livery = self.lm.load_livery_from_livery_registry_file(dF)
-      if livery:
-        if not self.lm.is_livery_registered(livery=livery):
-          self.lm.register_livery(livery)
-          registeredLiveries['success'][livery.dcsuf.id] = livery
+    with self.console.status("Checking liveries against registry..."):
+      for dF in installedDCSLMFiles:
+        livery = self.lm.load_livery_from_livery_registry_file(dF)
+        if livery:
+          if not self.lm.is_livery_registered(livery=livery):
+            self.lm.register_livery(livery)
+            registeredLiveries['success'][livery.dcsuf.id] = livery
+          else:
+            if livery not in registeredLiveries['success']:
+              registeredLiveries['existing'][livery.dcsuf.id] = livery
         else:
-          if livery not in registeredLiveries['success']:
-            registeredLiveries['existing'][livery.dcsuf.id] = livery
-      else:
-        registeredLiveries['failed'].append(dF)
+          registeredLiveries['failed'].append(dF)
     reportStr = ""
     if len(registeredLiveries['success']):
       reportStr += "Registered " + str(len(registeredLiveries['success'])) + " liveries. "
@@ -1273,7 +1285,7 @@ class DCSLMApp:
     if len(registeredLiveries['existing']):
       reportStr += "Matched " + str(len(registeredLiveries['existing'])) + " existing registered liveries. "
     if len(registeredLiveries['failed']):
-      reportStr += "Failed to register " + str(len(registeredLiveries['failed'])) + " liveries from \'.dcslm\' files:\n"
+      reportStr += "Failed to register " + str(len(registeredLiveries['failed'])) + " liveries from \'.dcslm\' files:[err]\n"
       reportStr += ', '.join(registeredLiveries['failed'])
     self.lm.write_data()
     self.console.print(reportStr)
