@@ -10,13 +10,13 @@ UnitDefaults = {
           "names": ["a-10c", "a 10c", "a-10c warthog", "a-10", "a 10"],
           "friendly": "A-10C",
           "dcs_files": "A-10C Warthog",
-          "liveries": ["A-10A", "A-10C", "A-10CII"]
+          "liveries": ["A-10C", "A-10A", "A-10CII"]
         },
         "a-10cii": {
           "names": ["a-10cii", "a 10c2", "a 10cII", "a-10c2", "a-10c2 warthog", "a-10c II warthog", "a-10", "a 10"],
           "friendly": "A-10C II",
           "dcs_files": "A-10C II Tank Killer",
-          "liveries": ["A-10A", "A-10C", "A-10CII"]
+          "liveries": ["A-10CII", "A-10A", "A-10C"]
         },
         "ah-64d": {
           "names": ["ah-64d", "ah-64", "ah 64", "ah64", "apache"],
@@ -272,7 +272,7 @@ UnitDefaults = {
         },
         "hercules": {
           "names": ["hercules", "super hercules", "c-130j", "c-130"],
-          "friendly": "C-130J Super Hercules",
+          "friendly": "C-130J",
           "dcs_files": "Other",
           "liveries": ["Hercules"]
         },

@@ -85,11 +85,15 @@ class UnitManager:
     return False
 
   def get_unit_from_liveries_dir(self, liveryDir):
+    bestMatch = None
     for unitType in UnitDefaults.keys():
       for u in self.Units[unitType].values():
         if liveryDir in u.liveries:
-          return u
-    return None
+          if liveryDir == u.liveries[0]: # First element designates the actual unit
+            return u
+          else: # Some units can install to other units (i.e. A-10)
+            bestMatch = u
+    return bestMatch
 
   def get_unit_from_generic_name(self, genericName):
     for c in self.Categories:
