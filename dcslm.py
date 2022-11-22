@@ -717,7 +717,7 @@ class DCSLMApp:
                                      " registry files to installed livery directories.")
                   self.lm.register_livery(livery)
                   self.console.print("[bold green]Livery[/bold green] \'" + str(livery.dcsuf.title) +
-                                     "\' [bold green]Registered!")
+                                     "\' [bold green]registered with ID[/bold green] " + str(livery.dcsuf.id) + "[bold green]!")
                   livery.calculate_size_installed_liveries()
                   installData['success'].append(livery)
                 else:
@@ -1116,7 +1116,6 @@ class DCSLMApp:
     else:
       self.console.print("[red]Unable to find installed livery from \'" + ' '.join(sArgs) + "\'.")
 
-  # TODO: Fix unit registered (A-10C II Tank Killer, 3326863)
   def _scan_register_unknown_liveries_register(self, liveryData):
     l = Livery()
     titleOptions = []
@@ -1192,9 +1191,10 @@ class DCSLMApp:
             if len(selectedLiveries):
               selectingLiveries = False
               nL = self._scan_register_unknown_liveries_register(selectedLiveries)
-              if not nL:
+              if nL:
                 self.lm.register_livery(nL)
-                self.console.print("[bold green]Livery[/bold green] \'" + str(nL.dcsuf.title) + "\' [bold green]Registered!")
+                self.console.print("[bold green]Livery[/bold green] \'" + str(nL.dcsuf.title) +
+                                   "\' [bold green]registered with ID[/bold green] " + str(nL.dcsuf.id) + "[bold green]!")
                 self.lm.write_livery_registry_files(nL)
                 self.console.print("Wrote " + str(len(nL.installs['units']) * nL.get_num_liveries()) +
                                    " registry files to installed livery directories.")
@@ -1672,6 +1672,7 @@ class DCSLMApp:
     dcsuf = None
     usedDCSUF = False
     selectedUnit = None
+    panelUnit = "None"
     self.console.print("Prompting user for DCS User Files livery information\n")
     self.console.print("Fill in the information with the \'DCS User Files ID\' or leave the line blank and hit [bold]ENTER[/bold].")
     dcsufID = Prompt.ask("[bold]DCS User Files ID[/bold]", console=self.console)
@@ -1682,6 +1683,10 @@ class DCSLMApp:
           self.console.print("Getting DCS User Files information from ID " + str(id))
           parsedDCSUF = DCSUFParser().get_dcsuserfile_from_url(dcsufID)
           if parsedDCSUF:
+            liveryUnitData = UM.get_unit_from_dcsuf_text(parsedDCSUF.unit)
+            if liveryUnitData:
+              panelUnit = liveryUnitData.friendly
+              parsedDCSUF.unit = liveryUnitData.generic
             self.console.print("Successfully parsed data from DCS User Files (" + str(id) + ").")
             dcsuf = parsedDCSUF
           else:
@@ -1691,7 +1696,7 @@ class DCSLMApp:
       else:
         self.console.print("\'" + dcsufID + "\' not a valid number.")
     if dcsuf:
-      self.print_dcsuf_panel(dcsuf, dcsuf.unit, True)
+      self.print_dcsuf_panel(dcsuf, panelUnit, True)
       if Confirm.ask("[bold]Confirm DCS User Files Information[/bold]", console=self.console):
         usedDCSUF = True
         return dcsuf, usedDCSUF
@@ -1727,6 +1732,7 @@ class DCSLMApp:
         while not dcsuf.unit:
           if unit:
             selectedUnit = unit
+            panelUnit = unit.friendly
             dcsuf.unit = unit.generic
             self.console.print("Using \'" + unit.friendly + "\' as livery unit.")
           else:
@@ -1736,6 +1742,7 @@ class DCSLMApp:
             if dcsuf.unit:
               self.console.print("Using \'" + unitInput.friendly + "\' as livery unit.")
               selectedUnit = unitInput
+              panelUnit = unitInput.friendly
         while not dcsuf.author:
           authorInput = Prompt.ask("[bold](OPTIONAL) Enter livery author[/bold]", console=self.console)
           if not authorInput or (authorInput and len(authorInput) == 0):
@@ -1773,7 +1780,7 @@ class DCSLMApp:
       dcsuf.size = livery.dcsuf.size
       dcsuf.download = livery.dcsuf.download
     if display and selectedUnit:
-      self.print_dcsuf_panel(dcsuf, unitName=selectedUnit.friendly)
+      self.print_dcsuf_panel(dcsuf, unitName=panelUnit)
     return dcsuf, usedDCSUF
 
   def print_help(self):
