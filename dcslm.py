@@ -36,7 +36,6 @@ import DCSLM.Utilities as Utilities
 
 # TODO: Detect shared data folder on install 3323004
 # TODO: Add fallback upgrade path to find latest DCSLM.exe when unable to parse releases page
-# TODO: scan/register existing liveries in saved games w/o dcsuf info
 # TODO: add description.lua parts as optional field to unit config to auto-determine unit
 
 def set_console_title(title):
@@ -1035,6 +1034,9 @@ class DCSLMApp:
         friendlyUnit = unitData.friendly
       else:
         friendlyUnit = l.dcsuf.unit
+      unitStr = friendlyUnit
+      if len(l.installs['units']) > 1:
+        unitStr += "[bold gold1]+" + str(len(l.installs['units']) - 1) + "[/bold gold1]"
       liverySizeMB = Utilities.bytes_to_mb(l.get_size_installed_liveries())
       footerData['size'] += liverySizeMB
       footerData['registered'] += 1
@@ -1044,9 +1046,9 @@ class DCSLMApp:
       sizeStr = Utilities.mb_to_mb_string(liverySizeMB)
       if l.is_optimized():
         sizeStr = "[size.opt]" + sizeStr + "[/size.opt]"
-      liveryRows.append((friendlyUnit, str(l.dcsuf.id), l.dcsuf.title, sizeStr))
-      if len(friendlyUnit) > len(longestUnit):
-        longestUnit = friendlyUnit
+      liveryRows.append((unitStr, str(l.dcsuf.id), l.dcsuf.title, sizeStr))
+      if len(unitStr) > len(longestUnit):
+        longestUnit = unitStr
     footerString = "[num]" + str(footerData['registered']) + "[/num] Registered Liveries    "
     footerString += "[num]" + str(footerData['installed']) + "[/num] Installed Livery Directories    "
     footerString += "[num]" + str(len(footerData['units'])) + "[/num] Units    "
@@ -1064,8 +1066,13 @@ class DCSLMApp:
       isEndSection = False
       if i != len(liveryRows) - 1:
         nextUnit = liveryRows[i + 1][0]
-        if nextUnit != l[0]:
+        currentUnit = l[0]
+        if nextUnit != currentUnit:
           isEndSection = True
+          if len(nextUnit) > len(currentUnit) and nextUnit[:len(currentUnit)] == currentUnit:
+            isEndSection = False
+          elif len(currentUnit) > len(nextUnit) and currentUnit[:len(nextUnit)] == nextUnit:
+            isEndSection = False
       if i == len(liveryRows) - 1: # for footer
         isEndSection = True
       statusTable.add_row(*l, end_section=isEndSection)
