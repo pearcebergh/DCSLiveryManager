@@ -50,12 +50,6 @@ def clear_console():
   else:
     os.system('clear')
 
-def set_console_size(w, h):
-  if platform.system() == 'Windows':
-    os.system(f'mode con: cols={w} lines={h}')
-  else:
-    os.system(f'printf \'\033[8;{h};{w}t\'')
-
 class DCSLMApp:
   def __init__(self):
     self.console = None
@@ -371,15 +365,6 @@ class DCSLMApp:
         'hidden': False,
         'exec': None
       },
-      'test': {
-        'usage': "",
-        'desc': "test function",
-        'flags': {},
-        'args': {},
-        'subcommands': {},
-        'hidden': True,
-        'exec': self.prompt_dcsuf_info
-      },
       'executable': {
         'usage': "DCSLM.exe \[flags] \[args]",
         'desc': "Command line arguments to be passed to the executable when launching",
@@ -432,33 +417,49 @@ class DCSLMApp:
     self.completers = {
       'commands': {
         'commands': [],
+        'completer': None,
         'dict': {},
         'func': self.make_commands_completer
       },
       'units': {
         'commands': ['units'],
+        'completer': None,
         'dict': {},
         'func': self.make_units_completer
       },
       'livery_ids': {
         'commands': ['uninstall', 'info', 'optimize'],
+        'completer': None,
         'dict': {},
         'func': self.make_livery_ids_completer
       }
     }
     self._update_completers()
-    self._make_nested_completer()
+    self._make_nested_completers()
 
   def _update_completers(self):
     for k,v in self.completers.items():
-      v['dict'] = v['func']()
+      self._update_completer(v)
 
-  def _make_nested_completer(self):
+  def _update_completer_from_name(self, commandName):
+    if commandName in self.completers.keys():
+      self._update_completer(self.completers[commandName])
+
+  def _update_completer(self, commandData):
+    commandData['dict'] = commandData['func']()
+    commandData['completer'] = NestedCompleter.from_nested_dict(commandData['dict'])
+
+  def _make_nested_completer(self, command):
+    commandDict = {}
+    for k, d in self.completers.items():
+      if command in d['commands']:
+        commandDict = d['dict']
+    return commandDict
+
+  def _make_nested_completers(self):
     fullCompleterDict = self.completers['commands']['dict']
     for c in fullCompleterDict.keys():
-      for k,d in self.completers.items():
-        if c in d['commands']:
-          fullCompleterDict[c] = d['dict']
+      fullCompleterDict[c] = self._make_nested_completer(c)
     self.completer = NestedCompleter.from_nested_dict(fullCompleterDict)
 
   def _remove_brackets_sArgs(self, sArgs):
@@ -621,6 +622,7 @@ class DCSLMApp:
                         forceAllUnits=False, manualUnitSelection=False, verbose=False, screenshots=False):
     installData = {'success': [], 'failed': []}
     session = DCSUFParser().make_request_session()
+    extractedID = None
     liveryIndex = 0
     for liveryStr in liveryStrings:
       liveryStrType = Utilities.determine_livery_string_location(liveryStr)
@@ -756,7 +758,7 @@ class DCSLMApp:
 
   def _install_prompt_unit_input(self):
     inputStr = self.session.prompt(HTML("<b>Enter unit name:</b> "),
-                                   completer=NestedCompleter.from_nested_dict(self.completers['units']['dict']))
+                                   completer=self.completers['units']['completer'])
     inputStr = str.strip(inputStr)
     if inputStr == "units":
       self.dcs_units(sArgs="")
@@ -803,7 +805,7 @@ class DCSLMApp:
       try:
         while True:
           inputStr = self.session.prompt(HTML("<b>Enter unit name:</b> "),
-                                         completer=NestedCompleter.from_nested_dict(self.completers['units']['dict']))
+                                         completer=self.completers['units']['completer'])
           inputStr = str.strip(inputStr)
           if inputStr == "units":
             self.dcs_units(sArgs="")
@@ -872,7 +874,8 @@ class DCSLMApp:
                                          screenshots=installArgs.screenshots)
     self.lm.write_data()
     self.completers['livery_ids']['dict'] = self.make_livery_ids_completer()
-    self._make_nested_completer()
+    self._update_completer_from_name('livery_ids')
+    self._make_nested_completers()
     self._print_livery_install_report(installData, "Livery Install Report")
 
   def uninstall_liveries(self, sArgs):
@@ -928,7 +931,7 @@ class DCSLMApp:
         self.console.print("\t(" + str(l.dcsuf.id) + ") " + l.dcsuf.title, highlight=False)
       self.lm.write_data()
       self.completers['livery_ids']['dict'] = self.make_livery_ids_completer()
-      self._make_nested_completer()
+      self._make_nested_completers()
     if len(uninstallData['failed']):
       self.console.print("[err]Failed Livery Uninstalls:")
       for l in uninstallData['failed']:
@@ -1008,8 +1011,9 @@ class DCSLMApp:
     updateData = self._install_liveries(updateList, forceDownload=True)
     self.set_last_update()
     self.lm.write_data()
-    self.completers['livery_ids']['dict'] = self.make_livery_ids_completer()
-    self._make_nested_completer()
+    self.completers['livery_ids']['completer'] = self.make_livery_ids_completer()
+    self.completers['livery_ids']['dict'] = NestedCompleter.from_nested_dict(self.completers['livery_ids']['completer'])
+    self._make_nested_completers()
     self._print_livery_install_report(updateData, "Livery Update Report")
 
   def list_liveries(self, sArgs):
@@ -1288,7 +1292,7 @@ class DCSLMApp:
     if len(registeredLiveries['success']):
       reportStr += "Registered " + str(len(registeredLiveries['success'])) + " liveries. "
       self.completers['livery_ids']['dict'] = self.make_livery_ids_completer()
-      self._make_nested_completer()
+      self._make_nested_completers()
     if len(registeredLiveries['existing']):
       reportStr += "Matched " + str(len(registeredLiveries['existing'])) + " existing registered liveries. "
     if len(registeredLiveries['failed']):
@@ -1660,7 +1664,7 @@ class DCSLMApp:
             self.console.print("Loaded [sky_blue1]DCS User Files Parsing[/sky_blue1] configuration settings from " +
                                "\'[exe]DCSLM[/exe]\\dcsuf_parse.json\'")
             self.completers['units']['dict'] = self.make_units_completer()
-            self._make_nested_completer()
+            self._make_nested_completers()
           else:
             self.console.print("[red]Failed to read [sky_blue1]DCS User Files Parsing[/sky_blue1] configuration " +
                                "settings from \'[exe]DCSLM[/exe]\\dcsuf_parse.json\'[/red]")
@@ -1768,6 +1772,7 @@ class DCSLMApp:
           dcsuf.title = None
         elif checkConfirm == 'u':
           dcsuf.unit = None
+          unit = None
         elif checkConfirm == 'a':
           dcsuf.author = None
         else:
