@@ -2,6 +2,7 @@ import json
 import os
 from datetime import datetime
 import DCSLM.Utilities as Utilities
+from DCSLM.UnitManager import UM
 
 class DCSUserFile:
   def __init__(self):
@@ -18,7 +19,7 @@ class DCSUserFile:
   def to_JSON(self):
     return {
       'id': self.id,
-      'unit': self.unit,
+      'unit': self.unit.generic,
       'author': self.author,
       'title': self.title,
       'date': self.date,
@@ -35,6 +36,8 @@ class DCSUserFile:
         if var in jsonData.keys():
           if var == 'datetime':
             setattr(self, var, datetime.fromtimestamp(jsonData['datetime']))
+          elif var == 'unit':
+            setattr(self, var, UM.get_unit_from_generic_name(jsonData['unit']))
           else:
             setattr(self, var, jsonData[var])
       return self

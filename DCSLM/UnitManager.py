@@ -86,48 +86,53 @@ class UnitManager:
 
   def get_unit_from_liveries_dir(self, liveryDir):
     bestMatch = None
-    for unitType in UnitDefaults.keys():
-      for u in self.Units[unitType].values():
-        if liveryDir in u.liveries:
-          if liveryDir == u.liveries[0]: # First element designates the actual unit
-            return u
-          else: # Some units can install to other units (i.e. A-10)
-            bestMatch = u
+    if liveryDir and len(liveryDir):
+      for unitType in UnitDefaults.keys():
+        for u in self.Units[unitType].values():
+          if liveryDir in u.liveries:
+            if liveryDir == u.liveries[0]: # First element designates the actual unit
+              return u
+            else: # Some units can install to other units (i.e. A-10)
+              bestMatch = u
     return bestMatch
 
   def get_unit_from_generic_name(self, genericName):
-    for c in self.Categories:
-      if c in self.Units.keys():
-        for u,d in self.Units[c].items():
-          if genericName == d.generic:
-            return d
+    if genericName:
+      for c in self.Categories:
+        if c in self.Units.keys():
+          for u,d in self.Units[c].items():
+            if genericName == d.generic:
+              return d
     return None
 
   def get_unit_from_friendly_name(self, friendlyName):
-    for c in self.Categories:
-      if c in self.Units.keys():
-        for u,d in self.Units[c].items():
-          if friendlyName.lower() == d.friendly.lower():
-            return d
+    if friendlyName:
+      for c in self.Categories:
+        if c in self.Units.keys():
+          for u,d in self.Units[c].items():
+            if friendlyName.lower() == d.friendly.lower():
+              return d
     return None
 
-  def get_unit_from_dcsuf_text(self, dscufText):
-    for c in self.Categories:
-      if c in self.Units.keys():
-        for u,d in self.Units[c].items():
-          if dscufText == d.dcs_files:
-            return d
+  def get_unit_from_dcsuf_text(self, dcsufText):
+    if dcsufText:
+      for c in self.Categories:
+        if c in self.Units.keys():
+          for u,d in self.Units[c].items():
+            if dcsufText == d.dcs_files:
+              return d
     return None
 
   def get_units_from_tags(self, tagsList):
     matchedUnits = []
-    for c in self.Categories:
-      if c in self.Units.keys():
-        for u,d in self.Units[c].items():
-          for t in tagsList:
-            if t.lower() in d.names:
-              matchedUnits.append(d)
-              break
+    if tagsList and len(tagsList):
+      for c in self.Categories:
+        if c in self.Units.keys():
+          for u,d in self.Units[c].items():
+            for t in tagsList:
+              if t.lower() in d.names:
+                matchedUnits.append(d)
+                break
     return matchedUnits
 
 UM = UnitManager()
