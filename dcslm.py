@@ -1483,7 +1483,6 @@ class DCSLMApp:
 
       self.console.print(optimizationTable)
 
-  # TODO: Fix deletion of files on already optimized livery (3314968)
   def optimize_livery(self, sArgs):
     if not len(sArgs):
       raise RuntimeWarning("No liveries provided for \'optimize\' command.")
