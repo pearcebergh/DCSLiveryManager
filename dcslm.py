@@ -611,7 +611,8 @@ class DCSLMApp:
     fileNameSpc = fileName.replace("_", " ")
     possibleTitles.append(fileNameSpc)
     for l in detectedLiveries:
-      possibleTitles.append(l['name'])
+      if not l['data']:
+        possibleTitles.append(l['name'])
     return possibleTitles
 
   def _install_archive_create_livery(self, liveryStrData):
@@ -692,7 +693,7 @@ class DCSLMApp:
                 livery.installs['units'] = unitChoices
             installRoots = self.lm.generate_aircraft_livery_install_path(livery, unitChoices)
             if len(detectedLiveries) and len(installRoots):
-              liveryNames = [l['name'] for l in detectedLiveries]
+              liveryNames = [l['name'] for l in detectedLiveries if not l['data']]
               self.console.print(liveryNames)
               self.console.print(progressStr + "Generating livery install paths...")
               installPaths = self.lm.generate_livery_install_paths(livery, installRoots, detectedLiveries)

@@ -310,6 +310,12 @@ class LiveryManager:
         return True
     return False
 
+  def is_valid_data_directory(self, fileList):
+    for f in fileList:
+      if ".dds" in f:
+        return True
+    return False
+
   def detect_extracted_liveries(self, livery, extractPath, extractedLiveryFiles):
     liveryDirectories = []
     for root, files in extractedLiveryFiles.items():
@@ -320,9 +326,15 @@ class LiveryManager:
         else: # Get livery name of last part of the path
           liveryName = str.split(root,"\\")[-1]
       if len(liveryName):
-        if self.is_valid_livery_directory(files):
-          liverySize = self._get_size_of_extracted_livery_files(livery, extractPath, files)
-          liveryDirectories.append({'name': liveryName, 'size': liverySize})
+        folderData = {'name': liveryName, 'size': 0, 'data': False}
+        folderData['size'] = self._get_size_of_extracted_livery_files(livery, extractPath, files)
+        if not self.is_valid_livery_directory(files):
+          if self.is_valid_data_directory(files):
+            folderData['data'] = True
+            folderData['name'] = root
+          else:
+            continue
+        liveryDirectories.append(folderData)
     return liveryDirectories
 
   def does_archive_exist(self, archiveName):
@@ -394,14 +406,14 @@ class LiveryManager:
       installPath = os.path.join(os.getcwd(), livery.destination, install)
       installLivery = str.split(installPath, "\\")[-1]
       for root, files in extractedLiveryFiles.items():
-        if self.is_valid_livery_directory(files):
-          rootUnit = livery.dcsuf.title
-          if root != "\\":
-            if not len(root):
-              rootUnit = livery.dcsuf.title
-            else:
-              rootUnit = str.split(root, "\\")[-1]
-          if installLivery == rootUnit:
+        rootUnit = livery.dcsuf.title
+        if root != "\\":
+          if not len(root):
+            rootUnit = livery.dcsuf.title
+          else:
+            rootUnit = str.split(root, "\\")[-1]
+        if installLivery == rootUnit:
+          if self.is_valid_livery_directory(files) or self.is_valid_data_directory(files):
             if self._copy_livery_files(livery, extractPath, files, installPath):
               copiedLiveries.append(install)
     return copiedLiveries
@@ -447,7 +459,7 @@ class LiveryManager:
     for dl in detectedLiveries:
       if dl['name'] == "\\":
         dl['name'] = livery.dcsuf.title
-      livery.installs['liveries'][dl['name']] = {'size': dl['size'], 'paths':[]}
+      livery.installs['liveries'][dl['name']] = {'size': dl['size'], 'paths': [], 'data': dl['data']}
       for root in installRoots:
         livery.installs['liveries'][dl['name']]['paths'].append(os.path.join(root, dl['name']))
         installPaths.append(os.path.join(root, dl['name']))
