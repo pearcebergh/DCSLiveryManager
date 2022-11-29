@@ -573,7 +573,8 @@ class LiveryManager:
     fileHashes = {}
     for f, d in fileRefs.items():
       filepath = os.path.abspath(os.path.join(installRoot, f))
-      if not "." in filepath:
+      splitFile = str.split(filepath, '\\')
+      if not "." in splitFile[-1]:
         detectedFormat = Utilities.find_desc_file_format(filepath)
         filepath += "." + detectedFormat
       if os.path.isfile(filepath):
