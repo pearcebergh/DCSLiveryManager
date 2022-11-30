@@ -34,7 +34,6 @@ from DCSLM.UnitDefaults import UnitsOfficial
 from DCSLM.UnitManager import UM
 import DCSLM.Utilities as Utilities
 
-# TODO: Detect shared data folder on install 3323004
 # TODO: Add fallback upgrade path to find latest DCSLM.exe when unable to parse releases page
 # TODO: add description.lua parts as optional field to unit config to auto-determine unit
 
