@@ -10,6 +10,7 @@ import DCSLM.Utilities as Utilities
 from pprint import pprint
 from .DCSUFParser import DCSUFParser
 from .Livery import Livery
+from .UnitManager import UM
 
 
 class LiveryManager:
@@ -491,6 +492,29 @@ class LiveryManager:
       return Utilities.request_file_size(archiveURL)
     return 0
 
+  def _count_unit_parts(self, descParts):
+    unitPartsCount = {}
+    for p in descParts:
+      for c in UM.Categories:
+        if c in UM.Units.keys():
+          for u, d in UM.Units[c].items():
+            unitCount = 0
+            for uP in d.parts:
+              if uP == p:
+                unitCount += 1
+            if unitCount > 0:
+              if not d in unitPartsCount:
+                unitPartsCount[d] = unitCount
+              else:
+                unitPartsCount[d] += unitCount
+    return unitPartsCount
+
+  def determine_unit_from_description_path(self, descPath):
+    descLines = self._optimize_get_desclines_from_description_file(descPath)
+    descParts = self._get_parts_from_description(descLines)
+    unitPartsCount = self._count_unit_parts(descParts)
+    return max(unitPartsCount)
+
   def _get_file_lines(self, filePath):
     if os.path.isfile(filePath):
       with open(filePath, "r", errors="ignore") as readFile:
@@ -555,9 +579,9 @@ class LiveryManager:
       luaData = splitStatement
     return luaData
 
-  def _get_file_refs_from_description(self, descLines):
-    fileRefs = {}
+  def _get_py_statements_from_description(self, descLines):
     inCommentBlock = False
+    pyStatements = []
     for line in descLines:
       commentStart = str.find(line, "--")
       blockStart = str.find(line, "--[[")
@@ -571,14 +595,28 @@ class LiveryManager:
       if commentStart < 0:
         commentStart = len(line) + 1
       if not inCommentBlock:
-        pyStatements = self._optimize_get_py_statements_from_line(line, commentStart, blockEnd)
-        for ps in pyStatements:
-          if not ps[3]:
-            partStr = ps[0] + ':' + ps[1]
-            if not ps[2] in fileRefs.keys():
-              fileRefs[ps[2]] = {'parts': []}
-            if not partStr in fileRefs[ps[2]]['parts']:
-              fileRefs[ps[2]]['parts'].append(partStr)
+        pyStatements.extend(self._optimize_get_py_statements_from_line(line, commentStart, blockEnd))
+    return pyStatements
+
+  def _get_parts_from_description(self, descLines):
+    parts = []
+    pyStatements = self._get_py_statements_from_description(descLines)
+    for ps in pyStatements:
+      lowerPart = str.lower(ps[0])
+      if not lowerPart in parts:
+        parts.append(lowerPart)
+    return parts
+
+  def _get_file_refs_from_description(self, descLines):
+    fileRefs = {}
+    pyStatements = self._get_py_statements_from_description(descLines)
+    for ps in pyStatements:
+      if not ps[3]:
+        partStr = ps[0] + ':' + ps[1]
+        if not ps[2] in fileRefs.keys():
+          fileRefs[ps[2]] = {'parts': []}
+        if not partStr in fileRefs[ps[2]]['parts']:
+          fileRefs[ps[2]]['parts'].append(partStr)
     return fileRefs
 
   def _get_file_list_data_folder(self, livery, liveryData):
@@ -732,6 +770,12 @@ class LiveryManager:
       fPath = os.path.join(os.getcwd(), f)
       Utilities.remove_file(fPath)
 
+  def _optimize_get_desclines_from_description_file(self, descPath):
+    descLines = []
+    if os.path.isfile(descPath):
+      descLines = self._get_file_lines(descPath)
+    return descLines
+
   def _optimize_get_desclines_from_livery(self, livery):
     descLines = {}
     for t, l in livery.installs['liveries'].items():
@@ -739,10 +783,9 @@ class LiveryManager:
       for u in range(0, len(livery.installs['units'])):
         installRoot = os.path.join(os.getcwd(), livery.destination, l['paths'][u])
         descPath = os.path.join(installRoot, "description.lua")
-        if os.path.isfile(descPath):
-          lines = self._get_file_lines(descPath)
-          descLines[t][livery.installs['units'][u]] = lines
-        elif l['data']:
+        if not l['data']:
+          descLines[t][livery.installs['units'][u]] = self._optimize_get_desclines_from_description_file(descPath)
+        else:
           descLines[t][livery.installs['units'][u]] = []
     return descLines
 

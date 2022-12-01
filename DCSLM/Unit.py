@@ -10,6 +10,7 @@ class Unit:
     self.category = None
     self.modified = False
     self.custom = False
+    self.parts = []
 
   def to_JSON(self):
     classVars = vars(Unit())

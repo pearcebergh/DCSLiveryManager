@@ -35,7 +35,6 @@ from DCSLM.UnitManager import UM
 import DCSLM.Utilities as Utilities
 
 # TODO: Add fallback upgrade path to find latest DCSLM.exe when unable to parse releases page
-# TODO: add description.lua parts as optional field to unit config to auto-determine unit
 
 def set_console_title(title):
   if platform.system() == 'Windows':
@@ -363,6 +362,23 @@ class DCSLMApp:
         'subcommands': {},
         'hidden': False,
         'exec': None
+      },
+      'parts': {
+        'usage': "",
+        'desc': "List parts in the description.lua for a livery. Used for unit configuration creation.",
+        'flags': {},
+        'args': {
+          'livery': {
+            'type': "string",
+            'optional': False,
+            'desc': "Livery ID",
+            'variable': False,
+            'skip': False
+          },
+        },
+        'subcommands': {},
+        'hidden': True,
+        'exec': self.print_parts
       },
       'executable': {
         'usage': "DCSLM.exe \[flags] \[args]",
@@ -2061,6 +2077,19 @@ class DCSLMApp:
     with downloadProgress:
       archivePath =  self.lm.download_livery_archive(livery, dlCallback=callbackData, session=session)
     return archivePath
+
+  def print_parts(self, sArgs):
+    partsArgs = self._parse_command_args("parts", sArgs)
+    livery = self.lm.get_registered_livery(partsArgs.livery)
+    if livery:
+      for t,l in livery.installs['liveries'].items():
+        if not 'data' in l.keys() or not l['data']:
+          for p in l['paths']:
+            liveryPath = os.path.join(os.getcwd(), livery.destination, p)
+            descPath = os.path.join(liveryPath, "description.lua")
+            descLines = self.lm._optimize_get_desclines_from_description_file(descPath)
+            descParts = self.lm._get_parts_from_description(descLines)
+            pprint(descParts)
 
   def reload_dcslm_config(self):
     if self.lm:
