@@ -67,9 +67,9 @@ class DCSUserFile:
         raise RuntimeError("Unable to parse date text \'" + date + "\' to datetime object.")
     return None
 
-  def datetime_to_date(self, datetime):
-    if datetime:
-      return datetime.strftime('%m/%d/%Y %H:%M:%S')
+  def datetime_to_date(self, dt):
+    if dt:
+      return dt.strftime('%m/%d/%Y %H:%M:%S')
     return ""
 
 class Livery:

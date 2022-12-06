@@ -8,7 +8,7 @@ from .Livery import DCSUserFile
 from .Utilities import correct_dcs_user_files_url
 from .UnitManager import UM
 
-class DCSUFParserConfig():
+class DCSUFParserConfig:
   def __init__(self):
     self.DCSUFDivConfig = {}
     self.load_config()
@@ -61,7 +61,7 @@ class DCSUFParserConfig():
 
 DCSUFPC = DCSUFParserConfig()
 
-class DCSUFParser():
+class DCSUFParser:
   def __init__(self):
     self.DCSDownloadUrlPrefix = "https://www.digitalcombatsimulator.com"
 

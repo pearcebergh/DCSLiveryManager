@@ -28,7 +28,7 @@ from rich.table import Table
 from rich.theme import Theme
 from DCSLM import __version__
 from DCSLM.DCSUFParser import DCSUFParser, DCSUFPC
-from DCSLM.Livery import Livery, DCSUserFile
+from DCSLM.Livery import Livery
 from DCSLM.LiveryManager import LiveryManager
 from DCSLM.UnitDefaults import UnitsOfficial
 from DCSLM.UnitManager import UM
@@ -674,7 +674,7 @@ class DCSLMApp:
           archiveName = livery.dcsuf.download.split('/')[-1]
           archivePath = self._install_check_archive_path(livery, archiveName, progressStr, forceDownload)
           if screenshots:
-            screenshotFiles = self._install_download_screenshots(livery, progressStr)
+            screenshotFiles = self._install_download_screenshots(livery, progressStr, session)
           archivePath = self._install_download_archive(livery, archivePath, progressStr, session, keepFiles)
         else:
           archivePath = liveryStrData['path']
@@ -1059,7 +1059,6 @@ class DCSLMApp:
       footerData['size'] += liverySizeMB
       footerData['registered'] += 1
       footerData['installed'] += l.get_num_liveries()
-      unitName = l.dcsuf.unit
       if l.dcsuf.unit.generic not in footerData['units']:
         footerData['units'].append(l.dcsuf.unit.generic)
       sizeStr = Utilities.mb_to_mb_string(liverySizeMB)
@@ -1088,9 +1087,9 @@ class DCSLMApp:
         currentUnit = l[0]
         if nextUnit != currentUnit:
           isEndSection = True
-          if len(nextUnit) > len(currentUnit) and nextUnit[:len(currentUnit)] == currentUnit:
+          if len(nextUnit) > len(currentUnit) and nextUnit[:len(currentUnit)] == currentUnit and nextUnit.find('+') != -1:
             isEndSection = False
-          elif len(currentUnit) > len(nextUnit) and currentUnit[:len(nextUnit)] == nextUnit:
+          elif len(currentUnit) > len(nextUnit) and currentUnit[:len(nextUnit)] == nextUnit and currentUnit.find('+') != -1:
             isEndSection = False
       if i == len(liveryRows) - 1: # for footer
         isEndSection = True
@@ -1695,7 +1694,6 @@ class DCSLMApp:
 
   def prompt_dcsuf_info(self, titles=None, display=True, livery=None, unit=None):
     from DCSLM.Livery import DCSUserFile
-    from DCSLM.Unit import Unit
     dcsuf = None
     usedDCSUF = False
     selectedUnit = None
@@ -1860,7 +1858,6 @@ class DCSLMApp:
     return justifiedList
 
   def _make_dcsuf_panel(self, dcsuf, childPanel=False, unitName="", showTags=False):
-    from DCSLM.Livery import DCSUserFile
     dcsufLines = ["ID: " + str(dcsuf.id) + " | Author: " + dcsuf.author + " | Upload Date: " +
                   dcsuf.date + " | Archive Size: " + dcsuf.size,
                   dcsuf.download]
