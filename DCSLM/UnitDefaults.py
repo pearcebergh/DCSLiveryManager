@@ -80,7 +80,15 @@ UnitDefaults = {
           "friendly": "Christen Eagle II",
           "dcs_files": "Christen Eagle II",
           "liveries": ["Christen Eagle II"],
-          "parts": []
+          "parts": ['ce2_fuse','ce2_wings_l','ce2_wings_u','ce2_glass_canopy','ce2_spinner','ce2_prop_blades','ce2_prop_blades_blur',
+                    'ce2_prop_blades_blur_back','ce2_prop_disc_00','ce2_prop_disc_01','ce2_prop_disc_02','ce2_prop_disc_03',
+                    'ce2_prop_disc_04','ce2_prop_disc_05','ce2_prop_disc_00_back','ce2_prop_disc_01_back','ce2_prop_disc_02_back',
+                    'ce2_prop_disc_03_back','ce2_prop_disc_04_back','ce2_prop_disc_05_back','ce2_pilot_head_1','ce2_pilot_top_1',
+                    'ce2_pilot_pants_1','ce2_pilot_gloves_1','ce2_pilot_patch_1','ce2_pilot_headset_1','ce2_pilot_parachute_1',
+                    'ce2_pilot_parachute_1a','ce2_pilot_harness_1','ce2_pilot_cap_2','ce2_pilot_head_2','ce2_pilot_top_2',
+                    'ce2_pilot_pants_2','ce2_pilot_gloves_2','ce2_pilot_boots_2','ce2_pilot_patch_2','ce2_pilot_headset_2',
+                    'ce2_pilot_parachute_2','ce2_pilot_parachute_2a','ce2_pilot_harness_2','ce2_cp_1001','ce2_cp_1002',
+                    'ce2_cp_1003','ce2_cp_1004','ce2_cp_1005','ce2_cp_1006']
         },
         "f-14": {
           "names": ["f-14"],
@@ -159,14 +167,16 @@ UnitDefaults = {
           "friendly": "Fw 190 A-8",
           "dcs_files": "Fw 190 A-8 Anton",
           "liveries": ["fw-109a-8"],
-          "parts": []
+          "parts": ['fw190a-8_fuselage','fw190a-8_wing_r','fw190a-8_wing_l','fw190_bn_31','fw190_bn_32',
+                    'fw190_bn_tail','fw190_bn_tail_442','fw190_bn_tail_31','fw190_bn_tail_32']
         },
         "fw-190-d-9": {
           "names": ["fw 190 d9", "fw-190-d9", "fw-190-d-9", "fw 190 d-9", "fw190 d9"],
           "friendly": "Fw 190 D-9",
           "dcs_files": "Fw 190 D-9 Dora",
           "liveries": ["FW-109D-9"],
-          "parts": []
+          "parts": ['fw-190_01','fw-190_02','fw-190_03','fw-190_04','fw_190_01','fw_190_02',
+                    'fw_190_03','fw_190_04','fw-190_bort_number','fw-190_number_gb']
         },
         "hawk": {
           "names": ["hawk", "hawk t.1a"],
@@ -216,7 +226,10 @@ UnitDefaults = {
           "friendly": "L-39",
           "dcs_files": "L-39 Albatros",
           "liveries": ["L-39C", "L-39ZA"],
-          "parts": []
+          "parts": ['l-39c','pilot_l39_01','l39-cpt-fonar_','l-39_main_n','l-39_main_n_n','l-39_main_n_n_n','l-39_main_n_r',
+                    'l-39_main_n_n_r','l-39_main_n_n_n_r','l-39_main_n_f3','l-39_main_n_n_f3','l-39_main_n_n_n_f3','l-39_main_n_f3_r',
+                    'l-39_main_n_n_f3_r','l-39_main_n_n_n_f3_r','l-39_main_n_kil','l-39_main_n_n_kil','l-39_main_n_n_n_kil',
+                    'l-39_main_n_r_kil','l-39_main_n_n_r_kil','l-39_main_n_n_n_r_kil','pilot_l39_helmet','fuel_tanks_l39']
         },
         "m-2000c": {
           "names": ["mirage", "m-2000c"],
@@ -285,14 +298,16 @@ UnitDefaults = {
           "friendly": "MiG-15bis",
           "dcs_files": "MiG-15bis",
           "liveries": ["MiG-15bis"],
-          "parts": []
+          "parts": ['mig-15_main','mig-15_main_n','mig-15_main_n_r','mig-15_main_n_n','mig-15_main_n_n_r',
+                    'mig-15_main_n_n_n','mig-15_main_n_n_n_r','mig-15_main_n_f3','mig-15_main_n_f3_r',
+                    'mig-15_main_n_n_f3','mig-15_main_n_n_f3_r','mig-15_main_n_n_n_f3','mig-15_main_n_n_n_f3_r']
         },
         "mig-19p": {
           "names": ["mig-19p"],
           "friendly": "MiG-19P",
           "dcs_files": "MiG-19P Farmer",
           "liveries": ["MiG-19P"],
-          "parts": []
+          "parts": ['mig19p_t2','mig19p_t2_fuse1','mig19p_t2_fuse10','mig19p_t2_fuse100','mig19p_t3','mig19p_t4','mig19p_t5']
         },
         "mig-21bis": {
           "names": ["mig-21bis", "mig-21"],
@@ -307,18 +322,38 @@ UnitDefaults = {
                     'mig21bis_ser_tail_001000','mig21bis_ser_tail_010000']
         },
         "mig-29a": {
-          "names": ["mig-29a"],
+          "names": ["mig-29", "mig-29a"],
           "friendly": "MiG-29A",
           "dcs_files": "MiG-29A",
           "liveries": ["mig-29a"],
-          "parts": []
+          "parts": ['mig29_tex1','mig29_tex2','mig29_tex3','mig29_tex4','mig29_tex5','mig29_tex5_bn31','mig29_tex5_bn32',
+                    'mig29_tex6','mig29_tex7','mig29_tex8','mig29_metal','mig29_nose','mig29_nose_bn31','mig29_nose_bn32',
+                    'pilot_mig29_body','ptb-1150','mig29_pylon']
         },
         "mig-29c": {
-          "names": ["mig-29c"],
+          "names": ["mig-29", "mig-29c"],
           "friendly": "MiG-29C",
           "dcs_files": "MiG-29C",
           "liveries": ["mig-29c"],
-          "parts": []
+          "parts": ['mig29c_tex1','mig29c_tex2','mig29c_tex3','mig29c_tex4','mig29c_tex5','mig29c_tex6','mig29c_tex7',
+                    'mig29c_tex8','mig29c_nose','mig29c_pylon','mig29c_tex5_bn31','mig29c_tex5_bn32','mig29c_nose_bn31','mig29c_nose_bn32']
+        },
+        "mig-29g": {
+          "names": ["mig-29", "mig-29g"],
+          "friendly": "MiG-29G",
+          "dcs_files": "Other",
+          "liveries": ["mig-29g"],
+          "parts": ['mig29g_tex1','mig29g_tex2','mig29g_tex3','mig29g_tex4','mig29g_tex5','mig29g_tex5_bn31','mig29g_tex5_bn32',
+                    'mig29g_tex6','mig29g_tex7','mig29g_tex8','mig29g_metal','mig29g_nose','mig29g_nose_bn31','mig29g_nose_bn32',
+                    'pilot_mig29_body','ptb-1150','mig29g_pylon']
+        },
+        "mig-29s": {
+          "names": ["mig-29s", "mig-29s"],
+          "friendly": "MiG-29S",
+          "dcs_files": "Other",
+          "liveries": ["mig-29s"],
+          "parts": ['mig29_tex1','mig29_tex2','mig29_tex3','mig29_tex4','mig29_tex5','mig29_tex6','mig29_tex7','mig29_tex8',
+                    'mig29_nose','mig29_gear','mig29_pylon','mig29_tex5_bn31','mig29_tex5_bn32','mig29_nose_bn31','mig29_nose_bn32']
         },
         "mosquito fb mk vi": {
           "names": ["mosquito", "mossie", "mosquito fb vi", "mosquito fb mk vi", "mosquito fb mk. vi"],
@@ -335,7 +370,9 @@ UnitDefaults = {
           "friendly": "P-47D",
           "dcs_files": "P-47D Thunderbolt",
           "liveries": ["P-47D-30"],
-          "parts": []
+          "parts": ['p47d_fuz_front','p47d_fuz_rear','p47d_wing_l','p47d_wing_r','p47d_nmr_tl0','p47d_nmr_tl00',
+                    'p47d_nmr_tl000','p47d_nmr_tr0','p47d_nmr_tr00','p47d_nmr_sn0','p47d_nmr_sn00','p47d_nmr_sn000',
+                    'p47d_nmr_sn0000','p47d_nmr_sn00000','p47d_nmr_sn000000']
         },
         "p-51d": {
           "names": ["p-51d"],
@@ -354,42 +391,55 @@ UnitDefaults = {
           "friendly": "SA342",
           "dcs_files": "SA342 Gazelle",
           "liveries": ["SA342L", "SA342M", "SA342Minigun", "SA342Mistral"],
-          "parts": []
+          "parts": ['mat: sa342_camou_adt_1','mat: sa342_camou_adt_2','camou_adt_2_droppable','mat: sa342_camou_adt_3',
+                    'mat: sa342_camou_adt_4','mat: sa342_camou_adt_5','mat: sa342_camou_adt_6','mat: sa342_camou_adt_7',
+                    'mat: sa342_camou_adt_8','mat: sa342_camou_adt_9','mat: sa342_camou_adt_10','mat: sa342_camou_adt_11',
+                    'cabin floor','mat: sa342_camou_adt_wpns_1','mat: sa342_camou_adt_wpns_2','mat: sa342_adt_addons',
+                    'mat: sa342_camou_adt_addons_3','mat: sa342_cpit_doors_1','tex: sa342_panels_interiors_5','mat: sa342_panels_interiors_7',]
         },
         "spitfire lf mk ix": {
           "names": ["spitfire", "spitfire lf mk ix", "spitfire lf mk. ix"],
           "friendly": "Spitfire LF Mk. IX",
           "dcs_files": "Spitfire LF Mk. IX",
           "liveries": ["SpitfireLFMkIX"],
-          "parts": []
+          "parts": ['spitfireix','number_l_0','number_l_00','number_l_000','number_l_f3_0','number_l_f3_00','number_l_f3_000',
+                    'number_l_f3_n','number_l_f3_nn','number_r_0','number_r_00','number_r_000','number_r_f3_0','number_r_f3_00',
+                    'number_r_f3_000','number_r_f3_n','number_r_f3_nn','spitfireix_prop_2_color','spitfireix_prop_2_color_0']
         },
         "su-25": {
           "names": ["su-25"],
           "friendly": "Su-25",
           "dcs_files": "Su-25",
           "liveries": ["su-25"],
-          "parts": []
+          "parts": ['su25-fuz-center','su25-wings','su-25-flap-details','su25-fuz-tail & fin','su25-tail & stab','su25-brake-l',
+                    'su-25-brake-r','su25-fuz-nose','su-25-pitot+','su-25-fuz-details','su25-gear-metal','su-25-gear-steel',
+                    'su-25-gear-rubber','su-25-pilon','su-25-pilon_2','ptb-800-paint','apu-60-paint','su-25-numbers-1']
         },
         "su-25t": {
           "names": ["su-25t"],
           "friendly": "Su-25T",
           "dcs_files": "Su-25T",
           "liveries": ["su-25t"],
-          "parts": []
+          "parts": ['fuz-center','wings','su39-paint2bis-def-01','fuz-tail & fin','tail & stab','brake-l','brake-r',
+                    'fuz-nose-steel','su-39-pilon','pilon_2_su-39','pylonssu-25t1','pylon25lateral','ptb-800-paint',
+                    'gear-rubber','gear-metal','gear-steel','gear-bay','numbers']
         },
         "su-27": {
           "names": ["su-27"],
           "friendly": "Su-27",
           "dcs_files": "Su-27",
           "liveries": ["su-27"],
-          "parts": []
+          "parts": ['su27_tex01','su27_tex01_bn31','su27_tex01_bn32','su27_tex02','su27_tex02_compos','su27_tex03','su27_tex03_compos',
+                    'su27_tex04','su27_tex05','su27_tex06','su27_tex07','su27_nose_numbers','su27_tail_numbers','su27_tail_numbers_top',
+                    'su27_tail_numbers_down','su27_detail','su27_detail_compos']
         },
         "su-33": {
           "names": ["su-33"],
           "friendly": "Su-33",
           "dcs_files": "Su-33",
           "liveries": ["su-33"],
-          "parts": []
+          "parts": ['su33_tex01','su33_tex01_bn31','su33_tex01_bn32','su33_tex02','su33_tex03','su33_tex04',
+                    'su33_tex05','su33_tex06','su33_tex06_bn31','su33_tex06_bn32','su33_tex07']
         },
         "uh-1h": {
           "names": ["uh-1h", "huey"],
@@ -404,16 +454,24 @@ UnitDefaults = {
         "tf-51d": {
           "names": ["tf-51d"],
           "friendly": "TF-51D",
-          "dcs_files": "TF-51D Mustang",
+          "dcs_files": "TF-51",
           "liveries": ["TF-51D"],
-          "parts": []
+          "parts": ['p51d_fuz_front','p51d_fuz_rear','p51d_wing_l','p51d_wing_r','p51d_bort_number_cocpit_01','p51d_bort_number_front_10',
+                    'p51d_bort_number_front_01','p51d_bort_number_front-2_10','p51d_bort_number_front-2_01','p51d_bort_number_rear-2_10',
+                    'p51d_bort_number_rear-2_01','p51d_bort_number_tail_01','p51d_bort_number_fin_01','p51d_serial_number_l_001',
+                    'p51d_serial_number_l_010','p51d_serial_number_l_100','p51d_serial_number_r_001','p51d_serial_number_r_010',
+                    'p51d_serial_number_r_100','pilot_p51_body','pilot_p51_patch','pilot_p51_helmet_a','pilot_p51_helmet_glass',
+                    'tf51d-cpt_photo','pilot_p51_fp_belts','pilot_p51_sp1','pilot_p51_sp2']
         },
         "yak-52": {
           "names": ["yak-52"],
           "friendly": "Yak-52",
           "dcs_files": "Yak-52",
           "liveries": ["Yak-52"],
-          "parts": []
+          "parts": ['yak52_main','yak52_gear','yak52_main_decal','yak52_main_bn_01','yak52_main_bn_10','yak52_main_bn_100',
+                    'yak52_yakovlevs_bn_01','yak52_yakovlevs_bn_10','yak52_prop_0','yak52_prop_1','yak52_prop_2','yak52_prop_3',
+                    'yak52_prop_4','yak52_prop_5','yak52_3blade_prop_0','yak52_3blade_prop_1','yak52_3blade_prop_2',
+                    'yak52_3blade_prop_3','yak52_3blade_prop_4','yak52_3blade_prop_5']
         },
         "hercules": {
           "names": ["hercules", "super hercules", "c-130j", "c-130"],
@@ -441,6 +499,6 @@ UnitsOfficial = {
   "Air": ["a-10a", "a-10c", "a-10cii", "ah-64d", "ajs-37", "av-8b", "bf-109k-4", "c-101", "christen eagle ii", "f-14",
           "f-15c", "f-16c", "f-5e", "f-86f", "fa-18c", "fw-190-a-8", "fw-190-d-9", "hawk", "i-16", "j-11a", "jf-17",
           "ka-50", "l-39", "m-2000c", "mi-24p", "mi-8mtv2", "mig-15bis", "mig-19p", "mig-21bis", "mig-29a", "mig-29c",
-          "mosquito fb mk vi", "p-47d", "p-51d", "sa342", "spitfire lf mk ix", "su-25", "su-25t", "su-27", "su-33",
-          "uh-1h", "yak-52", "mirage f1", "mb-339", "tf-51d"]
+          "mig-29g", "mig-29s", "mosquito fb mk vi", "p-47d", "p-51d", "sa342", "spitfire lf mk ix", "su-25", "su-25t",
+          "su-27", "su-33", "uh-1h", "yak-52", "mirage f1", "mb-339", "tf-51d"]
 }
