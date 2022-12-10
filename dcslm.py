@@ -2049,14 +2049,30 @@ class DCSLMApp:
   def set_last_update(self):
     self.lm.LiveryData['last_update'] = datetime.timestamp(datetime.now())
 
+  def print_archives_motd(self):
+    archivesPath = os.path.join(os.getcwd(), "DCSLM", "archives")
+    with self.console.status("Calculating size of archives directory..."):
+      if os.path.isdir(archivesPath):
+        archivesFiles = glob.glob(archivesPath + "/*.*")
+        if len(archivesFiles):
+          archivesSize = Utilities.get_size_of_filelist(archivesFiles) >> 20
+          if archivesSize > 0:
+            if archivesSize >= 1000:
+              sizeStr = Utilities.mb_to_gb_string(archivesSize) + " [bold gold1]GB[/bold gold1]"
+            else:
+              sizeStr = Utilities.mb_to_mb_string(archivesSize) + " [bold gold1]MB[/bold gold1]"
+            self.console.print(str(len(archivesFiles)) + " saved archives in \'DCSLM\\archives\' (" + sizeStr + ")")
+
   def print_motd(self):
     if self.lm.get_num_registered_liveries() > 0:
       liveryMB = self.lm.get_size_registered_liveries()
-      if liveryMB > 10000.0:
+      if liveryMB > 1000.0:
         sizeStr = Utilities.mb_to_gb_string(liveryMB) + " [bold gold1]GB[/bold gold1]"
       else:
         sizeStr = Utilities.mb_to_mb_string(liveryMB) + " [bold gold1]MB[/bold gold1]"
       self.console.print(str(self.lm.get_num_registered_liveries()) + " registered liveries (" + sizeStr +")")
+      self.print_archives_motd()
+
 
   def _download_archive_rich_callback(self, dlCallback, downloadedBytes):
     dlCallback['progress'].update(dlCallback['task'], advance=downloadedBytes)
