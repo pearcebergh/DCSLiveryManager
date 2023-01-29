@@ -5,14 +5,20 @@ UnitDefaults = {
           "friendly": "A-10A",
           "dcs_files": "A-10A",
           "liveries": ["A-10A", "A-10C", "A-10CII"],
-          "parts": []
+          "parts": ['a-10c_paint_1-a','a-10c_paint_1-b','a-10c_paint_1-c','a-10c_paint_1-d','a-10c_paint_1-e',
+                    'a-10c_paint_1-f','a-10c_paint_1-g','a-10c_paint_1-h','a-10c_paint_1-i','a-10c_paint_1-j',
+                    'a-10c_paint_1-k','a-10c_paint_1-l','a-10_number','a-10_number_noze_f','a-10_number_noze_t',
+                    'a-10_number_wheel']
         },
         "a-10c": {
           "names": ["a-10c", "a 10c", "a-10c warthog", "a-10", "a 10"],
           "friendly": "A-10C",
           "dcs_files": "A-10C Warthog",
           "liveries": ["A-10C", "A-10A", "A-10CII"],
-          "parts": []
+          "parts": ['a-10c_paint_1-a','a-10c_paint_1-b','a-10c_paint_1-c','a-10c_paint_1-d','a-10c_paint_1-e',
+                    'a-10c_paint_1-f','a-10c_paint_1-g','a-10c_paint_1-h','a-10c_paint_1-i','a-10c_paint_1-j',
+                    'a-10c_paint_1-k','a-10c_paint_1-l','a-10_number','a-10_number_noze_f','a-10_number_noze_t',
+                    'a-10_number_wheel']
         },
         "a-10cii": {
           "names": ["a-10cii", "a 10c2", "a 10cII", "a-10c2", "a-10c2 warthog", "a-10c II warthog", "a-10", "a 10"],
