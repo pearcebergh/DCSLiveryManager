@@ -634,6 +634,15 @@ class DCSLMApp:
     livery = self.lm.get_livery_data_from_archive(liveryStrData['path'], liveryStrData['id'])
     return livery
 
+  def _install_detect_extracted_livery_units(self, livery, extractPath, detectedLiveries):
+    detectedUnits = []
+    for dL in detectedLiveries:
+      descriptionPath = os.path.join(extractPath, dL['name'], "description.lua")
+      if os.path.isfile(descriptionPath):
+        unit = self.lm.determine_unit_from_description_path(descriptionPath)
+        detectedUnits.append({'name': dL['name'], 'unit': unit})
+    return detectedUnits
+
   def _install_liveries(self, liveryStrings, keepFiles=False, forceDownload=False, forceInstall=False,
                         forceAllUnits=False, manualUnitSelection=False, verbose=False, screenshots=False):
     installData = {'success': [], 'failed': []}
@@ -692,6 +701,7 @@ class DCSLMApp:
             self.console.print(progressStr + "Detecting extracted liveries...")
             extractedLiveryFiles = self.lm.get_extracted_livery_files(livery, extractPath)
             detectedLiveries = self.lm.detect_extracted_liveries(livery, extractPath, extractedLiveryFiles)
+            detectedUnits = self._install_detect_extracted_livery_units(livery, extractPath, detectedLiveries)
             if liveryStrData['type'] == 'Archive':
               titlesList = self._install_archive_title_list(liveryStrData, detectedLiveries)
               filledDCSUF, usedDCSUF = self.prompt_dcsuf_info(titlesList, livery=livery)
@@ -1160,7 +1170,7 @@ class DCSLMApp:
           l.installs['liveries'][ld['title']]['paths'].extend(nl['paths'])
     l.destination = self.lm.generate_livery_destination_path(l)
     l.archive = ""
-    liveryInfo, dcsufInfo = self.prompt_dcsuf_info(titles=titleOptions, unit=selectedUnit)
+    liveryInfo, dcsufInfo = self.prompt_dcsuf_info(titles=titleOptions, unit=[selectedUnit])
     l.dcsuf = liveryInfo
     l.ovgme = l.generate_ovgme_folder()
     return l
@@ -1756,7 +1766,7 @@ class DCSLMApp:
             self.console.print("Using \'" + dcsuf.title + "\' as livery title.")
         while not dcsuf.unit:
           if unit:
-            selectedUnit = unit
+            selectedUnit = unit[0]
             panelUnit = unit.friendly
             dcsuf.unit = unit.generic
             self.console.print("Using \'" + unit.friendly + "\' as livery unit.")
@@ -2075,7 +2085,6 @@ class DCSLMApp:
     if self.lm.get_num_registered_liveries() > 0:
       self._print_num_liveries_motd()
       self._print_archives_motd()
-
 
   def _download_archive_rich_callback(self, dlCallback, downloadedBytes):
     dlCallback['progress'].update(dlCallback['task'], advance=downloadedBytes)
