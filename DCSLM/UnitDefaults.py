@@ -258,8 +258,8 @@ UnitDefaults = {
         "mirage f1": {
           "names": ["mirage", "f1", "f1ce", "mirage f1ce"],
           "friendly": "Mirage F1",
-          "dcs_files": "Other",
-          "liveries": ["Mirage-F1CE"], ## EE, BE, M later
+          "dcs_files": "Mirage F1",
+          "liveries": ["Mirage-F1CE", "Mirage-F1EE"], ## BE, M later
           "parts": ['miragef1_common_04_1','miragef1_common_04_2','miragef1_common_04_3_first_digit',
                     'miragef1_common_04_3_second_digit','miragef1_common_04_4_first_digit','miragef1_common_04_4_second_digit',
                     'miragef1_common_04_4_third_digit','miragef1_common_04_5_first_digit','miragef1_common_04_5_second_digit',
