@@ -513,7 +513,10 @@ class LiveryManager:
     descLines = self._optimize_get_desclines_from_description_file(descPath)
     descParts = self._get_parts_from_description(descLines)
     unitPartsCount = self._count_unit_parts(descParts)
-    return max(unitPartsCount)
+    if len(unitPartsCount.keys()) > 0:
+      return max(unitPartsCount)
+    else:
+      return None
 
   def _get_file_lines(self, filePath):
     if os.path.isfile(filePath):
