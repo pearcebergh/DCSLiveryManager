@@ -63,7 +63,7 @@ DCSUFPC = DCSUFParserConfig()
 
 class DCSUFParser:
   def __init__(self):
-    self.DCSDownloadUrlPrefix = "https://www.digitalcombatsimulator.com"
+    self.DCSDownloadUrlPrefix = ""
 
   def _get_generic_unit_from_dcs_text(self, unitText):
     unit = UM.get_unit_from_dcsuf_text(unitText)
