@@ -1400,10 +1400,12 @@ class DCSLMApp:
             dtRelease = datetime.strptime(dateDT, "%Y-%m-%dT%H:%M:%SZ")
             dtStr = dtRelease.strftime("%b %d, %Y")
             rData['date'] = dtStr
-        for a in r.find_all('a'):
+        '''for a in r.find_all('a'): # Not working
           if a.text.strip() == "DCSLM.exe":
             rData['download'] = "https://github.com" + a.get('href')
-            break
+            break'''
+        if len(rData['download']) == 0: # Backup hardcoded release url since it's unlikely to change
+          rData['download'] = "https://github.com/pearcebergh/DCSLiveryManager/releases/download/" + rData['version'] + "/DCSLM.exe"
         if pkg_resources.parse_version(rData['version']) > pkg_resources.parse_version(__version__):
           releaseData.append(rData)
       return releaseData
@@ -1458,17 +1460,19 @@ class DCSLMApp:
         upgradeConf = Confirm.ask("Do you want to download and upgrade to the latest version of [exe]DCSLM[/exe]?")
         self.console.print("")
         if upgradeConf:
-          oldExec = sys.executable + '.old'
-          if os.path.isfile(oldExec):
-            try:
-              Utilities.remove_file(oldExec)
-            except Exception as e:
-              self.console.print("[err]Failed to remove old executable:[/err] [red]" + str(e))
-          shutil.move(sys.executable, oldExec)
+          oldExec = None
+          if "DCSLM.exe" in sys.executable:
+            oldExec = sys.executable + '.old'
+            if os.path.isfile(oldExec):
+              try:
+                Utilities.remove_file(oldExec)
+              except Exception as e:
+                self.console.print("[err]Failed to remove old executable:[/err] [red]" + str(e))
+            shutil.move(sys.executable, oldExec)
           dlFilename = "DCSLM.exe"
           dlPath = os.path.join(os.getcwd(), dlFilename)
           latestExe = self._download_upgrade_progress(releaseData[0]['download'], releaseData[0]['version'], dlPath)
-          if not latestExe:
+          if not latestExe and oldExec:
             shutil.move(oldExec, sys.executable)
             return
           os.chmod(dlFilename, 0o775)
@@ -1479,6 +1483,7 @@ class DCSLMApp:
           sys.exit(0)
     except Exception as e:
       self.console.print("[err][exe]DCSLM[/exe] upgrade failed:[/err] [red]" + str(e))
+      self.console.print("[err]You may need to download the latest version manually:[/err] https://github.com/pearcebergh/DCSLiveryManager/releases/")
 
   def _print_optimization_report(self, optimizationReport):
     if len(optimizationReport):
