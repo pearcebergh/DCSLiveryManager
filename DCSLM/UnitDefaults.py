@@ -113,6 +113,19 @@ UnitDefaults = {
           "parts": ['f15nose','f15bottom','f15centr','f15wingl','f15wingr','f15stab','f15numbers','pilot_F15_patch',
                     'pilot_F15_00_body','f15PTB','pilot_F15_00_helmet','f15_aces2']
         },
+        "f-15e": {
+          "names": ["f-15e", "f-15", "f-15e strike eagle", "strike eagle"],
+          "friendly": "F-15E",
+          "dcs_files": "F-15E",
+          "liveries": ["F-15ESE"],
+          "parts": ['f-15e_01','f-15e_02','f-15e_02sb','f-15e_03','f-15e_04','f-15e_04at','f-15e_04ab','f-15e_04ft',
+                    'f-15e_04fb','f-15e_05','f-15e_05at','f-15e_05ab','f-15e_05ft','f-15e_05fb','f-15e_06','f-15e_06ls',
+                    'f-15e_06rs','f-15e_06lr','f-15e_06rr','f-15e_07','f-15e_refuel-decal','f-15e_refuel-number',
+                    'f-15e_tail-decal','f-15e_tail-decal-l','f-15e_tail-decal-r','f-15e_tail-number','f-15e_tail-number-l',
+                    'f-15e_tail-number-r','f-15ec_05','f-15ec_06','f-15ec_07','f-15ec_05r','f-15ec_06r','f-15ec_07r',
+                    'f-15e_vr-pilot1','f-15e_vr-pilot2','f-15e_vr-pilot3','f-15e_vr-pilot1r','f-15e_vr-pilot2r',
+                    'f-15e_vr-pilot3r','f-15ec_07_visor','f-15ec_07r_visor']
+        },
         "f-16c": {
           "names": ["f-16c","f-16c_50", "f-16"],
           "friendly": "F-16C",
@@ -260,20 +273,6 @@ UnitDefaults = {
           "friendly": "Mirage F1",
           "dcs_files": "Mirage F1",
           "liveries": ["Mirage-F1CE", "Mirage-F1EE"], ## BE, M later
-          "parts": ['miragef1_common_04_1','miragef1_common_04_2','miragef1_common_04_3_first_digit',
-                    'miragef1_common_04_3_second_digit','miragef1_common_04_4_first_digit','miragef1_common_04_4_second_digit',
-                    'miragef1_common_04_4_third_digit','miragef1_common_04_5_first_digit','miragef1_common_04_5_second_digit',
-                    'miragef1_common_04_6_first_digit','miragef1_common_04_6_second_digit','miragef1_common_04_6_third_digit',
-                    'miragef1_common_04_7_first_digit','miragef1_common_04_7_second_digit','miragef1_common_04_7_third_digit',
-                    'miragef1_common_04_usa_first_digit','miragef1_common_04_usa_second_digit','miragef1_common_04_usa_third_digit',
-                    'miragef1_common_04_usa_first_digit_1','miragef1_common_04_usa_second_digit_1','miragef1_common_03_1',
-                    'miragef1_common_03_2','miragef1_common_03_3_first_digit','miragef1_common_03_3_second_digit',
-                    'miragef1_common_03_4_first_digit','miragef1_common_03_4_second_digit','miragef1_common_03_5_first_digit',
-                    'miragef1_common_03_5_second_digit','miragef1_common_03_5_third_digit','miragef1_common_03_6_first_digit',
-                    'miragef1_common_03_6_second_digit','miragef1_common_03_6_third_digit','miragef1_common_03_7_first_digit',
-                    'miragef1_common_03_7_second_digit','miragef1_common_03_7_third_digit','miragef1_common_03_8_first_digit',
-                    'miragef1_common_03_8_second_digit','miragef1_common_03_8_third_digit','miragef1_common_05_1','miragef1_common_05_2',
-                    'pilot_miragef1_00_body','pilot_miragef1_00_helmet_french','pilot_miragef1_patch','miragef1-tank','miragef1_common_06']
 
         },
         "mi-24p": {
