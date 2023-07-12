@@ -116,6 +116,8 @@ class UnitManager:
 
   def get_unit_from_dcsuf_text(self, dcsufText):
     if dcsufText:
+      if(dcsufText == "F/A-18C"):
+        dcsufText = "F/A-18C Hornet"
       for c in self.Categories:
         if c in self.Units.keys():
           for u,d in self.Units[c].items():
