@@ -321,13 +321,15 @@ class LiveryManager:
     liveryDirectories = []
     for root, files in extractedLiveryFiles.items():
       liveryName = root
+      folderData = {'name': liveryName, 'size': 0, 'data': False, 'root': False}
       if root != "\\":
         if not len(root): # Set livery name to DCSUF title if there is no folder root
+          folderData['root'] = True
           liveryName = livery.dcsuf.title
         else: # Get livery name of last part of the path
           liveryName = str.split(root,"\\")[-1]
       if len(liveryName):
-        folderData = {'name': liveryName, 'size': 0, 'data': False}
+        folderData['name'] = liveryName
         folderData['size'] = self._get_size_of_extracted_livery_files(livery, extractPath, files)
         if not self.is_valid_livery_directory(files):
           if self.is_valid_data_directory(files):
@@ -449,10 +451,11 @@ class LiveryManager:
     else:
       return "Liveries"
 
-  def generate_aircraft_livery_install_path(self, livery, unitLiveries):
+  def generate_aircraft_livery_install_path(self, livery, units):
     liveryPaths = []
-    for unit in unitLiveries:
-      liveryPaths.append(os.path.join(unit))
+    for u in units:
+      for l in u.liveries:
+        liveryPaths.append(os.path.join(l))
     return liveryPaths
 
   def generate_livery_install_paths(self, livery, installRoots, detectedLiveries):
@@ -514,7 +517,7 @@ class LiveryManager:
     descParts = self._get_parts_from_description(descLines)
     unitPartsCount = self._count_unit_parts(descParts)
     if len(unitPartsCount.keys()) > 0:
-      return max(unitPartsCount)
+      return max(unitPartsCount, key=unitPartsCount.get)
     else:
       return None
 
