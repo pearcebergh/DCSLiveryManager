@@ -87,6 +87,10 @@ class Livery:
     for var in liveryVars.keys():
       if var == "dcsuf":
         jsonLivery[var] = selfVars[var].to_JSON()
+      elif var == "installs":
+        jsonLivery[var] = {'units': [], 'liveries': selfVars[var]['liveries'], 'optimized': selfVars[var]['optimized'] }
+        for u in selfVars[var]['units']:
+          jsonLivery[var]['units'].append(u.generic)
       else:
         jsonLivery[var] = selfVars[var]
     return jsonLivery

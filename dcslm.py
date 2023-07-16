@@ -35,6 +35,7 @@ from DCSLM.UnitManager import UM
 import DCSLM.Utilities as Utilities
 
 # TODO: Add fallback upgrade path to find latest DCSLM.exe when unable to parse releases page
+# TODO: Add 'multiple' dcsuf unit category
 
 def set_console_title(title):
   if platform.system() == 'Windows':
@@ -554,7 +555,7 @@ class DCSLMApp:
     return livery, liveryUnitData, unitName, showDCSUFTags
 
   def _install_select_unit(self, livery, liveryUnitData, manualUnitSelection, forceAllUnits):
-    if livery.dcsuf.unit == "Other" or livery.dcsuf.unit == "Vehicle" or livery.dcsuf.unit == "Unknown"  or manualUnitSelection:
+    if manualUnitSelection or not liveryUnitData:
       liveryUnitData = self._install_prompt_unit(livery, manualUnitSelection)
     if not liveryUnitData:
       raise RuntimeError("Unable to find unit to install livery to.")
@@ -565,7 +566,7 @@ class DCSLMApp:
       unitChoices = self.prompt_aircraft_livery_choice(livery, unitChoices)
     if len(unitChoices) == 0:
       raise RuntimeError("No units selected for install.")
-    return unitChoices
+    return liveryUnitData, unitChoices
 
   def _install_check_archive_path(self, livery, archiveName, progressStr, forceDownload):
     archivePath = self.lm.does_archive_exist(archiveName)
@@ -634,13 +635,34 @@ class DCSLMApp:
     livery = self.lm.get_livery_data_from_archive(liveryStrData['path'], liveryStrData['id'])
     return livery
 
+  def _install_print_detected_units(self, livery, detectedUnits):
+    unitLiveryDict = {'None': []}
+    for l in detectedUnits:
+      u = l['unit']
+      if u:
+        if u not in unitLiveryDict.keys():
+          unitLiveryDict[u] = []
+        unitLiveryDict[u].append(l['name'])
+      else:
+        unitLiveryDict['None'].append(l['name'])
+    for u in unitLiveryDict.keys():
+      if len(unitLiveryDict[u]):
+        liveriesStr = "[white],[/white] ".join(unitLiveryDict[u])
+        if u == 'None':
+          self.console.print("[red]None[/red] - " + "[bold err]" + liveriesStr)
+        else:
+          self.console.print("[unit]" + u.friendly + "[/unit] - " + "[bold gold1]" + liveriesStr)
+
   def _install_detect_extracted_livery_units(self, livery, extractPath, detectedLiveries):
     detectedUnits = []
     for dL in detectedLiveries:
-      descriptionPath = os.path.join(extractPath, dL['name'], "description.lua")
+      if not dL['root']:
+        descriptionPath = os.path.join(extractPath, dL['name'], "description.lua")
+      else:
+        descriptionPath = os.path.join(extractPath, "description.lua")
       if os.path.isfile(descriptionPath):
         unit = self.lm.determine_unit_from_description_path(descriptionPath)
-        detectedUnits.append({'name': dL['name'], 'unit': unit})
+        detectedUnits.append({'name': dL['name'], 'unit': unit, 'liveries':[]})
     return detectedUnits
 
   def _install_liveries(self, liveryStrings, keepFiles=False, forceDownload=False, forceInstall=False,
@@ -675,11 +697,10 @@ class DCSLMApp:
       try:
         extractedID = liveryStrData['id']
         screenshotFiles = []
+        unitChoices = []
+        liveryUnitData = None
         if liveryStrData['type'] == 'DCSUF':
           livery, liveryUnitData, unitName, dcsufTags = self._install_get_livery_unitdata(liveryStrData, session, forceInstall)
-          unitChoices = self._install_select_unit(livery, liveryUnitData, manualUnitSelection, forceAllUnits)
-          livery.installs['units'] = unitChoices
-          livery.ovgme = livery.generate_ovgme_folder()
           archiveName = livery.dcsuf.download.split('/')[-1]
           archivePath = self._install_check_archive_path(livery, archiveName, progressStr, forceDownload)
           if screenshots:
@@ -688,7 +709,6 @@ class DCSLMApp:
         else:
           archivePath = liveryStrData['path']
           livery = self._install_archive_create_livery(liveryStrData)
-          unitChoices = []
         if archivePath:
           livery.archive = archivePath
           self.lm.remove_extracted_livery_archive(livery, extractedID=extractedID)
@@ -702,6 +722,21 @@ class DCSLMApp:
             extractedLiveryFiles = self.lm.get_extracted_livery_files(livery, extractPath)
             detectedLiveries = self.lm.detect_extracted_liveries(livery, extractPath, extractedLiveryFiles)
             detectedUnits = self._install_detect_extracted_livery_units(livery, extractPath, detectedLiveries)
+            self._install_print_detected_units(livery, detectedUnits)
+            # TODO: Handle forceAllUnits
+            # TODO: handle 3332020 unit root folders
+            for dU in detectedUnits:
+              dUnit = dU['unit']
+              if not dUnit and isinstance(livery.dcsuf.unit, str):
+                unitInst = UM.get_unit_from_dcsuf_text(livery.dcsuf.unit)
+                if unitInst:
+                  dUnit = unitInst
+              selectedUnit, dU['liveries'] = self._install_select_unit(livery, dUnit, manualUnitSelection, forceAllUnits)
+              if dU['unit'] == None:
+                dU['unit'] = selectedUnit
+              if dU['unit'] != None:
+                if dU['unit'] not in unitChoices:
+                  unitChoices.append(dU['unit'])
             if liveryStrData['type'] == 'Archive':
               titlesList = self._install_archive_title_list(liveryStrData, detectedLiveries)
               filledDCSUF, usedDCSUF = self.prompt_dcsuf_info(titlesList, livery=livery)
@@ -713,9 +748,12 @@ class DCSLMApp:
                   filledDCSUF.datetime = livery.dcsuf.datetime
                   filledDCSUF.download = livery.dcsuf.download
                 livery.dcsuf = filledDCSUF
-                liveryUnitData = livery.dcsuf.unit
-                unitChoices = self._install_select_unit(livery, liveryUnitData, manualUnitSelection, forceAllUnits)
                 livery.installs['units'] = unitChoices
+            elif liveryStrData['type'] == 'DCSUF':
+              livery.installs['units'] = unitChoices
+            # TODO set dcsuf unit accordingly
+            # TODO generate new install paths from detectedUnits
+            livery.ovgme = livery.generate_ovgme_folder()
             installRoots = self.lm.generate_aircraft_livery_install_path(livery, unitChoices)
             if len(detectedLiveries) and len(installRoots):
               liveryNames = [l['name'] for l in detectedLiveries if not l['data']]
@@ -793,8 +831,11 @@ class DCSLMApp:
       inputUnit = None
     return inputUnit
 
-  def _install_prompt_unit(self, livery, manualUnitSelection=False):
+  def _install_prompt_unit(self, livery, manualUnitSelection=False, unitSuggestion=None):
     selectedUnit = None
+    defaultUnitStr = ""
+    if unitSuggestion:
+      defaultUnitStr = unitSuggestion.friendly
     if len(livery.dcsuf.tags) and not manualUnitSelection:
       matchedUnits = UM.get_units_from_tags(livery.dcsuf.tags)
       if not len(matchedUnits):
@@ -829,7 +870,7 @@ class DCSLMApp:
       try:
         while True:
           inputStr = self.session.prompt(HTML("<b>Enter unit name:</b> "),
-                                         completer=self.completers['units']['completer'])
+                                         completer=self.completers['units']['completer'], default=defaultUnitStr)
           inputStr = str.strip(inputStr)
           if inputStr == "units":
             self.dcs_units(sArgs="")
