@@ -163,7 +163,7 @@ UnitDefaults = {
         "fa-18c": {
           "names": ["fa-18", "fa-18c", "fa-18c_hornet"],
           "friendly": "F/A-18C",
-          "dcs_files": "F/A-18C Hornet",
+          "dcs_files": "F/A-18C",
           "liveries": ["FA-18C_hornet"],
           "parts": ['f18c1','f18c2','f18c_bort_number_nose_l_100','f18c_bort_number_nose_l_10','f18c_bort_number_nose_l_01',
                     'f18c_bort_number_nose_r_100','f18c_bort_number_nose_r_10','f18c_bort_number_nose_r_01','f18c_bort_number_zak_l_100',
