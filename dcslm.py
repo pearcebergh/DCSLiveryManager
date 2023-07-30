@@ -555,18 +555,18 @@ class DCSLMApp:
     return livery, liveryUnitData, unitName, showDCSUFTags
 
   def _install_select_unit(self, livery, liveryUnitData, manualUnitSelection, forceAllUnits):
-    if manualUnitSelection or not liveryUnitData:
-      liveryUnitData = self._install_prompt_unit(livery, manualUnitSelection)
-    if not liveryUnitData:
+    if manualUnitSelection or not liveryUnitData['unit']:
+      liveryUnitData['unit'] = self._install_prompt_unit(livery, manualUnitSelection, liveryName=liveryUnitData['name'])
+    if not liveryUnitData['unit']:
       raise RuntimeError("Unable to find unit to install livery to.")
     else:
-      livery.dcsuf.unit = liveryUnitData
-    unitChoices = liveryUnitData.liveries
+      livery.dcsuf.unit = liveryUnitData['unit']
+    unitChoices = liveryUnitData['unit'].liveries
     if len(unitChoices) > 1 and not forceAllUnits:
-      unitChoices = self.prompt_aircraft_livery_choice(livery, unitChoices)
+      unitChoices = self.prompt_aircraft_livery_choice(livery, unitChoices, liveryUnitData['name'])
     if len(unitChoices) == 0:
       raise RuntimeError("No units selected for install.")
-    return liveryUnitData, unitChoices
+    return liveryUnitData['unit'], unitChoices
 
   def _install_check_archive_path(self, livery, archiveName, progressStr, forceDownload):
     archivePath = self.lm.does_archive_exist(archiveName)
@@ -723,7 +723,6 @@ class DCSLMApp:
             detectedLiveries = self.lm.detect_extracted_liveries(livery, extractPath, extractedLiveryFiles)
             detectedUnits = self._install_detect_extracted_livery_units(livery, extractPath, detectedLiveries)
             self._install_print_detected_units(livery, detectedUnits)
-            # TODO: Handle forceAllUnits
             # TODO: handle 3332020 unit root folders
             for dU in detectedUnits:
               dUnit = dU['unit']
@@ -731,7 +730,9 @@ class DCSLMApp:
                 unitInst = UM.get_unit_from_dcsuf_text(livery.dcsuf.unit)
                 if unitInst:
                   dUnit = unitInst
-              selectedUnit, dU['liveries'] = self._install_select_unit(livery, dUnit, manualUnitSelection, forceAllUnits)
+              selectedUnit, dU['liveries'] = self._install_select_unit(livery, dU, manualUnitSelection, forceAllUnits)
+              if not livery.dcsuf.unit:
+                livery.dcsuf.unit = selectedUnit
               if dU['unit'] == None:
                 dU['unit'] = selectedUnit
               if dU['unit'] != None:
@@ -751,8 +752,6 @@ class DCSLMApp:
                 livery.installs['units'] = unitChoices
             elif liveryStrData['type'] == 'DCSUF':
               livery.installs['units'] = unitChoices
-            # TODO set dcsuf unit accordingly
-            # TODO generate new install paths from detectedUnits
             livery.ovgme = livery.generate_ovgme_folder()
             installRoots = self.lm.generate_aircraft_livery_install_path(livery, unitChoices)
             if len(detectedLiveries) and len(installRoots):
@@ -831,11 +830,13 @@ class DCSLMApp:
       inputUnit = None
     return inputUnit
 
-  def _install_prompt_unit(self, livery, manualUnitSelection=False, unitSuggestion=None):
+  def _install_prompt_unit(self, livery, manualUnitSelection=False, unitSuggestion=None, liveryName=""):
     selectedUnit = None
     defaultUnitStr = ""
     if unitSuggestion:
       defaultUnitStr = unitSuggestion.friendly
+    if len(liveryName):
+      self.console.print("Unit selection for livery \'" + liveryName + "\'")
     if len(livery.dcsuf.tags) and not manualUnitSelection:
       matchedUnits = UM.get_units_from_tags(livery.dcsuf.tags)
       if not len(matchedUnits):
@@ -1785,7 +1786,10 @@ class DCSLMApp:
         dcsuf = None
     else:
       confirmData = False
-      dcsuf = DCSUserFile()
+      if livery:
+        dcsuf = livery.dcsuf
+      else:
+        dcsuf = DCSUserFile()
       self.console.print("\n[bold]Please manually enter livery information. Some fields are optional.")
       promptTitles = []
       choiceStr = "\t[0] Custom Title"
@@ -1847,9 +1851,10 @@ class DCSLMApp:
           dcsuf.author = None
         else:
           confirmData = True
-    generatedID = self.lm.get_next_local_livery_id()
-    dcsuf.id = generatedID
-    self.console.print("Generated Livery ID " + str(generatedID))
+    if not dcsuf.id:
+      generatedID = self.lm.get_next_local_livery_id()
+      dcsuf.id = generatedID
+      self.console.print("Generated Livery ID " + str(generatedID))
     dcsuf.tags = []
     if not livery:
       dcsuf.datetime = datetime.now()
@@ -2037,7 +2042,7 @@ class DCSLMApp:
       return Confirm.ask("\n[bold]Do you still want to install the livery?[/bold]")
     return True
 
-  def prompt_aircraft_livery_choice(self, livery, unitChoices):
+  def prompt_aircraft_livery_choice(self, livery, unitChoices, liveryName):
     liveryChoices = ["[white]None[/white]"]
     liveryUnitData = livery.dcsuf.unit
     for u in unitChoices:
@@ -2053,10 +2058,10 @@ class DCSLMApp:
         choiceText += "[[sky_blue1]" + str(i) + "[/sky_blue1]]" + liveryChoices[i] + " "
       self.console.print("\nThere are multiple livery install locations for the [bold magenta]" +
                          liveryUnitData.friendly + "[/bold magenta]. " +
-                         "Please choose from the following choices by inputting the corresponding index number(s):")
+                         "Choose from the following choices by inputting the corresponding index number(s):")
       self.console.print("\n\t" + choiceText)
       try:
-        promptStr = "\n[bold]Which units do you want the livery to be installed to?[/bold]"
+        promptStr = "\n[bold]Which units do you want the livery \'" + liveryName + "\' to be installed to?[/bold]"
         optionsStr = '/'.join([str(i) for i in range(0,len(liveryChoices))])
         validChoice = False
         while not validChoice:

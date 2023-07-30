@@ -486,7 +486,9 @@ class LiveryManager:
       l.dcsuf.download = path
       l.dcsuf.author = "Unknown"
       l.dcsuf.tags = []
-      l.dcsuf.title = "Livery " + str(id)
+      archiveFile = os.path.split(path)[1]
+      archiveName = os.path.splitext(archiveFile)[0]
+      l.dcsuf.title = archiveName
       return l
     raise RuntimeError("Unable to get livery data from path \'" + path + "\'")
 
