@@ -7,7 +7,7 @@ from DCSLM.UnitManager import UM
 class DCSUserFile:
   def __init__(self):
     self.id = None
-    self.unit = None
+    self.unit = []
     self.author = None
     self.title = None
     self.date = None
@@ -19,7 +19,7 @@ class DCSUserFile:
   def to_JSON(self):
     return {
       'id': self.id,
-      'unit': self.unit.generic,
+      'unit': [u.generic for u in self.unit],
       'author': self.author,
       'title': self.title,
       'date': self.date,
@@ -37,7 +37,11 @@ class DCSUserFile:
           if var == 'datetime':
             setattr(self, var, datetime.fromtimestamp(jsonData['datetime']))
           elif var == 'unit':
-            setattr(self, var, UM.get_unit_from_generic_name(jsonData['unit']))
+            if type(jsonData['unit']) is list:
+              unitList = [UM.get_unit_from_generic_name(u) for u in jsonData['unit']]
+              setattr(self, var, unitList)
+            else:
+              setattr(self, var, [UM.get_unit_from_generic_name(jsonData['unit'])])
           else:
             setattr(self, var, jsonData[var])
       return self
@@ -54,6 +58,12 @@ class DCSUserFile:
         if s.isnumeric():
           return int(s)
     raise RuntimeWarning("Unable to get DCS User File ID from url " + fileURL)
+
+  def get_units_friendly_string(self):
+    return ", ".join([u.friendly for u in self.unit])
+
+  def get_units_generic_string(self):
+    return ", ".join([u.generic for u in self.unit])
 
   def date_to_datetime(self, date):
     if len(date):
@@ -111,7 +121,7 @@ class Livery:
     return self.from_JSON(jsonData)
 
   def generate_ovgme_folder(self):
-    if self.dcsuf and self.dcsuf.unit and self.dcsuf.title:
+    if self.dcsuf and len(self.dcsuf.unit) and self.dcsuf.title:
       return self.dcsuf.title
     else:
       raise RuntimeError("Unable to generate OVGME folder name for livery due to insufficient data.")

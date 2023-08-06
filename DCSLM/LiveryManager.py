@@ -419,6 +419,7 @@ class LiveryManager:
           if self.is_valid_livery_directory(files) or self.is_valid_data_directory(files):
             if self._copy_livery_files(livery, extractPath, files, installPath):
               copiedLiveries.append(install)
+              break
     return copiedLiveries
 
   def remove_extracted_livery_archive(self, livery, extractedID=None):
@@ -451,22 +452,17 @@ class LiveryManager:
     else:
       return "Liveries"
 
-  def generate_aircraft_livery_install_path(self, livery, units):
-    liveryPaths = []
-    for u in units:
-      for l in u.liveries:
-        liveryPaths.append(os.path.join(l))
-    return liveryPaths
-
-  def generate_livery_install_paths(self, livery, installRoots, detectedLiveries):
+  def generate_livery_install_paths(self, livery, detectedUnits, detectedLiveries):
     installPaths = []
-    for dl in detectedLiveries:
-      if dl['name'] == "\\":
-        dl['name'] = livery.dcsuf.title
-      livery.installs['liveries'][dl['name']] = {'size': dl['size'], 'paths': [], 'data': dl['data']}
-      for root in installRoots:
-        livery.installs['liveries'][dl['name']]['paths'].append(os.path.join(root, dl['name']))
-        installPaths.append(os.path.join(root, dl['name']))
+    for dU in detectedUnits:
+      livery.installs['liveries'][dU['name']] = {'size': 0, 'paths': [], 'data': 0}
+      for dL in detectedLiveries:
+        if dL['name'] == dU['name']:
+          for l in dU['liveries']:
+            lPath = os.path.join(l, dU['name'])
+            installPaths.append(lPath)
+            livery.installs['liveries'][dU['name']]['paths'].append(lPath)
+          break
     return installPaths
 
   def get_livery_data_from_dcsuf_url(self, url, session=None):
