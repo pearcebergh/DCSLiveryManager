@@ -321,7 +321,7 @@ class LiveryManager:
     liveryDirectories = []
     for root, files in extractedLiveryFiles.items():
       liveryName = root
-      folderData = {'name': liveryName, 'size': 0, 'data': False, 'root': False}
+      folderData = {'name': liveryName, 'size': 0, 'data': False, 'root': False, 'path': root}
       if root != "\\":
         if not len(root): # Set livery name to DCSUF title if there is no folder root
           folderData['root'] = True

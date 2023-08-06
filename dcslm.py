@@ -658,7 +658,7 @@ class DCSLMApp:
     detectedUnits = []
     for dL in detectedLiveries:
       if not dL['root']:
-        descriptionPath = os.path.join(extractPath, dL['name'], "description.lua")
+        descriptionPath = os.path.join(extractPath, dL['path'], "description.lua")
       else:
         descriptionPath = os.path.join(extractPath, "description.lua")
       if os.path.isfile(descriptionPath):
@@ -724,7 +724,6 @@ class DCSLMApp:
             detectedLiveries = self.lm.detect_extracted_liveries(livery, extractPath, extractedLiveryFiles)
             detectedUnits = self._install_detect_extracted_livery_units(livery, extractPath, detectedLiveries)
             self._install_print_detected_units(livery, detectedUnits)
-            # TODO: handle 3332020 unit root folders
             for dU in detectedUnits:
               dUnit = dU['unit']
               if not dUnit and isinstance(livery.dcsuf.unit, str):
