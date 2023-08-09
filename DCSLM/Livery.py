@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 import DCSLM.Utilities as Utilities
 from DCSLM.UnitManager import UM
+from DCSLM.Unit import Unit
 
 class DCSUserFile:
   def __init__(self):
@@ -100,7 +101,10 @@ class Livery:
       elif var == "installs":
         jsonLivery[var] = {'units': [], 'liveries': selfVars[var]['liveries'], 'optimized': selfVars[var]['optimized'] }
         for u in selfVars[var]['units']:
-          jsonLivery[var]['units'].append(u.generic)
+          if isinstance(u, str):
+            jsonLivery[var]['units'].append(u)
+          elif isinstance(u, Unit):
+            jsonLivery[var]['units'].append(u.generic)
       else:
         jsonLivery[var] = selfVars[var]
     return jsonLivery
