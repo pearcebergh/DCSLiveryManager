@@ -784,42 +784,43 @@ class LiveryManager:
     descLines = {}
     for t, l in livery.installs['liveries'].items():
       descLines[t] = {}
-      for u in range(0, len(livery.installs['units'])):
-        installRoot = os.path.join(os.getcwd(), livery.destination, l['paths'][u])
+      for p in l['paths']:
+        installRoot = os.path.join(os.getcwd(), livery.destination, p)
         descPath = os.path.join(installRoot, "description.lua")
+        if 'data' not in l.keys():
+          l['data'] = False
         if not l['data']:
-          descLines[t][livery.installs['units'][u]] = self._optimize_get_desclines_from_description_file(descPath)
+          descLines[t][p] = self._optimize_get_desclines_from_description_file(descPath)
         else:
-          descLines[t][livery.installs['units'][u]] = []
+          descLines[t][p] = []
     return descLines
 
   def _optimize_get_filerefs_from_desclines(self, livery, descLines):
     filesData = {}
-    rootUnit = livery.installs['units'][0]
     for t, l in livery.installs['liveries'].items():
       if t in descLines.keys():
-        if rootUnit in descLines[t].keys():
+        for p in descLines[t]:
           if 'data' not in l.keys() or not l['data']:
-            fileRefs = self._get_file_refs_from_description(descLines[t][rootUnit])
-            filesData[t] = fileRefs
+            fileRefs = self._get_file_refs_from_description(descLines[t][p])
+            filesData[p] = fileRefs
           else:
             filesList = self._get_file_list_data_folder(livery, l)
-            filesData[t] = filesList
+            filesData[p] = filesList
     # Consolidate relative file paths with other liveries
-    for t in filesData.keys():
+    for p in filesData.keys():
       movedFiles = []
-      for f in filesData[t].keys():
+      for f in filesData[p].keys():
         if f.startswith("../"):
           splitFile = f.split("/")
           splitLivery = '\\'.join(splitFile[1:-1])
           if splitLivery in filesData.keys():
-            for p in filesData[t][f]['parts']:
+            for part in filesData[p][f]['parts']:
               if splitFile[-1] in filesData[splitLivery].keys():
-                if p not in filesData[splitLivery][splitFile[-1]]['parts']:
-                  filesData[splitLivery][splitFile[-1]]['parts'].append(p)
+                if part not in filesData[splitLivery][splitFile[-1]]['parts']:
+                  filesData[splitLivery][splitFile[-1]]['parts'].append(part)
             movedFiles.append(f)
       for mF in movedFiles:
-        del filesData[t][mF]
+        del filesData[p][mF]
     return filesData
 
   def _optimize_calculate_fileref_hashes(self, livery, fileRefs):
