@@ -87,10 +87,11 @@ class UnitManager:
   def get_unit_from_liveries_dir(self, liveryDir):
     bestMatch = None
     if liveryDir and len(liveryDir):
+      lowerLiveryDir = str.lower(liveryDir)
       for unitType in UnitDefaults.keys():
         for u in self.Units[unitType].values():
-          if liveryDir in u.liveries:
-            if liveryDir == u.liveries[0]: # First element designates the actual unit
+          if lowerLiveryDir in u.liveries:
+            if lowerLiveryDir == u.liveries[0]: # First element designates the actual unit
               return u
             else: # Some units can install to other units (i.e. A-10)
               bestMatch = u

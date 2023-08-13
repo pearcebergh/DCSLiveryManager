@@ -510,7 +510,13 @@ class LiveryManager:
                 unitPartsCount[d] += unitCount
     return unitPartsCount
 
-  def determine_unit_from_description_path(self, descPath):
+  def determine_unit_from_description_path(self, descPath, dlPath):
+    splitDLPath = os.path.split(dlPath)
+    dlPathUnit = None
+    if len(splitDLPath) > 1:
+      dlPathUnit = UM.get_unit_from_liveries_dir(splitDLPath[-2])
+    if dlPathUnit:
+      return dlPathUnit
     descLines = self._optimize_get_desclines_from_description_file(descPath)
     descParts = self._get_parts_from_description(descLines)
     unitPartsCount = self._count_unit_parts(descParts)

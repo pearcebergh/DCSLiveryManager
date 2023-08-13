@@ -34,6 +34,8 @@ class Unit:
         if var in jsonData.keys():
           setattr(self, var, jsonData[var])
       self.generic = str.lower(unitName)
+      for l in range(0, len(self.liveries)):
+        self.liveries[l] = str.lower(self.liveries[l])
     return self
 
   def from_JSON_String(self, unitName, jsonStr):

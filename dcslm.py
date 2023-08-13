@@ -34,8 +34,7 @@ from DCSLM.UnitDefaults import UnitsOfficial
 from DCSLM.UnitManager import UM
 import DCSLM.Utilities as Utilities
 
-# TODO: Add fallback upgrade path to find latest DCSLM.exe when unable to parse releases page
-# TODO: Add 'multiple' dcsuf unit category
+# TODO: Add fallback upgrade path to find latest DCSLM.exe when unable to parse releases page (use DCSUF)
 
 def set_console_title(title):
   if platform.system() == 'Windows':
@@ -662,7 +661,7 @@ class DCSLMApp:
       else:
         descriptionPath = os.path.join(extractPath, "description.lua")
       if os.path.isfile(descriptionPath):
-        unit = self.lm.determine_unit_from_description_path(descriptionPath)
+        unit = self.lm.determine_unit_from_description_path(descriptionPath, dL['path'])
         detectedUnits.append({'name': dL['name'], 'unit': unit, 'liveries':[]})
     return detectedUnits
 

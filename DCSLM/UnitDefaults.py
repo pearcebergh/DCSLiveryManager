@@ -355,7 +355,7 @@ UnitDefaults = {
                     'pilot_mig29_body','ptb-1150','mig29g_pylon']
         },
         "mig-29s": {
-          "names": ["mig-29s", "mig-29s"],
+          "names": ["mig-29", "mig-29s"],
           "friendly": "MiG-29S",
           "dcs_files": "Other",
           "liveries": ["mig-29s"],
