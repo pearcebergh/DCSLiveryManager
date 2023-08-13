@@ -695,72 +695,63 @@ class LiveryManager:
     optimizedLines = {}
     for t in descLines.keys():
       optimizedLines[t] = {}
-      for oU in units:
-        optimizedLines[t][oU] = []
-    rootUnit = units[0]
-    rootLiveryPath = "../../" + rootUnit + "/"
+      for dL in descLines[t]:
+        optimizedLines[t][dL] = []
+    #rootUnit = units[0]
+    #rootLiveryPath = "../../" + rootUnit + "/"
+    rootLiveryPath = "nah"
     for t, dL in descLines.items():
       if not len(dL):
         continue
       rootLivery = t + '/'
-      for line in dL[units[0]]:
-        if line[:2] == '--':
-          for lU in units:
+      for lU in dL.keys():
+        for line in dL[lU]:
+          if line[:2] == '--':
             optimizedLines[t][lU].append(line)
-          continue
-        pyStatements = self._optimize_get_py_statements_from_line(line)
-        optimizeStatement = False
-        for ps in pyStatements:
-          for l, fd in filesData['liveries'].items():
-            if ps[2] in fd.keys():
-              matchedData = fd[ps[2]]
-              if not 'hash' in matchedData.keys():
-                continue
-              if matchedData['hash'] in filesData['hashes'].keys():
-                matchedHash = filesData['hashes'][matchedData['hash']]
-                if t not in matchedHash:
+            continue
+          pyStatements = self._optimize_get_py_statements_from_line(line)
+          optimizeStatement = False
+          for ps in pyStatements:
+            for l, fd in filesData['liveries'].items():
+              if ps[2] in fd.keys():
+                matchedData = fd[ps[2]]
+                if not 'hash' in matchedData.keys():
                   continue
-                if len(matchedHash) > 1:
-                  replacementTitle = matchedHash[0]
-                  fileStr = str.split(ps[2], "/")[-1]
-                  if replacementTitle == t:
-                    replacementPath = fileStr
-                  else:
-                    replacementPath = "../" + replacementTitle + "/" + fileStr
-                  ps[2] = replacementPath
+                if matchedData['hash'] in filesData['hashes'].keys():
+                  matchedHash = filesData['hashes'][matchedData['hash']]
+                  if t not in matchedHash:
+                    continue
+                  if len(matchedHash) > 1:
+                    replacementTitle = matchedHash[0]
+                    fileStr = str.split(ps[2], "/")[-1]
+                    if replacementTitle == t:
+                      replacementPath = fileStr
+                    else:
+                      replacementPath = "../" + replacementTitle + "/" + fileStr
+                    ps[2] = replacementPath
+                    optimizeStatement = True
+                if len(units) > 1:
                   optimizeStatement = True
-              if len(units) > 1:
-                optimizeStatement = True
-        if not optimizeStatement:
-          for sU in units:
-            optimizedLines[t][sU].append(line)
-        else:
-          if commentLine:
-            for cU in units:
-              optimizedLines[t][cU].append("--" + line)
-          linePrefix = str.find(line, '{')
-          lastBracket = str.rfind(line, '}')
-          for u in range(0, min(len(units), 2)):
+          if not optimizeStatement:
+            optimizedLines[t][lU].append(line)
+          else:
+            if commentLine:
+              optimizedLines[t][lU].append("--" + line)
+            linePrefix = str.find(line, '{')
+            lastBracket = str.rfind(line, '}')
             correctedLuaStatements = []
             for ps in pyStatements:
-              if u == 0:
-                ls = self._optimize_py_statement_to_lua(ps)
-              else:
-                ls = self._optimize_py_statement_to_lua(ps, rootLivery, rootLiveryPath)
+              ls = self._optimize_py_statement_to_lua(ps)
               if len(ls):
                 correctedLuaStatements.append(ls)
             correctedLuaLine = line[:linePrefix] + ' '.join(correctedLuaStatements) + line[lastBracket + 1:]
-            if u == 0:
-              optimizedLines[t][units[0]].append(correctedLuaLine)
-            else:
-              for aU in range(u, len(units)):
-                optimizedLines[t][units[aU]].append(correctedLuaLine)
+            optimizedLines[t][lU].append(correctedLuaLine)
     return optimizedLines
 
   def _optimize_write_corrected_desc_files(self, livery, descLines, keepCopy=True):
     for t in descLines.keys():
-      for u, lines in descLines[t].items():
-        descRoot = os.path.join(os.getcwd(), livery.destination, u, t)
+      for l, lines in descLines[t].items():
+        descRoot = os.path.join(os.getcwd(), livery.destination, l, t)
         descPath = os.path.join(descRoot, "description.lua")
         if os.path.isfile(descPath):
           if keepCopy:
@@ -827,14 +818,15 @@ class LiveryManager:
     filesData = {}
     for t, l in livery.installs['liveries'].items():
       self.print("Generating file hashes for \'" + t + "\'", style="bold gold1")
-      installRoot = os.path.join(os.getcwd(), livery.destination, l['paths'][0])
-      if t in fileRefs.keys():
-        fileHashes = self._optimize_generate_file_hashes(installRoot, t, fileRefs[t])
-        for fh, lf in fileHashes.items():
-          if fh not in filesData.keys():
-            filesData[fh] = lf
-          else:
-            filesData[fh].extend(lf)
+      for p in l['paths']:
+        installRoot = os.path.join(os.getcwd(), livery.destination, p)
+        if p in fileRefs.keys():
+          fileHashes = self._optimize_generate_file_hashes(installRoot, t, fileRefs[p])
+          for fh, lf in fileHashes.items():
+            if fh not in filesData.keys():
+              filesData[fh] = lf
+            else:
+              filesData[fh].extend(lf)
     return filesData
 
   def _optimize_find_missing_files(self, liveryFileHashes, liveryFilesData):
