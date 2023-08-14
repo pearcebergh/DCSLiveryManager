@@ -3,6 +3,7 @@ import os
 import stat
 import hashlib
 import glob
+import shutil
 from requests import get
 
 def find_desc_file_format(knownFilePath):
@@ -58,6 +59,12 @@ def remove_file(filepath):
 def remove_files(fileList):
   for f in fileList:
     remove_file(f)
+
+def remove_directory(dirPath):
+  if validate_remove_path(dirPath):
+    shutil.rmtree(dirPath, ignore_errors=True)
+    return
+  raise RuntimeWarning("Tried to remove directory not in path of DCSLM! " + str(dirPath))
 
 def get_size_of_filelist(fileList):
   filelistSize = 0

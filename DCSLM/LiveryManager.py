@@ -287,12 +287,12 @@ class LiveryManager:
           if not os.path.isdir(extractedPath):
             os.makedirs(extractedPath, exist_ok=True)
           self._remove_existing_extracted_files(livery, extractedPath)
-          self._extract_archive(livery, livery.archive, extractedPath, verbose=verbose, prefer7z=True)
+          self.extract_archive(livery, livery.archive, extractedPath, verbose=verbose, prefer7z=True)
           self._extract_extracted_archive(livery, extractedPath)
           return extractedPath
     return None
 
-  def _extract_archive(self, livery, archivePath, extractPath, verbose=False, prefer7z=True):
+  def extract_archive(self, livery, archivePath, extractPath, verbose=False, prefer7z=True):
     prefProgram = None
     if patoolib.util.get_nt_7z_dir() != "" and prefer7z:
       prefProgram = "7z"
@@ -303,7 +303,7 @@ class LiveryManager:
     extractedFiles = glob.glob(extractedPath + "/**/*", recursive=True)
     for f in extractedFiles:
       if os.path.splitext(f)[-1][1:] in patoolib.ArchiveFormats:
-        self._extract_archive(livery, f, extractedPath)
+        self.extract_archive(livery, f, extractedPath)
 
   def is_valid_livery_directory(self, fileList):
     for f in fileList:

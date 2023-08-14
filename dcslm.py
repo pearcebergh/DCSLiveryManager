@@ -34,8 +34,6 @@ from DCSLM.UnitDefaults import UnitsOfficial
 from DCSLM.UnitManager import UM
 import DCSLM.Utilities as Utilities
 
-# TODO: Add fallback upgrade path to find latest DCSLM.exe when unable to parse releases page (use DCSUF)
-
 def set_console_title(title):
   if platform.system() == 'Windows':
     os.system(f'title {title}')
@@ -1369,54 +1367,21 @@ class DCSLMApp:
     self.console.print(reportStr)
 
   def quick_check_upgrade_available(self):
-    relData = self.request_upgrade_information()
-    if relData:
-      if len(relData):
-        self.console.print("\nYour DCSLM [err]v" + str(__version__) + "[/err] is out of date!\n" +
-                           "Use the \'upgrade\' command to upgrade [exe]DCSLM[/exe] to [bold green]v" +
-                           relData[0]['version'] + "[/bold green]")
+    upgradeFuncs = {
+      'GitHub': self.request_upgrade_information_github,
+      'DCS User Files' : self.request_upgrade_information_dcsuf
+    }
+    for s,f in upgradeFuncs.items():
+      relData = f()
+      if relData:
+        if len(relData):
+          self.console.print("\n[bold green]Found upgrade on[/bold green] " + s)
+          self.console.print("Your DCSLM [err]v" + str(__version__) + "[/err] is out of date!\n" +
+                             "Use the \'upgrade\' command to upgrade [exe]DCSLM[/exe] to [bold green]v" +
+                             relData[0]['version'] + "[/bold green]\n")
+          break
 
-  def request_latest_upgrade_download(self):
-    import requests
-    import pkg_resources
-    from bs4 import BeautifulSoup
-    # Get all links and find released exe downloads
-    try:
-      releaseData = []
-      rData = {
-        'name': "",
-        'version': "",
-        'desc': "N/A",
-        'date': "N/A",
-        'download': ""
-      }
-      relReq = requests.get("https://github.com/pearcebergh/DCSLiveryManager/releases", timeout=5)
-      relHTML = BeautifulSoup(relReq.text, 'html.parser')
-      rootPath = "/pearcebergh/DCSLiveryManager/releases/download/"
-      releaseLinks = []
-      for href in relHTML.find_all('a', href=True):
-        hrefStr = str(href.get('href'))
-        if rootPath in hrefStr:
-          releaseLinks.append(hrefStr)
-      highestTag = "0.0.0"
-      parsedHighest = pkg_resources.parse_version(highestTag)
-      for rL in releaseLinks:
-        splitRL = rL.split("/")
-        if pkg_resources.parse_version(splitRL[5]) > parsedHighest:
-          highestTag = splitRL[5]
-          parsedHighest = pkg_resources.parse_version(splitRL[5])
-      if highestTag != "0.0.0":
-        rData['name'] = highestTag + " Release"
-        rData['version'] = highestTag
-        rData['download'] = "https://github.com" + rootPath + highestTag + "/DCSLM.exe"
-        releaseData.append(rData)
-      pprint(releaseData)
-      return releaseData
-    except Exception as e:
-      self.console.print("Failed to parse GitHub release page for upgrade information.", style="err")
-      return None
-
-  def request_upgrade_information(self):
+  def request_upgrade_information_github(self):
     import requests
     import pkg_resources
     from datetime import datetime
@@ -1443,10 +1408,6 @@ class DCSLMApp:
             dtRelease = datetime.strptime(dateDT, "%Y-%m-%dT%H:%M:%SZ")
             dtStr = dtRelease.strftime("%b %d, %Y")
             rData['date'] = dtStr
-        '''for a in r.find_all('a'): # Not working
-          if a.text.strip() == "DCSLM.exe":
-            rData['download'] = "https://github.com" + a.get('href')
-            break'''
         if len(rData['download']) == 0: # Backup hardcoded release url since it's unlikely to change
           rData['download'] = "https://github.com/pearcebergh/DCSLiveryManager/releases/download/" + rData['version'] + "/DCSLM.exe"
         if pkg_resources.parse_version(rData['version']) > pkg_resources.parse_version(__version__):
@@ -1456,19 +1417,115 @@ class DCSLMApp:
       self.console.print("Failed to parse GitHub release page for upgrade information.", style="err")
       return None
 
-  def _download_upgrade_progress(self, exeURL, version, writePath):
+  def _request_upgrade_dcsuf_split_dl_url(self, dlUrl):
+    upgradeFilename = dlUrl.split('/')[-1]
+    upgradeFileExt = os.path.splitext(upgradeFilename)[-1][1:]
+    upgradeVersion = upgradeFilename[7:-len(upgradeFileExt)-1]
+    return upgradeFilename, upgradeFileExt, upgradeVersion
+
+  def _request_download_information_dcsuf(self, downloadDiv):
+    from bs4 import BeautifulSoup
+    buttonDiv = downloadDiv.find('a', {'class': "btn btn-primary download"})
+    if buttonDiv:
+      url = str(buttonDiv.get('href'))
+      if url:
+        dcsufRelInfo = {}
+        dcsufRelInfo['url'] = url
+        dcsufRelInfo['filename'], dcsufRelInfo['ext'], dcsufRelInfo['version'] = self._request_upgrade_dcsuf_split_dl_url(url)
+        return dcsufRelInfo
+    return None
+
+  def request_upgrade_information_dcsuf(self):
+    import requests
+    import pkg_resources
+    from bs4 import BeautifulSoup
+    dcsufFileURL = "https://www.digitalcombatsimulator.com/en/files/3318763/"
+    try:
+      releaseData = []
+      relReq = requests.get(dcsufFileURL, timeout=5)
+      relHTML = BeautifulSoup(relReq.text, 'html.parser')
+      downloadDiv = relHTML.find('div', {'class': "row download"})
+      if downloadDiv:
+        dcsufRelInfo = self._request_download_information_dcsuf(downloadDiv)
+        if not dcsufRelInfo:
+          raise RuntimeError("Unable to parse download information from \'" + dcsufFileURL + "\'")
+        relDiv = relHTML.find('div', {'class': "row file-detail-text"})
+        if relDiv:
+          relTextDiv = relDiv.find('div', {'class': "col-xs-12 no-padding"})
+          if relTextDiv:
+            relSplitText = relTextDiv.text.splitlines()
+            relTrimmedText = []
+            releaseNotesIndex = -1
+            for l in relSplitText:
+              trimmedLine = l.strip()
+              if len(trimmedLine):
+                relTrimmedText.append(trimmedLine)
+                if trimmedLine == "Release Notes -":
+                  releaseNotesIndex = len(relTrimmedText)
+            if len(relTrimmedText):
+              vName, vVersion, vDesc, vDate = None, None, None, None
+              lastReleaseIndex = -1
+              relTrimmedText.append("")
+              for i in range(releaseNotesIndex, len(relTrimmedText)):
+                l = relTrimmedText[i]
+                if i == len(relTrimmedText) - 1:
+                  if pkg_resources.parse_version(vVersion) > pkg_resources.parse_version(__version__):
+                    rData = {
+                      'name': vVersion + " Release",
+                      'version': vVersion,
+                      'desc': relTrimmedText[lastReleaseIndex+1:-1],
+                      'date': vDate,
+                      'download': dcsufRelInfo['url']
+                    }
+                    releaseData.append(rData)
+                elif l[0] == 'v':
+                  splitLine = l.split(' ')
+                  if len(splitLine) == 2:
+                    splitVersion = splitLine[0][1:]
+                    splitDate = splitLine[-1][1:-2]
+                    if lastReleaseIndex == -1:
+                      vVersion = splitVersion
+                      vDate = splitDate
+                      vName = vVersion + " Release"
+                      lastReleaseIndex = i
+                      continue
+                    elif pkg_resources.parse_version(splitVersion) > pkg_resources.parse_version(__version__):
+                      rData = {
+                        'name': vName,
+                        'version': vVersion,
+                        'desc': relTrimmedText[lastReleaseIndex+1:i],
+                        'date': vDate,
+                        'download': dcsufRelInfo['url']
+                      }
+                      releaseData.append(rData)
+                      vVersion = splitVersion
+                      vDate = splitDate
+                      vName = vVersion + " Release"
+                    lastReleaseIndex = i
+      return releaseData
+    except Exception as e:
+      self.console.print("Failed to parse GitHub release page for upgrade information.", style="err")
+      return None
+
+  def _download_upgrade_progress(self, fileURL, fileVersion, writePath):
     import requests
     downloadProgress = Progress(TextColumn("[bold blue]{task.fields[filename]}", justify="right"),
                                 BarColumn(bar_width=None),"[progress.percentage]{task.percentage:>3.1f}%",
                                 "•",DownloadColumn(), "•", TransferSpeedColumn(), "•",TimeRemainingColumn(),
                                 console=self.console)
-    dlTask = downloadProgress.add_task("download", filename="DCSLM.exe v" + version, start=False)
-    dlSize = Utilities.request_file_size(exeURL)
+    upgradeFilename = fileURL.split('/')[-1]
+    upgradeFileExt = os.path.splitext(upgradeFilename)[-1][1:]
+    if upgradeFileExt == "exe":
+      taskFilename = "DCSLM.exe v" + fileVersion
+    else:
+      taskFilename = upgradeFilename + " (v" + fileVersion + ")"
+    dlTask = downloadProgress.add_task("download", filename=taskFilename, start=False)
+    dlSize = Utilities.request_file_size(fileURL)
     downloadProgress.update(dlTask, total=dlSize)
     callbackData = { 'exec': self._download_archive_rich_callback, 'progress': downloadProgress, 'task': dlTask }
     with downloadProgress:
       try:
-        with requests.get(exeURL, stream=True) as req:
+        with requests.get(fileURL, stream=True) as req:
           req.raise_for_status()
           with open(writePath, 'wb') as f:
             if callbackData:
@@ -1481,52 +1538,111 @@ class DCSLMApp:
       except (KeyboardInterrupt, IOError, ConnectionError, FileNotFoundError) as e:
         if os.path.isfile(writePath):
           Utilities.remove_file(writePath)
-        raise RuntimeError("Failed to download \'DCSLM.exe\': " + str(e))
+        raise RuntimeError("Failed to download \'" + fileURL + "\': " + str(e))
     return None
 
-  def upgrade_dcslm(self):
+  def _upgrade_dcslm_github(self):
     import shutil
     import time
     import subprocess
-    try:
-      releaseData = self.request_upgrade_information()
-      if not len(releaseData):
-        self.console.print("Current [exe]DCSLM[/exe] version " + __version__ + " is the latest available version.")
-      else:
-        for rd in releaseData:
-          self.console.print(rd['name'] + " (" + rd['version'] + ") " + rd['date'] + ":")
-          splitDesc = str.split(rd['desc'], '\n')
-          for descLine in splitDesc:
-            if len(descLine):
-              self.console.print(" - " + descLine)
+    releaseData = self.request_upgrade_information_github()
+    if not len(releaseData):
+      self.console.print("Current [exe]DCSLM[/exe] version " + __version__ + " is the latest available version.")
+    else:
+      for rd in releaseData:
+        self.console.print(rd['name'] + " (" + rd['version'] + ") " + rd['date'] + ":")
+        splitDesc = str.split(rd['desc'], '\n')
+        for descLine in splitDesc:
+          if len(descLine):
+            self.console.print(" - " + descLine)
         self.console.print("")
-        upgradeConf = Confirm.ask("Do you want to download and upgrade to the latest version of [exe]DCSLM[/exe]?")
+      upgradeConf = Confirm.ask("Do you want to download and upgrade to the latest version of [exe]DCSLM[/exe]?")
+      self.console.print("")
+      if upgradeConf:
+        oldExec = None
+        if "DCSLM.exe" in sys.executable:
+          oldExec = sys.executable + '.old'
+          if os.path.isfile(oldExec):
+            try:
+              Utilities.remove_file(oldExec)
+            except Exception as e:
+              self.console.print("[err]Failed to remove old executable:[/err] [red]" + str(e))
+          shutil.move(sys.executable, oldExec)
+        dlFilename = "DCSLM.exe"
+        dlPath = os.path.join(os.getcwd(), dlFilename)
+        latestExe = self._download_upgrade_progress(releaseData[0]['download'], releaseData[0]['version'], dlPath)
+        if not latestExe and oldExec:
+          shutil.move(oldExec, sys.executable)
+          return
+        os.chmod(dlFilename, 0o775)
+        self.console.print("[bold green][exe]DCSLM[/exe] Upgrade complete to version " + releaseData[0]['version'])
+        self.console.print("[exe]DCSLM[/exe] [err]will be restarted in a few moments...")
+        time.sleep(2.5)
+        subprocess.call(dlFilename)
+        sys.exit(0)
+
+  def _upgrade_dcslm_dcsuf(self):
+    import shutil
+    import time
+    import subprocess
+    releaseData = self.request_upgrade_information_dcsuf()
+    if not len(releaseData):
+      self.console.print("Current [exe]DCSLM[/exe] version " + __version__ + " is the latest available version.")
+    else:
+      downloadURL = releaseData[0]['download']
+      dlFilename, dlFileExt, dlVersion = self._request_upgrade_dcsuf_split_dl_url(downloadURL)
+      for rd in releaseData:
+        self.console.print(rd['name'] + " (" + rd['version'] + ") " + rd['date'] + ":")
+        for descLine in rd['desc']:
+          self.console.print(" - " + descLine[2:])
         self.console.print("")
-        if upgradeConf:
-          oldExec = None
-          if "DCSLM.exe" in sys.executable:
-            oldExec = sys.executable + '.old'
+      upgradeConf = Confirm.ask("Do you want to download and upgrade to the latest version of [exe]DCSLM[/exe]?")
+      self.console.print("")
+      dcslmExePath = os.path.join(os.getcwd(), "DCSLM.exe")
+      if upgradeConf:
+        try:
+          dlPath = os.path.join(os.getcwd(), "DCSLM", "archives", dlFilename)
+          latestArchive = self._download_upgrade_progress(downloadURL, dlVersion, dlPath)
+          extractPath = os.path.join(os.getcwd(), "DCSLM", "extract", "DCSLM_v" + dlVersion)
+          if os.path.exists(extractPath):
+            Utilities.remove_directory(extractPath)
+          self.lm.extract_archive(None, dlPath, extractPath)
+          if not os.path.exists(extractPath):
+            self.console.print("[err]Failed to extract downloaded DCSLM archive")
+            return
+          dlExtractedExePath = os.path.join(extractPath, "DCSLM.exe")
+          dcslmExePathTemp = dcslmExePath + ".new"
+          shutil.move(dlExtractedExePath, dcslmExePathTemp)
+          Utilities.remove_directory(extractPath)
+          if "DCSLM.exe" in dcslmExePath:
+            oldExec = dcslmExePath + '.old'
             if os.path.isfile(oldExec):
               try:
                 Utilities.remove_file(oldExec)
               except Exception as e:
                 self.console.print("[err]Failed to remove old executable:[/err] [red]" + str(e))
-            shutil.move(sys.executable, oldExec)
-          dlFilename = "DCSLM.exe"
-          dlPath = os.path.join(os.getcwd(), dlFilename)
-          latestExe = self._download_upgrade_progress(releaseData[0]['download'], releaseData[0]['version'], dlPath)
-          if not latestExe and oldExec:
-            shutil.move(oldExec, sys.executable)
-            return
-          os.chmod(dlFilename, 0o775)
+            shutil.move(dcslmExePath, oldExec)
+          shutil.move(dcslmExePathTemp, dcslmExePath)
+          os.chmod(dcslmExePath, 0o775)
           self.console.print("[bold green][exe]DCSLM[/exe] Upgrade complete to version " + releaseData[0]['version'])
           self.console.print("[exe]DCSLM[/exe] [err]will be restarted in a few moments...")
           time.sleep(2.5)
-          subprocess.call(dlFilename)
+          subprocess.call(dcslmExePath)
           sys.exit(0)
-    except Exception as e:
-      self.console.print("[err][exe]DCSLM[/exe] upgrade failed:[/err] [red]" + str(e))
-      self.console.print("[err]You may need to download the latest version manually:[/err] https://github.com/pearcebergh/DCSLiveryManager/releases/")
+        except Exception as e:
+          self.console.print("[err]Failed to upgrade DCSLM from DCSUF - " + str(e))
+
+  def upgrade_dcslm(self):
+    upgradeFuncs = {
+      'GitHub': self._upgrade_dcslm_github,
+      'DCSLM': self._upgrade_dcslm_dcsuf
+    }
+    for name,f in upgradeFuncs.items():
+      try:
+        f()
+      except Exception as e:
+        self.console.print("[err][exe]DCSLM[/exe] " + name + " upgrade failed:[/err] [red]" + str(e))
+        self.console.print("[err]You may need to download the latest version manually:[/err] https://github.com/pearcebergh/DCSLiveryManager/releases/")
 
   def _print_optimization_report(self, optimizationReport):
     if len(optimizationReport):
