@@ -219,7 +219,10 @@ UnitDefaults = {
           "friendly": "J-11A",
           "dcs_files": "J-11A",
           "liveries": ["J-11A"],
-          "parts": []
+          "parts": ['j11a_tex01','j11a_tex03_compos','j11a_tex04','j11a_tex05','j11a_tex06','j11a_tex06_bn52','j11a_tex06_bn31',
+                    'j11a_tex06_bn32','j11a_tex02_compos','j11a_tex02','j11a_tex03','j11a_tex07','j11a_rkl609l','j11a_rkl609r',
+                    'j11a_tex01_bn52','j11a_tex01_bn31','j11a_tex01_bn32','j11a_detail','j11a_detail_compos','j11a_afterburn','su27_tex01']
+
         },
         "jf-17": {
           "names": ["jf-17"],
