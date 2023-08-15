@@ -241,7 +241,10 @@ UnitDefaults = {
           "parts": ['ka-50-lamp','ka-50-paint1','ka-50-paint1_m','ka-50-paint2','ka-50-paint3','ka-50-paint4','ka-50-paint5',
                     'ka-50-paint6','ka-50-vtulka_met','ka-50-gear-rubber','ka-50_st-rm_paint1','ka-50_lifting_rotor_mast',
                     'ka-50_lrm_part','ka-50_lrm-centre','ka-50-lrm_b','ka-50_bort_numbers','ka-50_turkey_numbers','b8v20',
-                    'b-13l','ptb_ka-50']
+                    'b-13l','ptb_ka-50',
+                    'ka_50_3_hvost','ka_50_3_kriliya','ka_50_3_nos','ka_50_3_puzo','ka_50_3_glass','ka_50_3_dvig_vint_redukt',
+                    'ka_50_3_shassi','ka_50_3_pushka','ka_50_3_setki','pilot_ka50_body','helmet_zsh7_shell','helmet_zsh7_glass',
+                    'ka_50_3_namber','ka_50_3_kabina','ka_50_3_karkas']
         },
         "l-39": {
           "names": ["l-39"],
