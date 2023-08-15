@@ -719,6 +719,8 @@ class DCSLMApp:
             self.console.print(progressStr + "Detecting extracted liveries...")
             extractedLiveryFiles = self.lm.get_extracted_livery_files(livery, extractPath)
             detectedLiveries = self.lm.detect_extracted_liveries(livery, extractPath, extractedLiveryFiles)
+            if not len(detectedLiveries):
+              raise RuntimeError(progressStr + "No liveries to install")
             detectedUnits = self._install_detect_extracted_livery_units(livery, extractPath, detectedLiveries)
             self._install_print_detected_units(livery, detectedUnits)
             for dU in detectedUnits:
@@ -728,7 +730,11 @@ class DCSLMApp:
                 if unitInst:
                   dUnit = unitInst
                   livery.dcsuf.unit = []
-              selectedUnit, dU['liveries'] = self._install_select_unit(livery, dU, manualUnitSelection, forceAllUnits)
+              try:
+                selectedUnit, dU['liveries'] = self._install_select_unit(livery, dU, manualUnitSelection, forceAllUnits)
+              except Exception as e:
+                self.console.print(e, style="warn")
+                continue
               if dU['unit'] == None:
                 dU['unit'] = selectedUnit
               if dU['unit'] != None:
@@ -736,6 +742,8 @@ class DCSLMApp:
                   unitChoices.append(dU['unit'])
                 if dU['unit'] not in livery.dcsuf.unit:
                   livery.dcsuf.unit.append(dU['unit'])
+            if not len(unitChoices):
+              raise RuntimeError(progressStr + "No units to install liveries to")
             if liveryStrData['type'] == 'Archive':
               titlesList = self._install_archive_title_list(liveryStrData, detectedLiveries)
               filledDCSUF, usedDCSUF = self.prompt_dcsuf_info(titlesList, livery=livery)
@@ -751,38 +759,35 @@ class DCSLMApp:
             elif liveryStrData['type'] == 'DCSUF':
               livery.installs['units'] = unitChoices
             livery.ovgme = livery.generate_ovgme_folder()
-            if len(detectedLiveries) and len(detectedUnits):
-              liveryNames = [l['name'] for l in detectedLiveries if not l['data']]
-              self.console.print(liveryNames)
-              self.console.print(progressStr + "Generating livery install paths...")
-              installPaths = self.lm.generate_livery_install_paths(livery, detectedUnits, detectedLiveries)
-              if len(installPaths):
-                self.console.print(progressStr + "Installing " + str(len(detectedLiveries)) +
-                                   (" liveries" if len(detectedLiveries) > 1 else " livery") + " to " +
-                                   str(len(detectedUnits)) + " aircraft.")
-                with self.console.status(progressStr + "Installing extracted liveries..."):
-                  copiedLiveries = self.lm.copy_detected_liveries(livery, extractPath,
-                                                                  extractedLiveryFiles, installPaths)
-                if len(copiedLiveries):
-                  if screenshots:
-                    copiedFolderPath, copiedScreenshots = self._install_copy_screenshots(livery, screenshotFiles,
-                                                                                         destinationPath, progressStr)
-                    if len(copiedScreenshots):
-                      self.console.print(progressStr + "Downloaded " + str(len(copiedScreenshots)) +
-                                         " screenshots to \'" + copiedFolderPath + "\'")
-                  with self.console.status(progressStr + "Writing registry files..."):
-                    self.lm.write_livery_registry_files(livery)
-                  self.console.print(progressStr + "Wrote " + str(len(copiedLiveries)) +
-                                     " registry files to installed livery directories.")
-                  self.lm.register_livery(livery)
-                  self.console.print("[bold green]Livery[/bold green] \'" + str(livery.dcsuf.title) +
-                                     "\' [bold green]registered with ID[/bold green] " + str(livery.dcsuf.id) + "[bold green]!")
-                  livery.calculate_size_installed_liveries()
-                  installData['success'].append(livery)
-                else:
-                  raise RuntimeError(progressStr + "Failed to copy livery files to install directories!")
+            liveryNames = [l['name'] for l in detectedLiveries if not l['data']]
+            self.console.print(liveryNames)
+            self.console.print(progressStr + "Generating livery install paths...")
+            installPaths = self.lm.generate_livery_install_paths(livery, detectedUnits, detectedLiveries)
+            if len(installPaths):
+              self.console.print(progressStr + "Installing " + str(len(detectedLiveries)) +
+                                 (" liveries" if len(detectedLiveries) > 1 else " livery") + " to " +
+                                 str(len(detectedUnits)) + " aircraft.")
+              with self.console.status(progressStr + "Installing extracted liveries..."):
+                copiedLiveries = self.lm.copy_detected_liveries(livery, extractPath,
+                                                                extractedLiveryFiles, installPaths)
+              if len(copiedLiveries):
+                if screenshots:
+                  copiedFolderPath, copiedScreenshots = self._install_copy_screenshots(livery, screenshotFiles,
+                                                                                       destinationPath, progressStr)
+                  if len(copiedScreenshots):
+                    self.console.print(progressStr + "Downloaded " + str(len(copiedScreenshots)) +
+                                       " screenshots to \'" + copiedFolderPath + "\'")
+                with self.console.status(progressStr + "Writing registry files..."):
+                  self.lm.write_livery_registry_files(livery)
+                self.console.print(progressStr + "Wrote " + str(len(copiedLiveries)) +
+                                   " registry files to installed livery directories.")
+                self.lm.register_livery(livery)
+                self.console.print("[bold green]Livery[/bold green] \'" + str(livery.dcsuf.title) +
+                                   "\' [bold green]registered with ID[/bold green] " + str(livery.dcsuf.id) + "[bold green]!")
+                livery.calculate_size_installed_liveries()
+                installData['success'].append(livery)
               else:
-                raise RuntimeError(progressStr + "Failed to generate install paths!")
+                raise RuntimeError(progressStr + "Failed to copy livery files to install directories!")
             else:
               raise RuntimeError(progressStr + "Failed to detect valid livery directories from extracted livery archive!")
           else:
