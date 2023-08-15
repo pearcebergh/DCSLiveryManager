@@ -237,7 +237,7 @@ UnitDefaults = {
           "names": ["ka-50"],
           "friendly": "Ka-50",
           "dcs_files": "Ka-50",
-          "liveries": ["ka-50"],
+          "liveries": ["ka-50", "ka-50_3"],
           "parts": ['ka-50-lamp','ka-50-paint1','ka-50-paint1_m','ka-50-paint2','ka-50-paint3','ka-50-paint4','ka-50-paint5',
                     'ka-50-paint6','ka-50-vtulka_met','ka-50-gear-rubber','ka-50_st-rm_paint1','ka-50_lifting_rotor_mast',
                     'ka-50_lrm_part','ka-50_lrm-centre','ka-50-lrm_b','ka-50_bort_numbers','ka-50_turkey_numbers','b8v20',
