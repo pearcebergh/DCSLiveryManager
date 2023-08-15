@@ -46,7 +46,7 @@ def request_file_size(fileURL):
 
 def validate_remove_path(filepath):
   if len(filepath):
-    if os.getcwd() in filepath:
+    if os.getcwd() in os.filepath.normpath(filepath):
       return True
   return False
 
