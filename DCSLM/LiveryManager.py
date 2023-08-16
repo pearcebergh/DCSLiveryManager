@@ -580,13 +580,17 @@ class LiveryManager:
     luaData = []
     splitStatement = str.split(luaStatement[1:-1], ',')
     if len(splitStatement) == 4:
-      splitStatement[0] = re.search("\".+\"", str.strip(splitStatement[0])).group()[1:-1]
-      splitStatement[1] = str.strip(str.strip(splitStatement[1]))
-      splitStatement[2] = re.search("\".+\"", str.strip(splitStatement[2])).group()[1:-1]
-      if splitStatement[2].startswith('..'):
-        splitStatement[2] = os.path.normpath(splitStatement[2]).replace('\\', '/')
-      splitStatement[3] = False if (str.lower(str.strip(splitStatement[3])) == "false") else True
-      luaData = splitStatement
+      try:
+        splitStatement[0] = re.search("\".+\"", str.strip(splitStatement[0])).group()[1:-1]
+        splitStatement[1] = str.strip(str.strip(splitStatement[1]))
+        splitStatement[2] = re.search("\".+\"", str.strip(splitStatement[2])).group()[1:-1]
+        if splitStatement[2].startswith('..'):
+          splitStatement[2] = os.path.normpath(splitStatement[2]).replace('\\', '/')
+        splitStatement[3] = False if (str.lower(str.strip(splitStatement[3])) == "false") else True
+        luaData = splitStatement
+      except Exception as e:
+        self.print("Unable to parse lua statement - " + str(e) + ": " + luaStatement, style="warn")
+        return []
     return luaData
 
   def _get_py_statements_from_description(self, descLines):
