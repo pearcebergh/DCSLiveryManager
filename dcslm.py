@@ -710,8 +710,9 @@ class DCSLMApp:
         if archivePath:
           livery.archive = archivePath
           self.lm.remove_extracted_livery_archive(livery, extractedID=extractedID)
-          self.console.print("\n" + progressStr + "[bold]Running extraction program on downloaded archive:")
-          extractPath = self.lm.extract_livery_archive(livery, verbose=verbose)
+          self.console.print("\n" + progressStr + "")
+          with self.console.status(progressStr + "[bold]Running extraction program on archive..."):
+            extractPath = self.lm.extract_livery_archive(livery, verbose=verbose)
           if extractPath:
             self.console.print("\n" + progressStr + "Extracted \'" + livery.archive + "\' to temporary directory.")
             destinationPath = self.lm.generate_livery_destination_path(livery)
@@ -903,7 +904,10 @@ class DCSLMApp:
       for l in installData['success']:
         unitData = l.dcsuf.unit
         if len(unitData):
-          unitsFriendly = l.dcsuf.get_units_friendly_string()
+          if len(unitData) < 4:
+            unitsFriendly = l.dcsuf.get_units_friendly_string()
+          else:
+            unitsFriendly = "Multiple (" + str(len(unitData)) + ")"
           installTable.add_row(unitsFriendly, str(l.dcsuf.id), l.dcsuf.title, str(l.get_num_liveries()),
                                Utilities.bytes_to_mb_string(l.get_size_installed_liveries()))
       self.console.print(installTable)
@@ -1101,15 +1105,14 @@ class DCSLMApp:
     liveryRows = []
     longestUnit = ""
     footerData = {'size': 0, 'units': [], 'installed': 0, 'registered': 0}
+    multipleUnitRows = []
     for l in self.lm.Liveries.values():
       unitData = l.dcsuf.unit
       if len(unitData) == 1:
-        friendlyUnit = unitData[0].friendly
-      else:
         friendlyUnit = l.dcsuf.get_units_friendly_string()
+      else:
+        friendlyUnit = "Multiple (" + str(len(unitData)) + ")"
       unitStr = friendlyUnit
-      if len(l.installs['units']) > 1:
-        unitStr += "[bold gold1]+" + str(len(l.installs['units']) - 1) + "[/bold gold1]"
       liverySizeMB = Utilities.bytes_to_mb(l.get_size_installed_liveries())
       footerData['size'] += liverySizeMB
       footerData['registered'] += 1
@@ -1120,7 +1123,10 @@ class DCSLMApp:
       sizeStr = Utilities.mb_to_mb_string(liverySizeMB)
       if l.is_optimized():
         sizeStr = "[size.opt]" + sizeStr + "[/size.opt]"
-      liveryRows.append((unitStr, str(l.dcsuf.id), l.dcsuf.title, sizeStr))
+      if len(unitData) == 1:
+        liveryRows.append((unitStr, str(l.dcsuf.id), l.dcsuf.title, sizeStr))
+      else:
+        multipleUnitRows.append((unitStr, str(l.dcsuf.id), l.dcsuf.title, sizeStr))
       if len(unitStr) > len(longestUnit):
         longestUnit = unitStr
     footerString = "[num]" + str(footerData['registered']) + "[/num] Registered Liveries    "
@@ -1135,13 +1141,14 @@ class DCSLMApp:
     statusTable.add_column("Livery Title", justify="center", no_wrap=True, overflow='ellipsis', max_width=72)
     statusTable.add_column("Size (MB)", justify="right", no_wrap=True, style="size", width=10)
     liveryRows.sort(key=sort_list_by_unit_then_title)
+    liveryRows.extend(multipleUnitRows)
     for i in range(0, len(liveryRows)):
       l = liveryRows[i]
       isEndSection = False
       if i != len(liveryRows) - 1:
         nextUnit = liveryRows[i + 1][0]
         currentUnit = l[0]
-        if nextUnit != currentUnit:
+        if nextUnit != currentUnit and "Multiple" not in currentUnit:
           isEndSection = True
           if len(nextUnit) > len(currentUnit) and nextUnit[:len(currentUnit)] == currentUnit and nextUnit.find('+') != -1:
             isEndSection = False
