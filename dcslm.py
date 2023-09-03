@@ -34,6 +34,8 @@ from DCSLM.UnitDefaults import UnitsOfficial
 from DCSLM.UnitManager import UM
 import DCSLM.Utilities as Utilities
 
+# TODO: upgrade from dcsuf remove archive after install
+
 def set_console_title(title):
   if platform.system() == 'Windows':
     os.system(f'title {title}')
@@ -337,7 +339,18 @@ class DCSLMApp:
       'upgrade': {
         'usage': "",
         'desc': "Upgrade DCSLM to the latest version",
-        'flags': {},
+        'flags': {
+          'github': {
+            'tags': ['-g', '--github'],
+            'desc': "Force upgrade attempt using GitHub",
+            'action': "store_true"
+          },
+          'dcsuf': {
+            'tags': ['-d', '--dcsuf'],
+            'desc': "Force upgrade attempt using DCS User Files",
+            'action': "store_true"
+          }
+        },
         'args': {},
         'subcommands': {},
         'hidden': False,
@@ -534,12 +547,14 @@ class DCSLMApp:
     showDCSUFTags = True
     liveryUnitData = None
     if "Other" not in livery.dcsuf.unit and "Vehicle" not in livery.dcsuf.unit:
-      liveryUnitData = UM.get_unit_from_dcsuf_text(livery.dcsuf.unit[0])
-      if liveryUnitData:
-        unitName = livery.dcsuf.unit[0]
-        livery.dcsuf.unit = [liveryUnitData]
-        showDCSUFTags = False
-      else:
+      for u in livery.dcsuf.unit:
+        liveryUnitData = UM.get_unit_from_dcsuf_text(u)
+        if liveryUnitData:
+          unitName = u
+          livery.dcsuf.unit = [liveryUnitData]
+          showDCSUFTags = False
+          break
+      if unitName == "Other":
         unitName = "Unknown"
     self.print_dcsuf_panel(livery.dcsuf, unitName=unitName, showTags=showDCSUFTags)
     existingLivery = self.lm.get_registered_livery(id=int(liveryStrData['id']))
@@ -559,6 +574,10 @@ class DCSLMApp:
     else:
       if liveryUnitData['unit'] not in livery.dcsuf.unit:
         livery.dcsuf.unit.append(liveryUnitData['unit'])
+        for u in livery.dcsuf.unit:
+          if u.dcs_files == liveryUnitData['unit'].dcs_files:
+            livery.dcsuf.unit.remove(u)
+            break
     unitChoices = liveryUnitData['unit'].liveries
     if len(unitChoices) > 1 and not forceAllUnits:
       unitChoices = self.prompt_aircraft_livery_choice(livery, liveryUnitData['unit'], unitChoices, liveryUnitData['name'])
@@ -1644,12 +1663,17 @@ class DCSLMApp:
         except Exception as e:
           self.console.print("[err]Failed to upgrade DCSLM from DCSUF - " + str(e))
 
-  def upgrade_dcslm(self):
+  def upgrade_dcslm(self, sArgs):
     upgradeFuncs = {
       'GitHub': self._upgrade_dcslm_github,
-      'DCSLM': self._upgrade_dcslm_dcsuf
+      'DCS User Files': self._upgrade_dcslm_dcsuf
     }
+    upgradeArgs = self._parse_command_args("upgrade", sArgs)
     for name,f in upgradeFuncs.items():
+      if name != "GitHub" and upgradeArgs.github:
+        continue
+      elif name != "DCS User Files" and upgradeArgs.dcsuf:
+        continue
       try:
         f()
       except Exception as e:
@@ -1894,10 +1918,12 @@ class DCSLMApp:
           self.console.print("Getting DCS User Files information from ID " + str(id))
           parsedDCSUF = DCSUFParser().get_dcsuserfile_from_url(dcsufID)
           if parsedDCSUF:
-            liveryUnitData = UM.get_unit_from_dcsuf_text(parsedDCSUF.unit[0])
-            if liveryUnitData:
-              panelUnit = liveryUnitData.friendly
-              parsedDCSUF.unit = [liveryUnitData]
+            for u in parsedDCSUF.unit:
+              liveryUnitData = UM.get_unit_from_dcsuf_text(u)
+              if liveryUnitData:
+                panelUnit = liveryUnitData.friendly
+                parsedDCSUF.unit = [liveryUnitData]
+                break
             self.console.print("Successfully parsed data from DCS User Files (" + str(id) + ").")
             dcsuf = parsedDCSUF
           else:
