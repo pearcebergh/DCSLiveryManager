@@ -34,8 +34,6 @@ from DCSLM.UnitDefaults import UnitsOfficial
 from DCSLM.UnitManager import UM
 import DCSLM.Utilities as Utilities
 
-# TODO: upgrade from dcsuf remove archive after install
-
 def set_console_title(title):
   if platform.system() == 'Windows':
     os.system(f'title {title}')
@@ -1612,6 +1610,18 @@ class DCSLMApp:
         subprocess.call(dlFilename)
         sys.exit(0)
 
+  def _upgrade_dcslm_dcsuf_remove_files(self, dlPath, extractPath):
+    if os.path.isfile(dlPath):
+      try:
+        Utilities.remove_file(dlPath)
+      except Exception as e:
+        self.console.print("[warn]Failed to remove DCSLM upgrade archive \'" + dlPath + "\'")
+    if os.path.isdir(extractPath):
+      try:
+        Utilities.remove_directory(extractPath)
+      except Exception as e:
+        self.console.print("[warn]Failed to remove DCSLM upgrade extracted directory \'" + extractPath + "\'")
+
   def _upgrade_dcslm_dcsuf(self):
     import shutil
     import time
@@ -1631,10 +1641,10 @@ class DCSLMApp:
       self.console.print("")
       dcslmExePath = os.path.join(os.getcwd(), "DCSLM.exe")
       if upgradeConf:
+        dlPath = os.path.join(os.getcwd(), "DCSLM", "archives", dlFilename)
+        extractPath = os.path.join(os.getcwd(), "DCSLM", "extract", "DCSLM_v" + dlVersion)
         try:
-          dlPath = os.path.join(os.getcwd(), "DCSLM", "archives", dlFilename)
           latestArchive = self._download_upgrade_progress(downloadURL, dlVersion, dlPath)
-          extractPath = os.path.join(os.getcwd(), "DCSLM", "extract", "DCSLM_v" + dlVersion)
           if os.path.exists(extractPath):
             Utilities.remove_directory(extractPath)
           self.lm.extract_archive(None, dlPath, extractPath)
@@ -1655,6 +1665,7 @@ class DCSLMApp:
             shutil.move(dcslmExePath, oldExec)
           shutil.move(dcslmExePathTemp, dcslmExePath)
           os.chmod(dcslmExePath, 0o775)
+          self._upgrade_dcslm_dcsuf_remove_files(dlPath, extractPath)
           self.console.print("[bold green][exe]DCSLM[/exe] Upgrade complete to version " + releaseData[0]['version'])
           self.console.print("[exe]DCSLM[/exe] [err]will be restarted in a few moments...")
           time.sleep(2.5)
@@ -1662,6 +1673,8 @@ class DCSLMApp:
           sys.exit(0)
         except Exception as e:
           self.console.print("[err]Failed to upgrade DCSLM from DCSUF - " + str(e))
+        finally:
+          self._upgrade_dcslm_dcsuf_remove_files(dlPath, extractPath)
 
   def upgrade_dcslm(self, sArgs):
     upgradeFuncs = {
