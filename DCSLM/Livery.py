@@ -16,6 +16,7 @@ class DCSUserFile:
     self.size = None
     self.download = None
     self.tags = None
+    self.dcsuf_unit = None
 
   def to_JSON(self):
     return {
@@ -28,6 +29,7 @@ class DCSUserFile:
       'size': self.size,
       'download': self.download,
       'tags': self.tags,
+      'category': self.dcsuf_unit
     }
 
   def from_JSON(self, jsonData):
@@ -45,6 +47,14 @@ class DCSUserFile:
               setattr(self, var, [UM.get_unit_from_generic_name(jsonData['unit'])])
           else:
             setattr(self, var, jsonData[var])
+      if not self.dcsuf_unit: # Correct missing category field from older .dcslm files
+        if len(self.unit) == 1:
+          if self.unit[0].dcs_files != "Other":
+            self.dcsuf_unit = self.unit[0].dcs_files
+        elif len(self.unit) > 1:
+          self.dcsuf_unit = "Multiple"
+      if not self.dcsuf_unit:
+        self.dcsuf_unit = "Other"
       return self
 
   def from_JSON_String(self, jsonStr):

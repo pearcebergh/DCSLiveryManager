@@ -20,7 +20,7 @@ class UnitManager:
         self.Units[unitType] = {}
       for unitName, unitData in UnitDefaults[unitType].items():
         defaultUnit = Unit().from_JSON(unitName, unitData)
-        defaultUnit.category = unitType
+        defaultUnit.dcsuf_unit = unitType
         self.Units[unitType][unitName] = defaultUnit
         self.UnitNames[unitName] = unitType
 
@@ -36,7 +36,7 @@ class UnitManager:
           with open(uF, "r") as unitFile:
             unitData = json.load(unitFile)
             customUnit = Unit().from_JSON(unitName, unitData)
-            customUnit.category = unitType
+            customUnit.dcsuf_unit = unitType
             if customUnit.validate_unit():
               if unitName in self.UnitNames.keys():
                 customUnit.modified = True
@@ -75,7 +75,7 @@ class UnitManager:
         print("Wrote " + unitPath)
 
   def write_unit_config_file(self, unitData):
-    unitPath = os.path.join(os.getcwd(), "DCSLM", "units", unitData.category.lower())
+    unitPath = os.path.join(os.getcwd(), "DCSLM", "units", unitData.dcsuf_unit.lower())
     unitFilepath = os.path.join(unitPath, unitData.generic + ".json")
     try:
       with open(unitFilepath, 'w') as unitFile:

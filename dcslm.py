@@ -544,7 +544,7 @@ class DCSLMApp:
     unitName = "Other"
     showDCSUFTags = True
     liveryUnitData = None
-    if "Other" not in livery.dcsuf.unit and "Vehicle" not in livery.dcsuf.unit:
+    if "Other" != livery.dcsuf.dcsuf_unit and "Vehicle" != livery.dcsuf.dcsuf_unit:
       for u in livery.dcsuf.unit:
         liveryUnitData = UM.get_unit_from_dcsuf_text(u)
         if liveryUnitData:
@@ -553,7 +553,10 @@ class DCSLMApp:
           showDCSUFTags = False
           break
       if unitName == "Other":
-        unitName = "Unknown"
+        if livery.dcsuf.dcsuf_unit:
+          unitName = livery.dcsuf.dcsuf_unit
+        else:
+          unitName = "Unknown"
     self.print_dcsuf_panel(livery.dcsuf, unitName=unitName, showTags=showDCSUFTags)
     existingLivery = self.lm.get_registered_livery(id=int(liveryStrData['id']))
     if existingLivery and not forceInstall:
@@ -743,8 +746,8 @@ class DCSLMApp:
             self._install_print_detected_units(livery, detectedUnits)
             for dU in detectedUnits:
               dUnit = dU['unit']
-              if not dUnit and isinstance(livery.dcsuf.unit, str):
-                unitInst = UM.get_unit_from_dcsuf_text(livery.dcsuf.unit)
+              if not dUnit:
+                unitInst = UM.get_unit_from_dcsuf_text(livery.dcsuf.dcsuf_unit)
                 if unitInst:
                   dUnit = unitInst
                   livery.dcsuf.unit = []
@@ -1827,7 +1830,7 @@ class DCSLMApp:
             self.console.print("Unit config for \'" + unitData.friendly + "\' is the same on disk.")
           else:
             self.console.print("Writing out config for \'" + unitData.friendly + "\' to \'[exe]DCSLM[/exe]\\units\\" +
-                               unitData.category.lower() + "/" + unitData.generic + ".json\'")
+                               unitData.dcsuf_unit.lower() + "/" + unitData.generic + ".json\'")
             UM.write_unit_config_file(unitData)
         else:
           unitPanel = self._make_unit_panel(unitData)

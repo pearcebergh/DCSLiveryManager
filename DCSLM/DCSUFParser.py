@@ -139,7 +139,7 @@ class DCSUFParser:
             parsedVar = self._parse_div_select(d, dcsufHTML)
             parsedDCSUF[v] = parsedVar
           dcsuf.id = dcsuf.get_id_from_url(url)
-          dcsuf.unit = [parsedDCSUF['unit'].text]
+          dcsuf.dcsuf_unit = parsedDCSUF['unit'].text
           dcsuf.author = parsedDCSUF['author'].text
           titleText = parsedDCSUF['title'].text
           dcsuf.title = self._remove_bad_filename_characters(titleText)
