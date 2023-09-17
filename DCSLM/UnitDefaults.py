@@ -284,7 +284,7 @@ UnitDefaults = {
           "names": ["mirage", "f1", "f1ce", "mirage f1ce", "mirage f1"],
           "friendly": "Mirage F1",
           "dcs_files": "Mirage F1",
-          "liveries": ["Mirage-F1CE", "Mirage-F1EE"], ## BE, M later
+          "liveries": ["Mirage-F1CE", "Mirage-F1EE", "Mirage-F1BE"], ## M later
           "parts": ['miragef1_common_04_1','miragef1_common_04_2','miragef1_common_03_1','miragef1_common_03_2',
                     'miragef1_common_05_1','miragef1_common_05_2','pilot_miragef1_00_body','pilot_miragef1_00_helmet_french',
                     'pilot_miragef1_patch','miragef1-tank','miragef1_common_06']
