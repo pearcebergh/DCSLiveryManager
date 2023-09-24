@@ -517,7 +517,7 @@ UnitDefaults = {
 UnitsOfficial = {
   "Air": ["a-10a", "a-10c", "a-10cii", "ah-64d", "ajs-37", "av-8b", "bf-109k-4", "c-101", "christen eagle ii", "f-14",
           "f-15c", "f-15e", "f-16c", "f-5e", "f-86f", "fa-18c", "fw-190-a-8", "fw-190-d-9", "hawk", "i-16", "j-11a", "jf-17",
-          "ka-50", "l-39", "mirage f1", "m-2000c", "mi-24p", "mi-8mtv2", "mig-15bis", "mig-19p", "mig-21bis", "mig-29a",
-          "mig-29c", "mig-29g", "mig-29s", "mosquito fb mk vi", "p-47d", "p-51d", "sa342", "spitfire lf mk ix", "su-25", "su-25t",
-          "su-27", "su-33", "uh-1h", "yak-52", "mirage f1", "mb-339", "tf-51d"]
+          "ka-50", "ka-50_3", "l-39", "mb-339", "mirage f1", "m-2000c", "mi-24p", "mi-8mtv2", "mig-15bis", "mig-19p", "mig-21bis",
+          "mig-29a", "mig-29c", "mig-29g", "mig-29s", "mosquito fb mk vi", "p-47d", "p-51d", "sa342", "spitfire lf mk ix", "su-25",
+          "su-25t", "su-27", "su-33", "uh-1h", "yak-52", "tf-51d"]
 }
