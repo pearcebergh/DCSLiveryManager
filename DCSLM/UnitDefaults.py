@@ -511,6 +511,21 @@ UnitDefaults = {
                     'wing_010','wing_100','nose_aggressor_001','nose_aggressor_010','tail_001','tail_010','tail_100',
                     'fuel_150_a4e','fuel_300lr_a4e','fuel_300c_a4e','fuel_400_a4e']
         },
+        "kc-135": {
+          "names": ["kc-135", "kc 135", "kc135"],
+          "friendly": "KC-135",
+          "dcs_files": "Other",
+          "liveries": ["kc-135", "KC135MPRS"],
+          "parts": ['kc_135_body_1','kc_135_body_2','kc_135_wings','kc_135_wings_mark','kc_135_notes']
+
+        },
+        "e-3": {
+          "names": ["e-3", "e 3", "e3"],
+          "friendly": "E-3A",
+          "dcs_files": "Other",
+          "liveries": ["e-3a"],
+          "parts": ['e-3_body_1','e-3_body_2','e-3_radar','e-3_wings','e-3_wings_mark']
+        },
       }
     }
 
