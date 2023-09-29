@@ -670,11 +670,11 @@ class LiveryManager:
     skipFiles = ["description.lua", "orig_description.lua", ".dcslm"]
     unusedFiles = []
     liveryFiles = {}
-    for l,lfd in liveryFilesData.items():
-      liveryFiles[l] = []
+    for li,lfd in liveryFilesData.items():
+      liveryFiles[li] = []
       for lf,d in lfd.items():
         if len(d['parts']):
-          liveryFiles[l].append(str.lower(lf))
+          liveryFiles[li].append(str.lower(lf))
     for t, l in livery.installs['liveries'].items():
       destRoot = os.path.join(os.getcwd(), livery.destination)
       installRoot = os.path.join(destRoot, l['paths'][0])
@@ -684,12 +684,13 @@ class LiveryManager:
         livIndex = splitPath.index("Liveries")
         if splitPath[-1] in skipFiles:
           continue
-        splitLivery = '\\'.join(splitPath[livIndex+2:-1])
+        splitLivery = '\\'.join(splitPath[livIndex+1:-1])
         shortName = os.path.splitext(splitPath[-1])[0]
         lowerName = str.lower(shortName)
         if splitLivery in liveryFiles.keys():
           if lowerName not in liveryFiles[splitLivery] and lowerName + ".dds" not in liveryFiles[splitLivery]:
-            unusedFiles.append(os.path.join(livery.destination, l['paths'][0], splitPath[-1]))
+            unusedFilepath = os.path.join(livery.destination, l['paths'][0], splitPath[-1])
+            unusedFiles.append(unusedFilepath)
       if len(l['paths']) > 1:
         for u in l['paths'][1:]:
           additionalInstallRoot = os.path.join(destRoot, u)
@@ -707,13 +708,9 @@ class LiveryManager:
       optimizedLines[t] = {}
       for dL in descLines[t]:
         optimizedLines[t][dL] = []
-    #rootUnit = units[0]
-    #rootLiveryPath = "../../" + rootUnit + "/"
-    rootLiveryPath = "nah"
     for t, dL in descLines.items():
       if not len(dL):
         continue
-      rootLivery = t + '/'
       for lU in dL.keys():
         for line in dL[lU]:
           if line[:2] == '--':
@@ -761,7 +758,7 @@ class LiveryManager:
   def _optimize_write_corrected_desc_files(self, livery, descLines, keepCopy=True):
     for t in descLines.keys():
       for l, lines in descLines[t].items():
-        descRoot = os.path.join(os.getcwd(), livery.destination, l, t)
+        descRoot = os.path.join(os.getcwd(), livery.destination, l)
         descPath = os.path.join(descRoot, "description.lua")
         if os.path.isfile(descPath):
           if keepCopy:
@@ -807,19 +804,20 @@ class LiveryManager:
           else:
             filesList = self._get_file_list_data_folder(livery, l)
             filesData[p] = filesList
-    # Consolidate relative file paths with other liveries
-    for p in filesData.keys():
+    for p in filesData.keys(): # Consolidate relative file paths with other liveries
       movedFiles = []
       for f in filesData[p].keys():
         if f.startswith("../"):
           splitFile = f.split("/")
           splitLivery = '\\'.join(splitFile[1:-1])
-          if splitLivery in filesData.keys():
-            for part in filesData[p][f]['parts']:
-              if splitFile[-1] in filesData[splitLivery].keys():
-                if part not in filesData[splitLivery][splitFile[-1]]['parts']:
-                  filesData[splitLivery][splitFile[-1]]['parts'].append(part)
-            movedFiles.append(f)
+          for fdL in filesData.keys():
+            if splitLivery in fdL:
+              for part in filesData[p][f]['parts']:
+                if splitFile[-1] in filesData[fdL].keys():
+                  if part not in filesData[fdL][splitFile[-1]]['parts']:
+                    filesData[fdL][splitFile[-1]]['parts'].append(part)
+              movedFiles.append(f)
+              break
       for mF in movedFiles:
         del filesData[p][mF]
     return filesData
@@ -866,7 +864,7 @@ class LiveryManager:
         self.print("Detected " + str(len(filesData['missing'])) + " missing files.")
       livery.calculate_size_installed_liveries()
       filesData['size']['before'] = livery.get_size_installed_liveries()
-      if (len(filesData['same_hash']) or len(livery.installs['units']) > 1) and not checkOnly:
+      if (len(filesData['same_hash']) != 0 or len(livery.installs['units']) > 1) and not checkOnly:
         correctedLines = self._optimize_correct_desc_lines(filesData, descLines, livery.installs['units'])
         self._optimize_write_corrected_desc_files(livery, correctedLines, keepCopy=copyDesc)
       if removeUnused or checkOnly:
