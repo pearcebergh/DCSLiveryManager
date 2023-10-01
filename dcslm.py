@@ -543,15 +543,7 @@ class DCSLMApp:
     self.console.print(liveryStrData['progress'] + getUFStr + "\n")
     unitName = "Other"
     showDCSUFTags = True
-    liveryUnitData = None
     if "Other" != livery.dcsuf.dcsuf_unit and "Vehicle" != livery.dcsuf.dcsuf_unit:
-      for u in livery.dcsuf.unit:
-        liveryUnitData = UM.get_unit_from_dcsuf_text(u)
-        if liveryUnitData:
-          unitName = u
-          livery.dcsuf.unit = [liveryUnitData]
-          showDCSUFTags = False
-          break
       if unitName == "Other":
         if livery.dcsuf.dcsuf_unit:
           unitName = livery.dcsuf.dcsuf_unit
@@ -563,9 +555,7 @@ class DCSLMApp:
       if existingLivery.dcsuf.datetime == livery.dcsuf.datetime:
         if not self.prompt_existing_livery(existingLivery):
           raise RuntimeError("Skipping reinstalling livery.")
-        else:
-          liveryUnitData = existingLivery.dcsuf.unit[0]
-    return livery, liveryUnitData, unitName, showDCSUFTags
+    return livery, unitName, showDCSUFTags
 
   def _install_select_unit(self, livery, liveryUnitData, manualUnitSelection, forceAllUnits):
     if manualUnitSelection or not liveryUnitData['unit']:
@@ -575,10 +565,6 @@ class DCSLMApp:
     else:
       if liveryUnitData['unit'] not in livery.dcsuf.unit:
         livery.dcsuf.unit.append(liveryUnitData['unit'])
-        for u in livery.dcsuf.unit:
-          if u.dcs_files == liveryUnitData['unit'].dcs_files:
-            livery.dcsuf.unit.remove(u)
-            break
     unitChoices = liveryUnitData['unit'].liveries
     if len(unitChoices) > 1 and not forceAllUnits:
       unitChoices = self.prompt_aircraft_livery_choice(livery, liveryUnitData['unit'], unitChoices, liveryUnitData['name'])
@@ -716,9 +702,8 @@ class DCSLMApp:
         extractedID = liveryStrData['id']
         screenshotFiles = []
         unitChoices = []
-        liveryUnitData = None
         if liveryStrData['type'] == 'DCSUF':
-          livery, liveryUnitData, unitName, dcsufTags = self._install_get_livery_unitdata(liveryStrData, session, forceInstall)
+          livery, unitName, dcsufTags = self._install_get_livery_unitdata(liveryStrData, session, forceInstall)
           archiveName = livery.dcsuf.download.split('/')[-1]
           archivePath = self._install_check_archive_path(livery, archiveName, progressStr, forceDownload)
           if screenshots:
@@ -744,13 +729,13 @@ class DCSLMApp:
               raise RuntimeError(progressStr + "No liveries to install")
             detectedUnits = self._install_detect_extracted_livery_units(livery, extractPath, detectedLiveries)
             self._install_print_detected_units(livery, detectedUnits)
-            for dU in detectedUnits:
+            for i in range(0, len(detectedUnits)):
+              dU = detectedUnits[i]
               dUnit = dU['unit']
               if not dUnit:
                 unitInst = UM.get_unit_from_dcsuf_text(livery.dcsuf.dcsuf_unit)
                 if unitInst:
                   dUnit = unitInst
-                  livery.dcsuf.unit = []
               try:
                 selectedUnit, dU['liveries'] = self._install_select_unit(livery, dU, manualUnitSelection, forceAllUnits)
               except Exception as e:
@@ -760,9 +745,9 @@ class DCSLMApp:
                 dU['unit'] = selectedUnit
               if dU['unit'] != None:
                 if dU['unit'] not in unitChoices:
-                  unitChoices.append(dU['unit'])
+                  unitChoices.append(detectedUnits[i]['unit'])
                 if dU['unit'] not in livery.dcsuf.unit:
-                  livery.dcsuf.unit.append(dU['unit'])
+                  livery.dcsuf.unit.append(detectedUnits[i]['unit'])
             if not len(unitChoices):
               raise RuntimeError(progressStr + "No units to install liveries to")
             if liveryStrData['type'] == 'Archive':
@@ -785,9 +770,10 @@ class DCSLMApp:
             self.console.print(progressStr + "Generating livery install paths...")
             installPaths = self.lm.generate_livery_install_paths(livery, detectedUnits, detectedLiveries)
             if len(installPaths):
+              uniqueUnits = set([u['unit'] for u in detectedUnits])
               self.console.print(progressStr + "Installing " + str(len(detectedLiveries)) +
                                  (" liveries" if len(detectedLiveries) > 1 else " livery") + " to " +
-                                 str(len(detectedUnits)) + " aircraft.")
+                                 str(len(uniqueUnits)) + " aircraft.")
               with self.console.status(progressStr + "Installing extracted liveries..."):
                 copiedLiveries = self.lm.copy_detected_liveries(livery, extractPath,
                                                                 extractedLiveryFiles, installPaths)
@@ -922,10 +908,10 @@ class DCSLMApp:
       installTable.add_column("# Liveries", justify="center", no_wrap=True, style="magenta")
       installTable.add_column("Size (MB)", justify="right", no_wrap=True, style="bold gold1")
       for l in installData['success']:
-        unitData = l.dcsuf.unit
+        unitData = l.installs['units']
         if len(unitData):
           if len(unitData) < 4:
-            unitsFriendly = l.dcsuf.get_units_friendly_string()
+            unitsFriendly = l.get_units_friendly_string()
           else:
             unitsFriendly = "Multiple (" + str(len(unitData)) + ")"
           installTable.add_row(unitsFriendly, str(l.dcsuf.id), l.dcsuf.title, str(l.get_num_liveries()),

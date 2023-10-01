@@ -146,6 +146,9 @@ class Livery:
       liveryCount += len(data['paths'])
     return liveryCount
 
+  def get_units_friendly_string(self):
+    return ", ".join([u.friendly for u in self.installs['units']])
+
   def calculate_size_installed_liveries(self):
     for i, v in self.installs['liveries'].items():
       v['size'] = 0
