@@ -353,7 +353,7 @@ UnitDefaults = {
           "names": ["mig-29", "mig-29c"],
           "friendly": "MiG-29C",
           "dcs_files": "MiG-29C",
-          "liveries": ["mig-29c"],
+          "liveries": ["mig-29c", "mig-29s"],
           "parts": ['mig29c_tex1','mig29c_tex2','mig29c_tex3','mig29c_tex4','mig29c_tex5','mig29c_tex6','mig29c_tex7',
                     'mig29c_tex8','mig29c_nose','mig29c_pylon','mig29c_tex5_bn31','mig29c_tex5_bn32','mig29c_nose_bn31','mig29c_nose_bn32']
         },
@@ -370,7 +370,7 @@ UnitDefaults = {
           "names": ["mig-29", "mig-29s"],
           "friendly": "MiG-29S",
           "dcs_files": "Other",
-          "liveries": ["mig-29s"],
+          "liveries": ["mig-29s", "mig-29c"],
           "parts": ['mig29c_tex1','mig29c_tex2','mig29c_tex3','mig29c_tex4','mig29c_tex5','mig29c_tex6','mig29c_tex7',
                     'mig29c_tex8','mig29c_nose','mig29c_pylon','mig29c_tex5_bn31','mig29c_tex5_bn32','mig29c_nose_bn31','mig29c_nose_bn32']
         },
