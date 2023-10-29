@@ -185,7 +185,7 @@ UnitDefaults = {
           "names": ["fw 190 a8", "fw-190-a8", "fw-190-a-8", "fw 190 a-8", "fw190 a8"],
           "friendly": "Fw 190 A-8",
           "dcs_files": "Fw 190 A-8 Anton",
-          "liveries": ["fw-109a-8"],
+          "liveries": ["FW-190A8"],
           "parts": ['fw190a-8_fuselage','fw190a-8_wing_r','fw190a-8_wing_l','fw190_bn_31','fw190_bn_32',
                     'fw190_bn_tail','fw190_bn_tail_442','fw190_bn_tail_31','fw190_bn_tail_32']
         },
@@ -193,7 +193,7 @@ UnitDefaults = {
           "names": ["fw 190 d9", "fw-190-d9", "fw-190-d-9", "fw 190 d-9", "fw190 d9"],
           "friendly": "Fw 190 D-9",
           "dcs_files": "Fw 190 D-9 Dora",
-          "liveries": ["FW-109D-9"],
+          "liveries": ["FW-190D9"],
           "parts": ['fw-190_01','fw-190_02','fw-190_03','fw-190_04','fw_190_01','fw_190_02',
                     'fw_190_03','fw_190_04','fw-190_bort_number','fw-190_number_gb']
         },
