@@ -2222,6 +2222,9 @@ class DCSLMApp:
         validChoice = False
         while not validChoice:
           choices = self.console.input(promptStr + " [magenta][" + optionsStr + "]: ")
+          if not len(choices):
+            self.console.print("[red]Invalid unit selection.")
+            continue
           choices = choices.split(' ')
           chosenUnits = []
           if "0" in choices:
@@ -2230,6 +2233,8 @@ class DCSLMApp:
             chosenUnits = unitChoices
           else:
             for c in choices:
+              if not str.isnumeric(c):
+                continue
               if int(c) <= len(unitChoices) and int(c) >= 1:
                 chosenUnits.append(unitChoices[int(c) - 1])
             if len(chosenUnits) == 0:

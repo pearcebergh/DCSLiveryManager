@@ -334,7 +334,7 @@ class LiveryManager:
         if not self.is_valid_livery_directory(files):
           if self.is_valid_data_directory(files):
             folderData['data'] = True
-            folderData['name'] = root
+            folderData['name'] = liveryName
           else:
             continue
         liveryDirectories.append(folderData)
@@ -454,15 +454,25 @@ class LiveryManager:
 
   def generate_livery_install_paths(self, livery, detectedUnits, detectedLiveries):
     installPaths = []
+    installUnits = set()
     for dU in detectedUnits:
-      livery.installs['liveries'][dU['name']] = {'size': 0, 'paths': [], 'data': 0}
+      livery.installs['liveries'][dU['name']] = {'size': 0, 'paths': [], 'data': False}
       for dL in detectedLiveries:
         if dL['name'] == dU['name']:
           for l in dU['liveries']:
             lPath = os.path.join(l, dU['name'])
             installPaths.append(lPath)
             livery.installs['liveries'][dU['name']]['paths'].append(lPath)
+            if not dU['name'] in installUnits:
+              installUnits.update(dU['liveries'])
           break
+    for dL in detectedLiveries:
+      if dL['data']:  # Add data directories
+        livery.installs['liveries'][dL['name']] = {'size': dL['size'], 'paths': [], 'data': True}
+        for iS in installUnits:
+          installDataPath = os.path.join(iS, dL['name'])
+          installPaths.append(installDataPath)
+          livery.installs['liveries'][dL['name']]['paths'].append(installDataPath)
     return installPaths
 
   def get_livery_data_from_dcsuf_url(self, url, session=None):
