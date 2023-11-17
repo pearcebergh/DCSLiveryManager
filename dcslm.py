@@ -720,6 +720,7 @@ class DCSLMApp:
             extractPath = self.lm.extract_livery_archive(livery, verbose=verbose)
           if extractPath:
             self.console.print("\n" + progressStr + "Extracted \'" + livery.archive + "\' to temporary directory.")
+            livery.ovgme = livery.generate_ovgme_folder()
             destinationPath = self.lm.generate_livery_destination_path(livery)
             livery.destination = destinationPath
             self.console.print(progressStr + "Detecting extracted liveries...")
@@ -764,7 +765,6 @@ class DCSLMApp:
                 livery.installs['units'] = unitChoices
             elif liveryStrData['type'] == 'DCSUF':
               livery.installs['units'] = unitChoices
-            livery.ovgme = livery.generate_ovgme_folder()
             liveryNames = [l['name'] for l in detectedLiveries if not l['data']]
             self.console.print(liveryNames)
             self.console.print(progressStr + "Generating livery install paths...")

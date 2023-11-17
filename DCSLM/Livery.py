@@ -135,7 +135,7 @@ class Livery:
     return self.from_JSON(jsonData)
 
   def generate_ovgme_folder(self):
-    if self.dcsuf and len(self.dcsuf.unit) and self.dcsuf.title:
+    if self.dcsuf and self.dcsuf.title:
       return self.dcsuf.title
     else:
       raise RuntimeError("Unable to generate OVGME folder name for livery due to insufficient data.")
