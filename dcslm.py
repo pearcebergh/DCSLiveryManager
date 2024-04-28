@@ -595,12 +595,14 @@ class DCSLMApp:
     return archivePath
 
   def _install_download_screenshots(self, livery, progressStr, session):
+    screenshotFiles = []
     if len(livery.dcsuf.screenshots):
       self.console.print("")
       with self.console.status(progressStr + "[bold]Downloading " + str(len(livery.dcsuf.screenshots)) +
                                " screenshots (--screenshots)..."):
         screenshotFiles = self.lm.download_screenshots(livery, session=session)
       self.console.print(progressStr + "Downloaded " + str(len(screenshotFiles)) + " screenshots.", style="bold")
+    return screenshotFiles
 
   def _install_download_archive(self, livery, archivePath, progressStr, session, keepFiles):
     if not archivePath:

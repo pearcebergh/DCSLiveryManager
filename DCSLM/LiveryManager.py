@@ -400,7 +400,7 @@ class LiveryManager:
         filePath = f[1:]
       extractedFilepath = os.path.join(extractPath, filePath)
       destinationFilepath = os.path.join(installDirectory, fileName)
-      shutil.copy2(extractedFilepath, destinationFilepath,)
+      shutil.copy2(extractedFilepath, destinationFilepath)
     return True
 
   def copy_detected_liveries(self, livery, extractPath, extractedLiveryFiles, installPaths):
