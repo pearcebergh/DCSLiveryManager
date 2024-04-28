@@ -389,6 +389,15 @@ class DCSLMApp:
         'hidden': True,
         'exec': self.print_parts
       },
+      'dcsufunits': {
+        'usage': "",
+        'desc': "Compare the list of DCS User Files units in the dropdown against our registered units configurations",
+        'flags': {},
+        'args': {},
+        'subcommands': {},
+        'hidden': True,
+        'exec': self.dcsuf_units_check
+      },
       'executable': {
         'usage': "DCSLM.exe \[flags] \[args]",
         'desc': "Command line arguments to be passed to the executable when launching",
@@ -1842,6 +1851,24 @@ class DCSLMApp:
           subtitleStr += "[unit.custom]Custom[/unit.custom]"
           self.console.print(Panel(unitsStr, title="[bold sky_blue1]" + c + " Units", expand=False, highlight=False,
                                    subtitle=subtitleStr, subtitle_align="center"), justify="center")
+
+  def dcsuf_units_check(self):
+    import requests
+    from bs4 import BeautifulSoup
+    dcsufURL = "https://www.digitalcombatsimulator.com/en/files/"
+    try:
+      unitsData = {}
+      dcsufReq = requests.get(dcsufURL, timeout=5)
+      dcsufHTML = BeautifulSoup(dcsufReq.text, 'html.parser')
+      unitsDropdown = dcsufHTML.find_all('div', {'class': "bx-filter-select-popup"})
+      unitsList = unitsDropdown[3].find_all('label', {'class': "bx-filter-param-label"})
+      for u in unitsList[1:-3]:
+        unitTrimmed = u.text[:str.find(u.text, '(') - 1]
+        unitsData[unitTrimmed] = UM.get_unit_from_dcsuf_text(unitTrimmed)
+      pprint(unitsData)
+    except Exception as e:
+      self.console.print("Failed to parse DCS User Files page for available units", style="err")
+      return None
 
   def dcslm_config(self, sArgs):
     for i in range(0, len(sArgs)):
