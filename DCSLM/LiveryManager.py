@@ -233,7 +233,7 @@ class LiveryManager:
     return localID
 
   def download_screenshots(self, livery, session=None):
-    DCSUFURLRoot = DCSUFParser().DCSDownloadUrlPrefix
+    DCSUFURLRoot = "https://www.digitalcombatsimulator.com"
     if livery.dcsuf.screenshots and len(livery.dcsuf.screenshots):
       # Check if able to create screenshot directory
       screenshotsPath = os.path.join(os.getcwd(), self.FolderRoot, "screenshots", str(livery.dcsuf.id))

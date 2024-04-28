@@ -82,7 +82,7 @@ class DCSUFParser:
   def _get_dcsfiles_archive_url_from_html(self, parsedHTML):
     downloadClass = parsedHTML.find(class_=DCSUFPC.DCSUFDivConfig['download'])
     if downloadClass:
-      fullArchiveUrl = self.DCSDownloadUrlPrefix + downloadClass['href']
+      fullArchiveUrl = downloadClass['href']
       archiveType = str.split(fullArchiveUrl, '.')[-1]
       if archiveType in patoolib.ArchiveFormats:
         return fullArchiveUrl
