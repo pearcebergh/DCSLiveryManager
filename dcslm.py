@@ -1533,7 +1533,7 @@ class DCSLMApp:
                     lastReleaseIndex = i
       return releaseData
     except Exception as e:
-      self.console.print("Failed to parse GitHub release page for upgrade information.", style="err")
+      self.console.print("Failed to parse DCSUF release page for upgrade information.", style="err")
       return None
 
   def _download_upgrade_progress(self, fileURL, fileVersion, writePath):
@@ -1576,7 +1576,7 @@ class DCSLMApp:
     import subprocess
     releaseData = self.request_upgrade_information_github()
     if not len(releaseData):
-      self.console.print("Current [exe]DCSLM[/exe] version " + __version__ + " is the latest available version.")
+      self.console.print("(GitHub) Current [exe]DCSLM[/exe] version " + __version__ + " is the latest available version.")
     else:
       for rd in releaseData:
         self.console.print(rd['name'] + " (" + rd['version'] + ") " + rd['date'] + ":")
@@ -1585,7 +1585,7 @@ class DCSLMApp:
           if len(descLine):
             self.console.print(" - " + descLine)
         self.console.print("")
-      upgradeConf = Confirm.ask("Do you want to download and upgrade to the latest version of [exe]DCSLM[/exe]?")
+      upgradeConf = Confirm.ask("(GitHub) Do you want to download and upgrade to the latest version of [exe]DCSLM[/exe]?")
       self.console.print("")
       if upgradeConf:
         oldExec = None
@@ -1595,7 +1595,7 @@ class DCSLMApp:
             try:
               Utilities.remove_file(oldExec)
             except Exception as e:
-              self.console.print("[err]Failed to remove old executable:[/err] [red]" + str(e))
+              self.console.print("[err](GitHub) Failed to remove old executable:[/err] [red]" + str(e))
           shutil.move(sys.executable, oldExec)
         dlFilename = "DCSLM.exe"
         dlPath = os.path.join(os.getcwd(), dlFilename)
@@ -1628,7 +1628,7 @@ class DCSLMApp:
     import subprocess
     releaseData = self.request_upgrade_information_dcsuf()
     if not len(releaseData):
-      self.console.print("Current [exe]DCSLM[/exe] version " + __version__ + " is the latest available version.")
+      self.console.print("(DCSUF) Current [exe]DCSLM[/exe] version " + __version__ + " is the latest available version.")
     else:
       downloadURL = releaseData[0]['download']
       dlFilename, dlFileExt, dlVersion = self._request_upgrade_dcsuf_split_dl_url(downloadURL)
@@ -1637,7 +1637,7 @@ class DCSLMApp:
         for descLine in rd['desc']:
           self.console.print(" - " + descLine[2:])
         self.console.print("")
-      upgradeConf = Confirm.ask("Do you want to download and upgrade to the latest version of [exe]DCSLM[/exe]?")
+      upgradeConf = Confirm.ask("(DCSUF) Do you want to download and upgrade to the latest version of [exe]DCSLM[/exe]?")
       self.console.print("")
       dcslmExePath = os.path.join(os.getcwd(), "DCSLM.exe")
       if upgradeConf:
@@ -1649,7 +1649,7 @@ class DCSLMApp:
             Utilities.remove_directory(extractPath)
           self.lm.extract_archive(None, dlPath, extractPath)
           if not os.path.exists(extractPath):
-            self.console.print("[err]Failed to extract downloaded DCSLM archive")
+            self.console.print("[err](DCSUF) Failed to extract downloaded DCSLM archive")
             return
           dlExtractedExePath = os.path.join(extractPath, "DCSLM.exe")
           dcslmExePathTemp = dcslmExePath + ".new"
@@ -1661,7 +1661,7 @@ class DCSLMApp:
               try:
                 Utilities.remove_file(oldExec)
               except Exception as e:
-                self.console.print("[err]Failed to remove old executable:[/err] [red]" + str(e))
+                self.console.print("[err](DCSUF) Failed to remove old executable:[/err] [red]" + str(e))
             shutil.move(dcslmExePath, oldExec)
           shutil.move(dcslmExePathTemp, dcslmExePath)
           os.chmod(dcslmExePath, 0o775)
