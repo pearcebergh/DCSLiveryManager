@@ -1412,7 +1412,7 @@ class DCSLMApp:
 
   def request_upgrade_information_github(self):
     import requests
-    import pkg_resources
+    from packaging.version import Version
     from datetime import datetime
     from bs4 import BeautifulSoup
     try:
@@ -1439,7 +1439,7 @@ class DCSLMApp:
             rData['date'] = dtStr
         if len(rData['download']) == 0: # Backup hardcoded release url since it's unlikely to change
           rData['download'] = "https://github.com/pearcebergh/DCSLiveryManager/releases/download/" + rData['version'] + "/DCSLM.exe"
-        if pkg_resources.parse_version(rData['version']) > pkg_resources.parse_version(__version__):
+        if Version(rData['version']) > Version(__version__):
           releaseData.append(rData)
       return releaseData
     except Exception as e:
@@ -1466,7 +1466,7 @@ class DCSLMApp:
 
   def request_upgrade_information_dcsuf(self):
     import requests
-    import pkg_resources
+    from packaging.version import Version
     from bs4 import BeautifulSoup
     dcsufFileURL = "https://www.digitalcombatsimulator.com/en/files/3318763/"
     try:
@@ -1498,7 +1498,7 @@ class DCSLMApp:
               for i in range(releaseNotesIndex, len(relTrimmedText)):
                 l = relTrimmedText[i]
                 if i == len(relTrimmedText) - 1:
-                  if pkg_resources.parse_version(vVersion) > pkg_resources.parse_version(__version__):
+                  if Version(vVersion) > Version(__version__):
                     rData = {
                       'name': vVersion + " Release",
                       'version': vVersion,
@@ -1518,7 +1518,7 @@ class DCSLMApp:
                       vName = vVersion + " Release"
                       lastReleaseIndex = i
                       continue
-                    elif pkg_resources.parse_version(splitVersion) > pkg_resources.parse_version(__version__):
+                    elif Version(splitVersion) > Version(__version__):
                       rData = {
                         'name': vName,
                         'version': vVersion,
