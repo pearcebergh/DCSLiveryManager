@@ -81,6 +81,18 @@ UnitDefaults = {
                     'pilot_c101_patch','pilot_c101_00_helmet_1','pilot_c101_patch_1']
 
         },
+        "ch-47f": {
+          "names": ["ch-47", "ch-47f", "ch-47f chinook", "chinook", "ch47", "ch47f", "ch47f chinook"],
+          "friendly": "CH-47F",
+          "dcs_files": "CH-47F",
+          "liveries": ["ch-47f"],
+          "parts": ['ch-47f_tex01','ch-47f_tex01_bn','ch-47f_tex01_decal','ch-47f_tex02','ch-47f_tex03','ch-47f_tex04',
+                    'ch-47f_tex05','ch-47f_tex06','ch-47f_tex07','ch-47f_tex08','ch-47f_tex09','ch-47f_tex09_decal',
+                    'ch-47f_tex10','ch-47f_tex11','ch-47f_tex11_bn','ch-47f_tex12','ch-47f_tex13','ch-47f_tex14',
+                    'ch-47f_tex15','ch-47f_tex16','ch-47f_tex16_bn','ch-47f_tex16_decal','ch-47f_tex17',
+                    'pilot_ch47_body','pilot_ch47_details','pilot_ch47_patch']
+
+        },
         "christen eagle ii": {
           "names": ["Christen Eagle II"],
           "friendly": "Christen Eagle II",
@@ -137,6 +149,20 @@ UnitDefaults = {
                     'f16_bl50_fin_decal','f16_bl50_fin_bort_number_001','f16_bl50_fin_bort_number_010','f16_bl50_fin_bort_number_100',
                     'f16_bl50_wing_l','f16_bl50_wing_r','f16_bl50_engine','f16_bl50_wing_pylon_1','f16_bl50_wing_pylon_2',
                     'f_16_tank_370','pilot_f16_helmet','pilot_f16_patch','pilot_f16']
+        },
+        "f-4e": {
+          "names": ["f-4e", "f-4", "f-4e-45mc", "f4e", "phantom"],
+          "friendly": "F-4E",
+          "dcs_files": "F-4E",
+          "liveries": ["F-4E-45MC"],
+          "parts": ['hb_f-4e_ext_engine_l','hb_f-4e_ext_01','hb_f-4e_ext_02','hb_f-4e_ext_03','hb_f-4e_ext_04',
+                    'hb_f-4e_ext_05','hb_f-4e_ext_06','hb_f-4e_ext_08','hb_f-4e_ext_09','hb_f-4e_ext_weaponpylons',
+                    'hb_f-4e_ord_pave_spike','hb_ord_600_gal_performancetank','hb_f-4e_ext_wingtank_r','hb_f-4e_ext_wingtank',
+                    'pilot_hb_hgu_55_basic','wso_hb_hgu_55_basic','hb_char_robinolds_cwu','hb_char_robinolds_overall',
+                    'hb_char_robinolds_roughmet','wso_hb_char_robinolds_cwu','wso_hb_char_robinolds_overall',
+                    'wso_hb_char_robinolds_roughmet','am32a60b_01_01','am32a60b_01_02','am32a60b_01_03','am32a60b_01_04',
+                    'am32a60b_01_05','am32a60b_01_06','hb_f4e_boarding_ladder','hb_f-4e_ext_lau-7'
+]
         },
         "f-5e": {
           "names": ["f-5e", "f-5", "f-5e-3"],
@@ -384,6 +410,17 @@ UnitDefaults = {
                     'mosquito_nmr_t000','mosquito_nmr_sn','mosquito_nmr_snn','mosquito_nmr_s0','mosquito_nmr_s00',
                     'mosquito_nmr_s000','mosquito 500 lb bomb fairing mk.iii','mosquito_50_gallon_drop_tanks','mosquito_100_gallon_drop_tanks']
         },
+        "oh-58d": {
+          "names": ["oh-58", "oh-58d", "kiowa", "kiowa warrior", "oh-58d kiowa warrior", "oh58d", "oh58"],
+          "friendly": "OH-58D",
+          "dcs_files": "OH-58D Kiowa Warrior",
+          "liveries": ["OH58D"],
+          "parts": ['shr_tailsection','doors n mms','mainbody','doors','shr_m4','mag','shr_reflexsight_m4',
+                    'material #3741','material #3742','airbag','material #40','shr_books_n_more','shr_bullet_door',
+                    'material #3736','shr_boardnumber_3','shr_boardnumber_2','shr_boardnumber_1','shorts',
+                    'material #3666','body_jeff_retopo','shr_grease pencil_01']
+
+        },
         "p-47d": {
           "names": ["p-47d"],
           "friendly": "P-47D",
@@ -534,5 +571,5 @@ UnitsOfficial = {
           "f-15c", "f-15e", "f-16c", "f-5e", "f-86f", "fa-18c", "fw-190-a-8", "fw-190-d-9", "hawk", "i-16", "j-11a", "jf-17",
           "ka-50", "ka-50_3", "l-39", "mb-339", "mirage f1", "m-2000c", "mi-24p", "mi-8mtv2", "mig-15bis", "mig-19p", "mig-21bis",
           "mig-29a", "mig-29c", "mig-29g", "mig-29s", "mosquito fb mk vi", "p-47d", "p-51d", "sa342", "spitfire lf mk ix", "su-25",
-          "su-25t", "su-27", "su-33", "uh-1h", "yak-52", "tf-51d"]
+          "su-25t", "su-27", "su-33", "uh-1h", "yak-52", "tf-51d", "f-4e", "oh-58d", "ch-47f"]
 }
