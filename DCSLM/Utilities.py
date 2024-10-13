@@ -10,7 +10,7 @@ def find_desc_file_format(knownFilePath):
   detectedFormat = "dds"
   matchedFiles = glob.glob(knownFilePath + ".*")
   if len(matchedFiles):
-    detectedFormat = matchedFiles[0].split(".")[-1]
+    detectedFormat = matchedFiles[0].split(".", 1)[-1]
   return detectedFormat
 
 def hash_file(filePath):

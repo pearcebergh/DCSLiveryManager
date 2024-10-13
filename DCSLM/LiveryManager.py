@@ -312,9 +312,11 @@ class LiveryManager:
     return False
 
   def is_valid_data_directory(self, fileList):
+    imgFiletypes = ['.dds', '.tga', '.bmp']
     for f in fileList:
-      if ".dds" in f:
-        return True
+      for i in imgFiletypes:
+        if i in f:
+          return True
     return False
 
   def detect_extracted_liveries(self, livery, extractPath, extractedLiveryFiles):

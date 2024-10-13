@@ -29,7 +29,6 @@ UnitDefaults = {
                     'a-10c_paint_1-f','a-10c_paint_1-g','a-10c_paint_1-h','a-10c_paint_1-i','a-10c_paint_1-j',
                     'a-10c_paint_1-k','a-10c_paint_1-l','a-10_number','a-10_number_noze_f','a-10_number_noze_t',
                     'a-10_number_wheel','a-10_ruber f','a-10_ruber main']
-
         },
         "ah-64d": {
           "names": ["ah-64d", "ah-64", "ah 64", "ah64", "apache"],
@@ -79,7 +78,6 @@ UnitDefaults = {
                     'c-101-fuse_1_16','c-101-fuse_1_17','c-101-fuse_1_18','c-101-fuse_1_19','c-101-fuse_2_1',
                     'c-101-fuse_2_2','c-101-fuse_2_3','c-101-fuse_2_4','c-101-fuse_2_5','pilot_c101_00_helmet',
                     'pilot_c101_patch','pilot_c101_00_helmet_1','pilot_c101_patch_1']
-
         },
         "ch-47f": {
           "names": ["ch-47", "ch-47f", "ch-47f chinook", "chinook", "ch47", "ch47f", "ch47f chinook"],
@@ -91,7 +89,6 @@ UnitDefaults = {
                     'ch-47f_tex10','ch-47f_tex11','ch-47f_tex11_bn','ch-47f_tex12','ch-47f_tex13','ch-47f_tex14',
                     'ch-47f_tex15','ch-47f_tex16','ch-47f_tex16_bn','ch-47f_tex16_decal','ch-47f_tex17',
                     'pilot_ch47_body','pilot_ch47_details','pilot_ch47_patch']
-
         },
         "christen eagle ii": {
           "names": ["Christen Eagle II"],
@@ -248,7 +245,6 @@ UnitDefaults = {
           "parts": ['j11a_tex01','j11a_tex03_compos','j11a_tex04','j11a_tex05','j11a_tex06','j11a_tex06_bn52','j11a_tex06_bn31',
                     'j11a_tex06_bn32','j11a_tex02_compos','j11a_tex02','j11a_tex03','j11a_tex07','j11a_rkl609l','j11a_rkl609r',
                     'j11a_tex01_bn52','j11a_tex01_bn31','j11a_tex01_bn32','j11a_detail','j11a_detail_compos','j11a_afterburn','su27_tex01']
-
         },
         "jf-17": {
           "names": ["jf-17"],
@@ -505,7 +501,6 @@ UnitDefaults = {
           "parts": ['civ_uh1_main_dam','civ_uh1_tail_dam','civ_uh1_main','civ_uh1_tail','uh1_main_dam','uh1_tail_dam',
                     'uh1_main','uh1_tail','uh1_weapon','pilot_uh1_01','pilot_uh1_02','pilot_uh1_helmet','pilot_uh1_patch',
                     'uh1_cov','uh1-cpt-door','uh1-cpt_karkas','uh1-cpt_karkas2','uh1-cpt_panel','uh1-cpt_central_box','uh1-cpt_dev2']
-
         },
         "tf-51d": {
           "names": ["tf-51d"],
@@ -536,7 +531,6 @@ UnitDefaults = {
           "liveries": ["Hercules"],
           "parts": ['herc_map1_diff','herc_map2_diff','herc_map3_diff','herc_map3_spec','herc_map4_diff',
                     'herc_map4_spec','herc_map5_diff','herc_map5_spec','herc_pilots_diff','herc_map6_transparent']
-
         },
         "a-4e-c": {
           "names": ["a-4e-c", "a-4", "a-4e", "skyhawk"],
@@ -554,7 +548,6 @@ UnitDefaults = {
           "dcs_files": "Other",
           "liveries": ["kc-135", "KC135MPRS"],
           "parts": ['kc_135_body_1','kc_135_body_2','kc_135_wings','kc_135_wings_mark','kc_135_notes']
-
         },
         "e-3": {
           "names": ["e-3", "e 3", "e3"],
@@ -562,6 +555,20 @@ UnitDefaults = {
           "dcs_files": "Other",
           "liveries": ["e-3a"],
           "parts": ['e-3_body_1','e-3_body_2','e-3_radar','e-3_wings','e-3_wings_mark']
+        },
+        "kc-130": {
+          "names": ["kc-130", "kc 130", "kc130"],
+          "friendly": "KC-130",
+          "dcs_files": "Other",
+          "liveries": ["KC130"],
+          "parts": ['kc-130_fusel', 'kc-130_wing', 'kc-130_wing_2', 'kc-130_notes', 'pilots_kc-130', 'kc-130_FPod']
+        },
+        "c-130": {
+          "names": ["c-130", "c 130", "c130"],
+          "friendly": "C-130",
+          "dcs_files": "Other",
+          "liveries": ["C-130"],
+          "parts": ['c-130_fusel', 'c-130_wing', 'c-130_wing_2', 'c-130_notes', 'pilots_c-130']
         },
       }
     }
